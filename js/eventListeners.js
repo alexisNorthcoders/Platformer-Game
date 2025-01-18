@@ -3,7 +3,7 @@ window.addEventListener('keydown', (event) => {
                
         
     switch (event.key) {
-        case 'w':
+        case 'ArrowUp':
 
             for (let i=0;i< doors.length; i++){
                 const door = doors[i]
@@ -26,11 +26,11 @@ window.addEventListener('keydown', (event) => {
             if (player.isGrounded) player.velocity.y = -10
             
             break
-        case 'a':
+        case 'ArrowLeft':
             // move left
             keys.a.pressed = true
             break
-        case 'd':
+        case 'ArrowRight':
             // move right
             keys.d.pressed = true
             break
@@ -39,15 +39,15 @@ window.addEventListener('keydown', (event) => {
 window.addEventListener('keyup', (event) => {
     console.log(event)
     switch (event.key) {
-        case 'a':
+        case 'ArrowLeft':
             // move left
             keys.a.pressed = false
             break
-        case 'd':
+        case 'ArrowRight':
             // move right
             keys.d.pressed = false
             break
-        case 'w':
+        case 'ArrowUp':
             // jump
             keys.w.pressed = false
             break

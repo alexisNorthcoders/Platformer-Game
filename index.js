@@ -6,63 +6,63 @@ canvas.height = 576 // 64 * 9
 
 let parsedCollisions
 let collisionBlocks
-let background 
+let background
 let doors
 
 const enemy = new Enemy({
-        imageSrc: './img/enemy/Idle (34x28).png',
-        frameRate:11,
-        loop: true,
-        autoplay:true,
-        
+    imageSrc: './img/enemy/Idle (34x28).png',
+    frameRate: 11,
+    loop: true,
+    autoplay: true,
+
 })
 
 
 const player = new Player({
-    
+
     imageSrc: './img/king/IdleRight.png',
     frameRate: 11,
     animations: {
-        idleRight:{
+        idleRight: {
             frameRate: 11,
             frameBuffer: 2,
             loop: true,
             imageSrc: './img/king/IdleRight.png',
         },
-        hit:{
+        hit: {
             frameRate: 2,
             frameBuffer: 8,
             loop: true,
             imageSrc: './img/king/Hit (78x58).png',
-            
+
         },
-        jump:{
+        jump: {
             frameRate: 1,
             frameBuffer: 2,
             loop: true,
             imageSrc: './img/king/Jump (78x58).png',
-            
+
         },
-        
-        idleLeft:{
+
+        idleLeft: {
             frameRate: 11,
             frameBuffer: 2,
             loop: true,
             imageSrc: './img/king/IdleLeft.png',
         },
-        runRight:{
+        runRight: {
             frameRate: 8,
             frameBuffer: 5,
             loop: true,
             imageSrc: './img/king/RunRight.png',
         },
-        runLeft:{
+        runLeft: {
             frameRate: 8,
             frameBuffer: 5,
             loop: true,
             imageSrc: './img/king/RunLeft.png',
         },
-        enterDoor:{
+        enterDoor: {
             frameRate: 8,
             frameBuffer: 5,
             loop: false,
@@ -72,16 +72,18 @@ const player = new Player({
                     opacity: 1,
                     onComplete: () => {
                         level++
+                        if (level === 4) level = 1
                         levels[level].init()
                         player.switchSprite('idleRight')
                         player.preventInput = false
                         gsap.to(overlay, {
-                            opacity: 0,})
+                            opacity: 0,
+                        })
                     }
                 })
             },
         },
-        
+
     }
 })
 
@@ -92,30 +94,31 @@ let levels = {
             parsedCollisions = collisionsLevel1.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
-           
+            enemy.collisionBlocks = collisionBlocks
+
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
             background = new Sprite({
                 position: {
                     x: 0,
                     y: 0
-        },
-                imageSrc : './img/backgroundLevel1.png'
+                },
+                imageSrc: './img/backgroundLevel1.png'
             })
             doors = [
                 new Sprite({
-                    position:{
-                        x:774,
-                        y:272
+                    position: {
+                        x: 774,
+                        y: 272
                     },
                     imageSrc: './img/doorOpen.png',
-                    frameRate:5,
-                    frameBuffer:5,
+                    frameRate: 5,
+                    frameBuffer: 5,
                     loop: false,
-                    autoplay:false,
-    })
-]
-            
+                    autoplay: false,
+                })
+            ]
+
         }
     },
     2: {
@@ -127,7 +130,7 @@ let levels = {
             player.position.x = 40
             player.position.y = 30
             enemy.position.x = 700
-            enemy.position.y = 200
+            enemy.position.y = 300
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -135,22 +138,22 @@ let levels = {
                 position: {
                     x: 0,
                     y: 0
-        },
-                imageSrc : './img/backgroundLevel2.png'
+                },
+                imageSrc: './img/backgroundLevel2.png'
             })
             doors = [
                 new Sprite({
-                    position:{
-                        x:772,
-                        y:334
+                    position: {
+                        x: 772,
+                        y: 334
                     },
                     imageSrc: './img/doorOpen.png',
-                    frameRate:5,
-                    frameBuffer:5,
+                    frameRate: 5,
+                    frameBuffer: 5,
                     loop: false,
-                    autoplay:false,
-    })
-]
+                    autoplay: false,
+                })
+            ]
         }
     },
     3: {
@@ -167,22 +170,22 @@ let levels = {
                 position: {
                     x: 0,
                     y: 0
-        },
-                imageSrc : './img/backgroundLevel3.png'
+                },
+                imageSrc: './img/backgroundLevel3.png'
             })
             doors = [
                 new Sprite({
-                    position:{
-                        x:176,
-                        y:335
+                    position: {
+                        x: 176,
+                        y: 335
                     },
                     imageSrc: './img/doorOpen.png',
-                    frameRate:5,
-                    frameBuffer:5,
+                    frameRate: 5,
+                    frameBuffer: 5,
                     loop: false,
-                    autoplay:false,
-    })
-]
+                    autoplay: false,
+                })
+            ]
         }
     },
 }
@@ -193,10 +196,10 @@ const keys = {
     w: {
         pressed: false
     },
-    a:{
+    a: {
         pressed: false
     },
-    d:{
+    d: {
         pressed: false
     }
 
@@ -205,32 +208,34 @@ const overlay = {
     opacity: 0
 }
 
-function animate(){
+function animate() {
     window.requestAnimationFrame(animate)
-    
+
     background.draw()
-     /* collisionBlocks.forEach(collisionBlock => {
-        collisionBlock.draw()
-    })  */
+
+    // debug collisionBlocks
+    /*  collisionBlocks.forEach(collisionBlock => {
+       collisionBlock.draw()
+   })   */
     doors.forEach(door => {
         door.draw()
     })
-   
-    
+
+
     player.handleInput(keys)
-    
-   
+
+
     enemy.draw()
     enemy.update()
     player.update()
     player.draw()
 
-     
+
 
     c.save()
     c.globalAlpha = overlay.opacity
     c.fillStyle = "black"
-    c.fillRect(0,0,canvas.width,canvas.height)
+    c.fillRect(0, 0, canvas.width, canvas.height)
     c.restore()
 }
 levels[level].init()
