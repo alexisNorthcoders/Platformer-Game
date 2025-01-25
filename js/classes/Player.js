@@ -51,32 +51,40 @@ class Player extends Sprite {
 
         this.velocity.x = 0
         if (keys.w.pressed) {
-            console.log('w jump')
+
             this.switchSprite('jump')
 
-        }
-        if (keys.d.pressed) {
-            if (this.isGrounded === true) this.switchSprite('runRight')
-            this.velocity.x = 4
-            this.lastDirection = 'right'
         }
         if (keys.space.pressed) {
             this.switchSprite('attack')
         }
+        if (keys.d.pressed) {
+            if (this.isGrounded === true){ 
+                console.log('running right')
+                this.switchSprite('runRight')}
+            this.velocity.x = 4
+            this.lastDirection = 'right'
+        }
+
         else if (keys.a.pressed) {
-            if (this.isGrounded === true) this.switchSprite('runLeft')
+            if (this.isGrounded === true){ 
+                console.log('running left')
+                this.switchSprite('runLeft')}
+
             this.velocity.x = -4
             this.lastDirection = 'left'
         }
+        
 
 
         else {
+            if (this.lastDirection === 'right' && this.isGrounded === true) this.switchSprite('idleRight')
             if (this.lastDirection === 'left' && this.isGrounded === true) this.switchSprite('idleLeft')
-            else if (this.lastDirection === 'right' && this.isGrounded === true) this.switchSprite('idleRight')
         }
     }
 
     switchSprite(name) {
+
         if (this.image === this.animations[name].image) return
         if (name === 'hit') {
             this.currentFrame = 0
@@ -87,6 +95,7 @@ class Player extends Sprite {
             this.currentAnimation = this.animations[name]
         }
         else if (!this.hitCooldown) {
+
             this.currentFrame = 0
             this.image = this.animations[name].image
             this.frameRate = this.animations[name].frameRate
@@ -113,19 +122,19 @@ class Player extends Sprite {
             player.hitbox.position.y + player.hitbox.height >= enemy.hitbox.position.y) {
 
 
-            this.switchSprite('hit')
-            this.velocity.y = -8
-
-            this.hitCooldown = true;
-
-            // Set a timer to reset the hitCooldown flag after a certain duration
-            setTimeout(() => {
-                this.hitCooldown = false;
-
-
-                // Reset animation or switch to another state after cooldown
-                // For example: this.switchSprite('idleRight');
-            }, this.hitCooldownDuration);
+            /*       this.switchSprite('hit')
+                  this.velocity.y = -8
+      
+                  this.hitCooldown = true;
+      
+                  // Set a timer to reset the hitCooldown flag after a certain duration
+                  setTimeout(() => {
+                      this.hitCooldown = false;
+      
+      
+                      // Reset animation or switch to another state after cooldown
+                      this.switchSprite('idleRight');
+                  }, this.hitCooldownDuration); */
         }
 
 

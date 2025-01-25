@@ -1,7 +1,11 @@
 Array.prototype.parse2D = function() {
+    let step;
+    if (this.length === 144) step = 16
+    else step = 30
+
     const rows = []
-    for (let i=0;i< this.length; i+= 16){
-        rows.push(this.slice(i, i+16))
+    for (let i=0;i< this.length; i+= step){
+        rows.push(this.slice(i, i+step))
     }
     return rows
 }
