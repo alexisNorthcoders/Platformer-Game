@@ -7,10 +7,10 @@ window.addEventListener('keydown', (event) => {
 
             for (let i = 0; i < doors.length; i++) {
                 const door = doors[i]
-                if (player.hitbox.position.x + player.hitbox.width <= door.position.x + door.width &&
+                if (player.hitbox.position.x + player.hitbox.width <= door.position.x + 2 * door.width &&
                     player.hitbox.position.x >= door.position.x &&
                     player.hitbox.position.y + player.hitbox.height >= door.position.y &&
-                    player.hitbox.position.y <= door.position.y + door.height
+                    player.hitbox.position.y <= door.position.y + 2 * door.height
                 ) {
                     player.velocity.x = 0
                     player.velocity.y = 0
@@ -36,12 +36,12 @@ window.addEventListener('keydown', (event) => {
             break
         case ' ':
             // hit
-            keys.space.pressed = true
-            break
+            keys.space.pressed = true;
+            break;
     }
 })
 window.addEventListener('keyup', (event) => {
-    console.log(event)
+
     switch (event.key) {
         case 'ArrowLeft':
             // move left

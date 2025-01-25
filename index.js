@@ -64,9 +64,15 @@ const player = new Player({
         },
         attack: {
             frameRate: 3,
-            frameBuffer: 3,
+            frameBuffer: 6,
             loop: false,
             imageSrc: './img/king/Attack (78x58).png',
+        },
+        attackLeft:{
+            frameRate: 3,
+            frameBuffer: 6,
+            loop: false,
+            imageSrc: './img/king/AttackLeft (78x58).png',
         },
         enterDoor: {
             frameRate: 8,
@@ -78,7 +84,7 @@ const player = new Player({
                     opacity: 1,
                     onComplete: () => {
                         level++
-                        if (level === 5) level = 1
+                        if (level === Object.keys(levels).length+1) level = 1
                         levels[level].init()
                         player.switchSprite('idleRight')
                         player.preventInput = false
@@ -93,7 +99,7 @@ const player = new Player({
     }
 })
 
-let level = 1
+let level = 6
 let levels = {
     1: {
         init: () => {
@@ -111,7 +117,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/backgroundLevel1.png'
+                imageSrc: './img/Level1.png'
             })
             doors = [
                 new Sprite({
@@ -125,7 +131,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ]
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
 
         }
     },
@@ -147,7 +160,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/backgroundLevel2.png'
+                imageSrc: './img/Level2.png'
             })
             doors = [
                 new Sprite({
@@ -161,7 +174,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ]
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
         }
     },
     3: {
@@ -179,7 +199,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/backgroundLevel3.png'
+                imageSrc: './img/Level3.png'
             })
             doors = [
                 new Sprite({
@@ -193,7 +213,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ]
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
         }
     },
     4: {
@@ -201,8 +228,11 @@ let levels = {
             parsedCollisions = collisionsLevel4.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
             player.position.x = 100
             player.position.y = 100
+            enemy.position.x = 700
+            enemy.position.y = 100
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -211,7 +241,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/level4.png'
+                imageSrc: './img/Level4.png'
             })
             doors = [
                 new Sprite({
@@ -225,7 +255,98 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ]
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
+        }
+    },
+    5: {
+        init: () => {
+            parsedCollisions = collisionsLevel5.parse2D()
+            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
+            player.position.x = 100
+            player.position.y = 100
+            enemy.position.x = 700
+            enemy.position.y = 100
+
+            if (player.currentAnimation) player.currentAnimation.isActive = false
+
+            background = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Level5.png'
+            })
+            doors = [
+                new Sprite({
+                    position: {
+                        x: 867,
+                        y: 80
+                    },
+                    imageSrc: './img/doorOpen.png',
+                    frameRate: 5,
+                    frameBuffer: 5,
+                    loop: false,
+                    autoplay: false,
+                })
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
+        }
+    },
+    6: {
+        init: () => {
+            parsedCollisions = collisionsLevel6.parse2D()
+            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
+            player.position.x = 80
+            player.position.y = 500
+            enemy.position.x = 700
+            enemy.position.y = 500
+
+            if (player.currentAnimation) player.currentAnimation.isActive = false
+
+            background = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Level6.png'
+            })
+            doors = [
+                new Sprite({
+                    position: {
+                        x: 850,
+                        y: 402
+                    },
+                    imageSrc: './img/doorOpen.png',
+                    frameRate: 5,
+                    frameBuffer: 5,
+                    loop: false,
+                    autoplay: false,
+                })
+            ],
+            life = new Sprite({
+                position:{
+                    x:0,
+                    y:0
+                },
+                 imageSrc: './img/Live Bar.png'
+            })
         }
     },
 }
@@ -252,26 +373,28 @@ const overlay = {
 }
 
 function animate() {
+    c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
 
-    background.draw()
+    background.draw(2)
+    life.draw(2)
 
     // debug collisionBlocks
-    /*  collisionBlocks.forEach(collisionBlock => {
+     /* collisionBlocks.forEach(collisionBlock => {
        collisionBlock.draw()
    })   */
     doors.forEach(door => {
-        door.draw()
+        door.draw(2)
     })
 
 
     player.handleInput(keys)
 
 
-    enemy.draw()
+    enemy.draw(2)
     enemy.update()
     player.update()
-    player.draw()
+    player.draw(2)
 
 
 

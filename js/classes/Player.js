@@ -2,6 +2,8 @@ class Player extends Sprite {
     constructor({ collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
         super({ imageSrc, frameRate, animations, loop })
         this.hitCooldown = false
+        this.action = false
+        this.running = false
         this.hitCooldownDuration = 1000
         this.position = {
             x: 200,
@@ -23,6 +25,7 @@ class Player extends Sprite {
     }
 
     update() {
+
         // blue box 
         c.fillStyle = 'rgba(0,0,255,0)'
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
@@ -47,40 +50,38 @@ class Player extends Sprite {
     }
 
     handleInput(keys) {
+        if (!keys.a.pressed && !keys.d.pressed) this.running = false
         if (this.preventInput) return
 
         this.velocity.x = 0
+
         if (keys.w.pressed) {
 
             this.switchSprite('jump')
+        }
 
-        }
-        if (keys.space.pressed) {
-            this.switchSprite('attack')
-        }
         if (keys.d.pressed) {
-            if (this.isGrounded === true){ 
-                console.log('running right')
-                this.switchSprite('runRight')}
+            this.running = true
+            if (this.isGrounded === true && !this.action) this.switchSprite('runRight')
             this.velocity.x = 4
             this.lastDirection = 'right'
         }
 
-        else if (keys.a.pressed) {
-            if (this.isGrounded === true){ 
-                console.log('running left')
-                this.switchSprite('runLeft')}
-
+        if (keys.a.pressed) {
+            this.running = true
+            if (this.isGrounded === true && !this.action) this.switchSprite('runLeft')
             this.velocity.x = -4
             this.lastDirection = 'left'
         }
-        
-
-
-        else {
-            if (this.lastDirection === 'right' && this.isGrounded === true) this.switchSprite('idleRight')
-            if (this.lastDirection === 'left' && this.isGrounded === true) this.switchSprite('idleLeft')
+        if (keys.space.pressed) {
+            this.action = true
+            this.lastDirection === 'right' ? this.switchSprite('attack') : this.switchSprite('attackLeft')
+            setTimeout(() => {
+                this.action = false;
+            }, 300);
         }
+        if (this.lastDirection === 'right' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleRight')
+        if (this.lastDirection === 'left' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleLeft')
     }
 
     switchSprite(name) {

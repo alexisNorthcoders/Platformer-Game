@@ -1,9 +1,9 @@
 class Sprite {
     constructor({
-        position, 
-        imageSrc, 
-        frameRate = 1, 
-        animations, 
+        position,
+        imageSrc,
+        frameRate = 1,
+        animations,
         frameBuffer = 2,
         loop = true,
         autoplay = true,
@@ -16,7 +16,7 @@ class Sprite {
             this.loaded = true
             this.width = this.image.width / this.frameRate
             this.height = this.image.height
-            
+
         }
         this.image.src = imageSrc
         this.loaded = false
@@ -30,7 +30,7 @@ class Sprite {
         this.currentAnimation
 
         if (this.animations) {
-            for (let key in this.animations){
+            for (let key in this.animations) {
                 const image = new Image()
                 image.src = this.animations[key].imageSrc
                 this.animations[key].image = image
@@ -38,17 +38,18 @@ class Sprite {
             console.log(this.animations)
         }
     }
-    draw(){
+    draw(scale = 1) {
         if (!this.loaded) return
+
         const cropbox = {
-            position:{
-                x:this.width * this.currentFrame,
-                y:0
+            position: {
+                x: this.width * this.currentFrame,
+                y: 0
             },
             width: this.width,
             height: this.height
-            }
-        
+        }
+
         c.drawImage(
             this.image,
             cropbox.position.x,
@@ -57,9 +58,9 @@ class Sprite {
             cropbox.height,
             this.position.x,
             this.position.y,
-            this.width,
-            this.height
-            )
+            this.width * scale,  // Scale the width
+            this.height * scale  // Scale the height
+        )
         this.updateFrames()
     }
 
@@ -67,18 +68,19 @@ class Sprite {
         this.autoplay = true
     }
 
-    updateFrames(){
+    updateFrames() {
         if (!this.autoplay) return
         this.elapsedFrames++
         if (this.elapsedFrames % this.frameBuffer === 0) {
-        if (this.currentFrame < this.frameRate - 1 ) this.currentFrame++
-        else if (this.loop) this.currentFrame = 0
+            if (this.currentFrame < this.frameRate - 1) this.currentFrame++
+            else if (this.loop) this.currentFrame = 0
         }
 
         if (this.currentAnimation?.onComplete) {
-            if (this.currentFrame === this.frameRate - 1 && !this.currentAnimation.isActive){
-            this.currentAnimation.onComplete()
-            this.currentAnimation.isActive = true}
+            if (this.currentFrame === this.frameRate - 1 && !this.currentAnimation.isActive) {
+                this.currentAnimation.onComplete()
+                this.currentAnimation.isActive = true
+            }
         }
     }
 }
