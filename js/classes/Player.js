@@ -42,7 +42,7 @@ class Player extends Sprite {
         setTimeout(() => {
             this.preventInput = false
             this.isShowingHello = false;
-        }, 4000);
+        }, 3000);
 
     }
 

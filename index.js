@@ -127,6 +127,12 @@ const player = new Player({
                         gsap.to(overlay, {
                             opacity: 0,
                         })
+                        if (level != 1) {
+                            setTimeout(() => {
+                                player.hello()
+                            }, 500);
+                        }
+
                     }
                 })
             },
@@ -208,6 +214,10 @@ let levels = {
                 },
                 imageSrc: './img/Live Bar.png'
             })
+
+            setTimeout(() => {
+                player.hello()
+            }, 500);
 
         }
     },
