@@ -206,6 +206,16 @@ const heart_3 = new Sprite({
     imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
 })
 
+const diamond = new Sprite({
+    position: {
+        x: 200,
+        y: 200
+    },
+    frameRate: 10,
+    frameBuffer: 4,
+    imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png'
+})
+
 
 let level = 1
 let levels = {
@@ -528,6 +538,7 @@ function animate() {
     heart_1.draw(2)
     heart_2.draw(2)
     heart_3.draw(2)
+    diamond.draw(2)
 
     // debug collisionBlocks
     /* collisionBlocks.forEach(collisionBlock => {
