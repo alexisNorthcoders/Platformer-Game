@@ -206,6 +206,23 @@ const heart_3 = new Sprite({
     imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
 })
 
+const diamond_1 = new Sprite({
+    position: {
+        x: 22,
+        y: 50
+    },
+    frameRate: 8,
+    frameBuffer: 8,
+    imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
+})
+const numberSprites = createNumberSprites(
+    1,
+    { x: 59, y: 55 },
+    10,
+    './Sprites/12-Live and Coins/Numbers (6x8).png',
+    10
+);
+
 const diamond = new Sprite({
     position: {
         x: 200,
@@ -538,6 +555,10 @@ function animate() {
     heart_1.draw(2)
     heart_2.draw(2)
     heart_3.draw(2)
+    diamond_1.draw(2)
+    numberSprites.forEach(sprite => {
+        sprite.draw(2);
+    });
     diamond.draw(2)
 
     // debug collisionBlocks
