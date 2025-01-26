@@ -14,14 +14,14 @@ const enemy = new Enemy({
     frameRate: 11,
     loop: true,
     autoplay: true,
-    animations:{
+    animations: {
         idle: {
             frameRate: 11,
-            frameBuffer:11,
+            frameBuffer: 11,
             loop: true,
             imageSrc: './Sprites/03-Pig/Idle (34x28).png',
         },
-        runLeft:{
+        runLeft: {
             frameRate: 6,
             frameBuffer: 6,
             loop: true,
@@ -34,17 +34,17 @@ const enemy = new Enemy({
 const kingPig = new Enemy({
     imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
     frameRate: 12,
-    
+
     loop: true,
     autoplay: true,
-    animations:{
+    animations: {
         idle: {
             frameRate: 12,
-            frameBuffer:6,
+            frameBuffer: 6,
             loop: true,
             imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
         },
-        runLeft:{
+        runLeft: {
             frameRate: 6,
             frameBuffer: 6,
             loop: true,
@@ -105,7 +105,7 @@ const player = new Player({
             loop: false,
             imageSrc: './img/king/Attack (78x58).png',
         },
-        attackLeft:{
+        attackLeft: {
             frameRate: 3,
             frameBuffer: 6,
             loop: false,
@@ -121,7 +121,7 @@ const player = new Player({
                     opacity: 1,
                     onComplete: () => {
                         level++
-                        if (level === Object.keys(levels).length+1) level = 1
+                        if (level === Object.keys(levels).length + 1) level = 1
                         levels[level].init()
                         player.switchSprite('idleRight')
                         player.preventInput = false
@@ -136,7 +136,7 @@ const player = new Player({
     }
 })
 
-let level = 1
+let level = 6
 let levels = {
     1: {
         init: () => {
@@ -173,13 +173,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
 
         }
     },
@@ -189,8 +189,14 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
             player.position.x = 40
             player.position.y = 30
+            kingPig.velocity.x = 0
+            kingPig.switchSprite('idle')
+            enemy.velocity.x = 0
+            kingPig.position.x = 400
+            kingPig.position.y = 400
             enemy.position.x = 700
             enemy.position.y = 400
 
@@ -216,13 +222,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
         }
     },
     3: {
@@ -231,10 +237,15 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
             player.position.x = 770
             player.position.y = 100
             enemy.position.y = 200
             enemy.position.x = 380
+            kingPig.position.y = 200
+            kingPig.position.x = 500
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -258,13 +269,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
         }
     },
     4: {
@@ -273,10 +284,15 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
             player.position.x = 100
             player.position.y = 500
             enemy.position.x = 700
             enemy.position.y = 100
+            kingPig.position.x = 500
+            kingPig.position.y = 100
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -300,13 +316,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
         }
     },
     5: {
@@ -315,10 +331,16 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
+            kingPig.position.x = 350
+            kingPig.position.y = 100
             player.position.x = 30
             player.position.y = 400
             enemy.position.x = 600
             enemy.position.y = 100
+          
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -342,13 +364,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
         }
     },
     6: {
@@ -357,6 +379,11 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
+            kingPig.position.x = 350
+            kingPig.position.y = 200
             player.position.x = 80
             player.position.y = 500
             enemy.position.x = 700
@@ -384,13 +411,13 @@ let levels = {
                     autoplay: false,
                 })
             ],
-            life = new Sprite({
-                position:{
-                    x:0,
-                    y:0
-                },
-                 imageSrc: './img/Live Bar.png'
-            })
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
         }
     },
 }
@@ -407,7 +434,7 @@ const keys = {
     d: {
         pressed: false
     },
-    space:{
+    space: {
         pressed: false
     }
 
@@ -424,9 +451,9 @@ function animate() {
     life.draw(2)
 
     // debug collisionBlocks
-     /* collisionBlocks.forEach(collisionBlock => {
-       collisionBlock.draw()
-   })   */
+    /* collisionBlocks.forEach(collisionBlock => {
+      collisionBlock.draw()
+  })   */
     doors.forEach(door => {
         door.draw(2)
     })
