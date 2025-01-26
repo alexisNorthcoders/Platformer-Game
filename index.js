@@ -123,7 +123,7 @@ const player = new Player({
                         if (level === Object.keys(levels).length + 1) level = 1
                         levels[level].init()
                         player.switchSprite('idleRight')
-                        
+
                         gsap.to(overlay, {
                             opacity: 0,
                         })
@@ -170,7 +170,44 @@ const helloDialogue = new DialogBox({
     }
 })
 
-let level = 7
+const life = new Sprite({
+    position: {
+        x: 0,
+        y: 0
+    },
+    imageSrc: './img/Live Bar.png'
+})
+
+const heart_1 = new Sprite({
+    position: {
+        x: 22,
+        y: 20
+    },
+    frameRate: 8,
+    frameBuffer: 8,
+    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
+})
+const heart_2 = new Sprite({
+    position: {
+        x: 44,
+        y: 20
+    },
+    frameRate: 8,
+    frameBuffer: 8,
+    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
+})
+const heart_3 = new Sprite({
+    position: {
+        x: 66,
+        y: 20
+    },
+    frameRate: 8,
+    frameBuffer: 8,
+    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
+})
+
+
+let level = 1
 let levels = {
     1: {
         init: () => {
@@ -208,13 +245,6 @@ let levels = {
                     autoplay: false,
                 })
             ]
-            life = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Live Bar.png'
-            })
 
             setTimeout(() => {
                 player.hello()
@@ -261,13 +291,8 @@ let levels = {
                     autoplay: false,
                 })
             ]
-            life = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Live Bar.png'
-            })
+
+
         }
     },
     3: {
@@ -308,13 +333,6 @@ let levels = {
                     autoplay: false,
                 })
             ]
-            life = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Live Bar.png'
-            })
         }
     },
     4: {
@@ -355,13 +373,6 @@ let levels = {
                     autoplay: false,
                 })
             ]
-            life = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Live Bar.png'
-            })
         }
     },
     5: {
@@ -403,13 +414,6 @@ let levels = {
                     autoplay: false,
                 })
             ]
-            life = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Live Bar.png'
-            })
         }
     },
     6: {
@@ -449,14 +453,7 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
         }
     },
     7: {
@@ -496,14 +493,7 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
         }
     },
 }
@@ -535,6 +525,9 @@ function animate() {
 
     background.draw(2)
     life.draw(2)
+    heart_1.draw(2)
+    heart_2.draw(2)
+    heart_3.draw(2)
 
     // debug collisionBlocks
     /* collisionBlocks.forEach(collisionBlock => {
