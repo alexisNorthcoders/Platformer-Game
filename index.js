@@ -8,7 +8,6 @@ let parsedCollisions
 let collisionBlocks
 let background
 let doors
-let helloDialogue
 
 const enemy = new Enemy({
     imageSrc: './Sprites/03-Pig/Idle (34x28).png',
@@ -136,6 +135,34 @@ const player = new Player({
     }
 })
 
+const helloDialogue = new DialogBox({
+    position: {
+        x: player.position.x + 68,
+        y: player.position.y - 68,
+    },
+    imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
+    frameRate: 3,
+    frameBuffer: 18,
+    autoplay: true,
+    loop: false,
+    animations: {
+        helloIn: {
+            imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
+            frameRate: 3,
+            frameBuffer: 18,
+            autoplay: true,
+            loop: false,
+        },
+        helloOut: {
+            frameRate: 3,
+            frameBuffer: 18,
+            autoplay: true,
+            loop: false,
+            imageSrc: './Sprites/13-Dialogue Boxes/Hello Out (24x8).png',
+        }
+    }
+})
+
 let level = 1
 let levels = {
     1: {
@@ -151,18 +178,6 @@ let levels = {
             player.position.x = 100
             player.position.y = 300
             enemy.position.y = 300
-
-            helloDialogue = new Sprite({
-                position: {
-                    x: player.position.x + 68,
-                    y: player.position.y - 68,
-                },
-                imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
-                frameRate: 3,
-                frameBuffer: 18,
-                autoplay: true,
-                loop: false
-            });
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -185,14 +200,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
+            life = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Live Bar.png'
+            })
 
         }
     },
@@ -234,14 +249,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
+            life = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Live Bar.png'
+            })
         }
     },
     3: {
@@ -281,14 +296,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
+            life = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Live Bar.png'
+            })
         }
     },
     4: {
@@ -328,14 +343,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
+            life = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Live Bar.png'
+            })
         }
     },
     5: {
@@ -376,14 +391,14 @@ let levels = {
                     loop: false,
                     autoplay: false,
                 })
-            ],
-                life = new Sprite({
-                    position: {
-                        x: 0,
-                        y: 0
-                    },
-                    imageSrc: './img/Live Bar.png'
-                })
+            ]
+            life = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Live Bar.png'
+            })
         }
     },
     6: {

@@ -29,14 +29,21 @@ class Player extends Sprite {
         this.isShowingHello = true;
         this.preventInput = true
 
+        helloDialogue.switchSprite('helloIn')
         helloDialogue.currentFrame = 0
         helloDialogue.position.x = this.position.x + 68
         helloDialogue.position.y = this.position.y
 
         setTimeout(() => {
-            this.isShowingHello = false;
-            this.preventInput = false
+            helloDialogue.switchSprite('helloOut')
+            helloDialogue.currentFrame = 0
         }, 2000);
+
+        setTimeout(() => {
+            this.preventInput = false
+            this.isShowingHello = false;
+        }, 4000);
+
     }
 
     update() {
