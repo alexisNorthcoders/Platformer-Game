@@ -22,9 +22,10 @@ window.addEventListener('keydown', (event) => {
 
             }
 
-            keys.w.pressed = true
-            if (player.isGrounded) player.velocity.y = -10
-
+            if (!keys.w.pressed && player.isGrounded) {
+                keys.w.pressed = true;
+                player.velocity.y = -10;
+            }
             break
         case 'ArrowLeft':
             // move left
