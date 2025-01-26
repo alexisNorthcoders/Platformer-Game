@@ -123,13 +123,14 @@ const player = new Player({
                         if (level === Object.keys(levels).length + 1) level = 1
                         levels[level].init()
                         player.switchSprite('idleRight')
-                        player.preventInput = false
+                        
                         gsap.to(overlay, {
                             opacity: 0,
                         })
                         if (level != 1) {
                             setTimeout(() => {
                                 player.hello()
+                                player.preventInput = false
                             }, 500);
                         }
 
@@ -169,7 +170,7 @@ const helloDialogue = new DialogBox({
     }
 })
 
-let level = 1
+let level = 7
 let levels = {
     1: {
         init: () => {
@@ -435,6 +436,53 @@ let levels = {
                     y: 0
                 },
                 imageSrc: './img/Level6.png'
+            })
+            doors = [
+                new Sprite({
+                    position: {
+                        x: 850,
+                        y: 402
+                    },
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
+                    frameRate: 5,
+                    frameBuffer: 5,
+                    loop: false,
+                    autoplay: false,
+                })
+            ],
+                life = new Sprite({
+                    position: {
+                        x: 0,
+                        y: 0
+                    },
+                    imageSrc: './img/Live Bar.png'
+                })
+        }
+    },
+    7: {
+        init: () => {
+            parsedCollisions = collisionsLevel7.parse2D()
+            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
+            kingPig.position.x = 350
+            kingPig.position.y = 200
+            player.position.x = 50
+            player.position.y = 100
+            enemy.position.x = 700
+            enemy.position.y = 500
+
+            if (player.currentAnimation) player.currentAnimation.isActive = false
+
+            background = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Level7.png'
             })
             doors = [
                 new Sprite({
