@@ -8,6 +8,7 @@ let parsedCollisions
 let collisionBlocks
 let background
 let doors
+let helloDialogue
 
 const enemy = new Enemy({
     imageSrc: './Sprites/03-Pig/Idle (34x28).png',
@@ -53,7 +54,6 @@ const kingPig = new Enemy({
     }
 
 })
-
 
 const player = new Player({
 
@@ -136,7 +136,7 @@ const player = new Player({
     }
 })
 
-let level = 6
+let level = 1
 let levels = {
     1: {
         init: () => {
@@ -145,11 +145,24 @@ let levels = {
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
+            kingPig.switchSprite('idle')
             kingPig.position.y = 200
             kingPig.position.x = 400
             player.position.x = 100
             player.position.y = 300
             enemy.position.y = 300
+
+            helloDialogue = new Sprite({
+                position: {
+                    x: player.position.x + 68,
+                    y: player.position.y - 68,
+                },
+                imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
+                frameRate: 3,
+                frameBuffer: 18,
+                autoplay: true,
+                loop: false
+            });
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -340,7 +353,7 @@ let levels = {
             player.position.y = 400
             enemy.position.x = 600
             enemy.position.y = 100
-          
+
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -468,6 +481,10 @@ function animate() {
     kingPig.update()
     player.update()
     player.draw(2)
+    if (player.isShowingHello) {
+
+        helloDialogue.draw(2)
+    }
 
 
 

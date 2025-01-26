@@ -5,6 +5,7 @@ class Player extends Sprite {
         this.action = false
         this.running = false
         this.hitCooldownDuration = 1000
+        this.isShowingHello = false;
         this.position = {
             x: 200,
             y: 200
@@ -22,6 +23,20 @@ class Player extends Sprite {
 
         this.collisionBlocks = collisionBlocks
         console.log(this.collisionBlocks)
+    }
+
+    hello() {
+        this.isShowingHello = true;
+        this.preventInput = true
+
+        helloDialogue.currentFrame = 0
+        helloDialogue.position.x = this.position.x + 68
+        helloDialogue.position.y = this.position.y
+
+        setTimeout(() => {
+            this.isShowingHello = false;
+            this.preventInput = false
+        }, 2000);
     }
 
     update() {
