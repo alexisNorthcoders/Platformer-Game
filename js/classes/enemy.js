@@ -21,6 +21,25 @@ class Enemy extends Sprite {
 
     }
 
+    move(runSpeed = -1) {
+        this.velocity.x = runSpeed
+    }
+
+    switchSprite(name) {
+
+        if (this.image === this.animations[name].image) return
+
+        else if (!this.hitCooldown) {
+
+            this.currentFrame = 0
+            this.image = this.animations[name].image
+            this.frameRate = this.animations[name].frameRate
+            this.frameBuffer = this.animations[name].frameBuffer
+            this.loop = this.animations[name].loop
+            this.currentAnimation = this.animations[name]
+        }
+    }
+
     update() {
         // blue box 
         //c.fillStyle = 'rgba(0,0,255,0.3)'
@@ -66,6 +85,7 @@ class Enemy extends Sprite {
                 if (this.velocity.x < 0) {
                     const offset = this.hitbox.position.x - this.position.x
                     this.position.x = collisionBlock.position.x + collisionBlock.width - offset + 0.01
+                    this.switchSprite('idle')
                     break
                 }
                 if (this.velocity.x > 0) {
@@ -73,6 +93,7 @@ class Enemy extends Sprite {
                     this.position.x = collisionBlock.position.x - offset - 0.01
                     break
                 }
+                
 
             }
         }
@@ -80,7 +101,7 @@ class Enemy extends Sprite {
     checkForVerticalCollisions() {
         // check for vertical collisions
         for (let i = 0; i < this.collisionBlocks.length; i++) {
-            
+
             const collisionBlock = this.collisionBlocks[i]
             // if collision exists
             if (this.hitbox.position.x <= collisionBlock.position.x + collisionBlock.width &&

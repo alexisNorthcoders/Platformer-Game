@@ -10,10 +10,47 @@ let background
 let doors
 
 const enemy = new Enemy({
-    imageSrc: './img/enemy/Idle (34x28).png',
+    imageSrc: './Sprites/03-Pig/Idle (34x28).png',
     frameRate: 11,
     loop: true,
     autoplay: true,
+    animations:{
+        idle: {
+            frameRate: 11,
+            frameBuffer:11,
+            loop: true,
+            imageSrc: './Sprites/03-Pig/Idle (34x28).png',
+        },
+        runLeft:{
+            frameRate: 6,
+            frameBuffer: 6,
+            loop: true,
+            imageSrc: './Sprites/03-Pig/Run (34x28).png',
+        }
+    }
+
+})
+
+const kingPig = new Enemy({
+    imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+    frameRate: 12,
+    
+    loop: true,
+    autoplay: true,
+    animations:{
+        idle: {
+            frameRate: 12,
+            frameBuffer:6,
+            loop: true,
+            imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+        },
+        runLeft:{
+            frameRate: 6,
+            frameBuffer: 6,
+            loop: true,
+            imageSrc: './Sprites/02-King Pig/Run (38x28).png',
+        }
+    }
 
 })
 
@@ -99,7 +136,7 @@ const player = new Player({
     }
 })
 
-let level = 6
+let level = 1
 let levels = {
     1: {
         init: () => {
@@ -107,6 +144,9 @@ let levels = {
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.position.y = 200
+            kingPig.position.x = 400
             player.position.x = 100
             player.position.y = 300
             enemy.position.y = 300
@@ -126,7 +166,7 @@ let levels = {
                         x: 846,
                         y: 273
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -169,7 +209,7 @@ let levels = {
                         x: 852,
                         y: 336
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -211,7 +251,7 @@ let levels = {
                         x: 154,
                         y: 335
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -253,7 +293,7 @@ let levels = {
                         x: 850,
                         y: 142
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -295,7 +335,7 @@ let levels = {
                         x: 858,
                         y: 145
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -337,7 +377,7 @@ let levels = {
                         x: 850,
                         y: 402
                     },
-                    imageSrc: './img/doorOpen.png',
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
                     frameRate: 5,
                     frameBuffer: 5,
                     loop: false,
@@ -396,7 +436,9 @@ function animate() {
 
 
     enemy.draw(2)
+    kingPig.draw(2)
     enemy.update()
+    kingPig.update()
     player.update()
     player.draw(2)
 
