@@ -1,54 +1,36 @@
-class Enemy extends Sprite {
-    constructor({ collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
+class Diamond extends Sprite {
+    constructor({ imageSrc, frameRate, animations, loop }) {
         super({ imageSrc, frameRate, animations, loop })
 
         this.position = {
             x: 500,
             y: 200
         }
+       
+        this.collisionBlocks = []
 
-        this.velocity = {
-            x: 0,
-            y: 0
-        }
-
-        this.sides = {
-            bottom: this.position.y + this.height
-        }
-        this.gravity = 0.4
-
-        this.collisionBlocks = collisionBlocks
     }
-
-    move(runSpeed = -1) {
-        this.velocity.x = runSpeed
-    }
-
-    switchSprite(name) {
-
-        if (this.image === this.animations[name].image) return
-
-        else if (!this.hitCooldown) {
-
-            this.currentFrame = 0
-            this.image = this.animations[name].image
-            this.frameRate = this.animations[name].frameRate
-            this.frameBuffer = this.animations[name].frameBuffer
-            this.loop = this.animations[name].loop
-            this.currentAnimation = this.animations[name]
+    updateHitbox() {
+        this.hitbox = {
+            position: {
+                x: this.position.x + 23,
+                y: this.position.y + 30
+            },
+            width: 37,
+            height: 28
         }
     }
 
     update() {
         // blue box 
-        /* c.fillStyle = 'rgba(0,0,255,0.3)'
-        c.fillRect(this.position.x,this.position.y,this.width,this.height)  */ 
-        this.position.x += this.velocity.x
+        //c.fillStyle = 'rgba(0,0,255,0.3)'
+        //c.fillRect(this.position.x,this.position.y,this.width,this.height)  
+       
 
         this.updateHitbox()
 
         this.checkForHorizontalCollisions()
-        this.applyGravity()
+        
 
         this.updateHitbox()
 
@@ -59,17 +41,6 @@ class Enemy extends Sprite {
             this.hitbox.height)
 
         this.checkForVerticalCollisions()
-    }
-
-    updateHitbox() {
-        this.hitbox = {
-            position: {
-                x: this.position.x + 23,
-                y: this.position.y + 30
-            },
-            width: 37,
-            height: 28
-        }
     }
 
     checkForHorizontalCollisions() {
@@ -123,11 +94,6 @@ class Enemy extends Sprite {
 
             }
         }
-    }
-    applyGravity() {
-
-        this.velocity.y += this.gravity
-        this.position.y += this.velocity.y
     }
 }
 

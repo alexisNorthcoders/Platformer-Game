@@ -223,7 +223,7 @@ const numberSprites = createNumberSprites(
     10
 );
 
-const diamond = new Sprite({
+const diamond = new Diamond({
     position: {
         x: 200,
         y: 200
@@ -234,7 +234,7 @@ const diamond = new Sprite({
 })
 
 
-let level = 1
+let level = 8
 let levels = {
     1: {
         init: () => {
@@ -243,6 +243,7 @@ let levels = {
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
+            diamond.collisionBlocks = collisionBlocks
             kingPig.switchSprite('idle')
             kingPig.position.y = 200
             kingPig.position.x = 400
@@ -523,9 +524,47 @@ let levels = {
             ]
         }
     },
+    8: {
+        init: () => {
+            parsedCollisions = collisionsLevel8.parse2D()
+            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            kingPig.velocity.x = 0
+            enemy.velocity.x = 0
+            kingPig.position.x = 750
+            kingPig.position.y = 100
+            player.position.x = 50
+            player.position.y = 500
+            enemy.position.x = 700
+            enemy.position.y = 100
+
+            if (player.currentAnimation) player.currentAnimation.isActive = false
+
+            background = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Level8.png'
+            })
+            doors = [
+                new Sprite({
+                    position: {
+                        x: 750,
+                        y: 402
+                    },
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
+                    frameRate: 5,
+                    frameBuffer: 5,
+                    loop: false,
+                    autoplay: false,
+                })
+            ]
+        }
+    },
 }
-
-
 
 const keys = {
     w: {
@@ -560,9 +599,10 @@ function animate() {
         sprite.draw(2);
     });
     diamond.draw(2)
+    diamond.update()
 
     // debug collisionBlocks
-    /* collisionBlocks.forEach(collisionBlock => {
+  /*   collisionBlocks.forEach(collisionBlock => {
       collisionBlock.draw()
   })   */
     doors.forEach(door => {
