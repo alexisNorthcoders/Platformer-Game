@@ -61,13 +61,14 @@ class Player extends Sprite {
 
         this.updateHitbox()
         // debug hitbox
-        c.fillStyle = 'rgba(0, 0, 255, 0.76)'
-        c.fillRect(
-            this.hitbox.position.x,
-            this.hitbox.position.y,
-            this.hitbox.width,
-            this.hitbox.height)
-
+        if (debugCollisions) {
+            c.fillStyle = 'rgba(0, 0, 255, 0.76)'
+            c.fillRect(
+                this.hitbox.position.x,
+                this.hitbox.position.y,
+                this.hitbox.width,
+                this.hitbox.height)
+        }
         this.checkForVerticalCollisions()
 
     }
@@ -174,7 +175,6 @@ class Player extends Sprite {
                 this.hitbox.position.y <= collisionBlock.position.y + collisionBlock.height) {
                 // collision on x axis going left
                 if (this.velocity.x < 0) {
-                    console.log(collisionBlock)
                     const offset = this.hitbox.position.x - this.position.x
                     this.position.x = collisionBlock.position.x + collisionBlock.width - offset + 0.01
                     break

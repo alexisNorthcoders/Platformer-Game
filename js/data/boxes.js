@@ -1,29 +1,3 @@
-const data_box_level_1 = [
-    {
-        "x": 75.0833333333333,
-        "y": 192
-    },
-    {
-        "x": 96.8333333333333,
-        "y": 192.25
-    },
-    {
-        "x": 84.5833333333333,
-        "y": 177
-    },
-    {
-        "x": 321.333333333333,
-        "y": 192.5
-    },
-    {
-        "x": 341.583333333333,
-        "y": 193
-    },
-    {
-        "x": 330.833333333333,
-        "y": 177.5
-    }]
-
 function transformDataBox(data) {
     return data.map(obj => [
         2 * Math.round(obj.x),
@@ -31,7 +5,31 @@ function transformDataBox(data) {
     ]);
 }
 
-const boxes_level_1 = transformDataBox(data_box_level_1);
+function loadBoxesSync(level) {
+    let request = new XMLHttpRequest();
+    request.open("GET", `/kings-and-pigs/js/data/levels/Level_${level}.json`, false);
+    request.send(null);
 
-console.log(boxes_level_1)
-const boxes_level_9 = [[112.609022556391 * 2, 576 - 32 - 192.157894736842]]
+    if (request.status === 200) {
+        const jsonData = JSON.parse(request.responseText);
+
+        const boxesLayer = jsonData.layers.find(layer => layer.name === "boxes");
+
+        const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+
+        return transformDataBox(boxesData)
+    } else {
+        console.error("Failed to load JSON");
+        return [];
+    }
+}
+
+const boxes_level_1 = loadBoxesSync(1)
+const boxes_level_2 = loadBoxesSync(2)
+const boxes_level_3 = loadBoxesSync(3)
+const boxes_level_4 = loadBoxesSync(4)
+const boxes_level_5 = loadBoxesSync(5)
+const boxes_level_6 = loadBoxesSync(6)
+const boxes_level_7 = loadBoxesSync(7)
+const boxes_level_8 = loadBoxesSync(8)
+const boxes_level_9 = loadBoxesSync(9)

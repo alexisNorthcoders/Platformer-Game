@@ -8,10 +8,32 @@ let parsedCollisions
 let collisionBlocks
 let background
 let doors
+let debugCollisions = false
 
 const config = {
     1: {
         boxesPositions: boxes_level_1
+    },
+    2: {
+        boxesPositions: boxes_level_2
+    },
+    3: {
+        boxesPositions: boxes_level_3
+    },
+    4: {
+        boxesPositions: boxes_level_4
+    },
+    5: {
+        boxesPositions: boxes_level_5
+    },
+    6: {
+        boxesPositions: boxes_level_6
+    },
+    7: {
+        boxesPositions: boxes_level_7
+    },
+    8: {
+        boxesPositions: boxes_level_8
     },
     9: {
         boxesPositions: boxes_level_9
@@ -246,7 +268,7 @@ function createBoxes(positions) {
     return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
 }
 
-let level = 1
+let level = 8
 let levels = {
     1: {
         init: () => {
@@ -265,8 +287,8 @@ let levels = {
             kingPig.switchSprite('idle')
             kingPig.position.y = 200
             kingPig.position.x = 400
-            player.position.x = 100
-            player.position.y = 300
+            player.position.x = 50
+            player.position.y = 200
             enemy.position.y = 300
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
@@ -276,7 +298,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level1.png'
+                imageSrc: './img/Level 1.png'
             })
             doors = [
                 new Sprite({
@@ -300,8 +322,14 @@ let levels = {
     },
     2: {
         init: () => {
+            const { boxesPositions } = config[2]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel2.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -322,7 +350,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level2.png'
+                imageSrc: './img/Level 2.png'
             })
             doors = [
                 new Sprite({
@@ -343,8 +371,14 @@ let levels = {
     },
     3: {
         init: () => {
+            const { boxesPositions } = config[3]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel3.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -364,7 +398,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level3.png'
+                imageSrc: './img/Level 3.png'
             })
             doors = [
                 new Sprite({
@@ -383,8 +417,14 @@ let levels = {
     },
     4: {
         init: () => {
+            const { boxesPositions } = config[4]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel4.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -404,7 +444,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level4.png'
+                imageSrc: './img/Level 4.png'
             })
             doors = [
                 new Sprite({
@@ -423,8 +463,14 @@ let levels = {
     },
     5: {
         init: () => {
+            const { boxesPositions } = config[5]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel5.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -445,7 +491,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level5.png'
+                imageSrc: './img/Level 5.png'
             })
             doors = [
                 new Sprite({
@@ -464,8 +510,14 @@ let levels = {
     },
     6: {
         init: () => {
+            const { boxesPositions } = config[6]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel6.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -485,7 +537,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level6.png'
+                imageSrc: './img/Level 6.png'
             })
             doors = [
                 new Sprite({
@@ -504,8 +556,14 @@ let levels = {
     },
     7: {
         init: () => {
+            const { boxesPositions } = config[7]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel7.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -525,7 +583,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level7.png'
+                imageSrc: './img/Level 7.png'
             })
             doors = [
                 new Sprite({
@@ -544,8 +602,14 @@ let levels = {
     },
     8: {
         init: () => {
+            const { boxesPositions } = config[8]
+
+            boxes = createBoxes(boxesPositions)
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -565,7 +629,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level8.png'
+                imageSrc: './img/Level 8.png'
             })
             doors = [
                 new Sprite({
@@ -610,7 +674,7 @@ let levels = {
                     x: 0,
                     y: 0
                 },
-                imageSrc: './img/Level9.png'
+                imageSrc: './img/Level 9.png'
             })
             doors = [
                 new Sprite({
@@ -692,10 +756,11 @@ function animate() {
     }
 
     // debug collisionBlocks
-    collisionBlocks.forEach(collisionBlock => {
-        collisionBlock.draw()
-    })
-
+    if (debugCollisions) {
+        collisionBlocks.forEach(collisionBlock => {
+            collisionBlock.draw()
+        })
+    }
 
     c.save()
     c.globalAlpha = overlay.opacity

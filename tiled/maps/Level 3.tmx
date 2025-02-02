@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="22">
+<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="25">
+ <editorsettings>
+  <export target="Level_3.json" format="json"/>
+ </editorsettings>
  <tileset firstgid="1" source="tile_set_1.tsx"/>
  <tileset firstgid="248" source="tile_set_2.tsx"/>
  <tileset firstgid="290" source="Box.tsx"/>
  <tileset firstgid="291" source="collision.tsx"/>
  <tileset firstgid="292" source="tile_set_3.tsx"/>
- <tileset firstgid="293" source="tile_set_3.tsx"/>
  <layer id="2" name="background" width="16" height="9" offsetx="1" offsety="1">
   <data encoding="csv">
 41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,
@@ -46,10 +48,12 @@
 </data>
  </layer>
  <objectgroup id="5" name="porta">
-  <object id="15" gid="293" x="77.3333" y="223.667" width="46" height="56"/>
-  <object id="19" gid="290" x="363" y="128" width="22" height="16"/>
-  <object id="20" gid="290" x="352" y="128.333" width="22" height="16"/>
-  <object id="21" gid="290" x="355.667" y="112.667" width="22" height="16"/>
+  <object id="15" gid="292" x="77.3333" y="223.667" width="46" height="56"/>
+ </objectgroup>
+ <objectgroup id="7" name="boxes" visible="0">
+  <object id="22" gid="290" x="363.75" y="128.25" width="22" height="16"/>
+  <object id="23" gid="290" x="352.75" y="128.583" width="22" height="16"/>
+  <object id="24" gid="290" x="356.417" y="112.917" width="22" height="16"/>
  </objectgroup>
  <layer id="1" name="parede exterior" width="16" height="9">
   <data encoding="csv">

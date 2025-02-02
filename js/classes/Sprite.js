@@ -35,7 +35,7 @@ class Sprite {
                 image.src = this.animations[key].imageSrc
                 this.animations[key].image = image
             }
-            console.log(this.animations)
+            
         }
     }
     draw(scale = 1) {

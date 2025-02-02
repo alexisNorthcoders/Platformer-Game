@@ -39,6 +39,14 @@ window.addEventListener('keydown', (event) => {
             // hit
             keys.space.pressed = true;
             break;
+        case '+':
+            // hit
+            debugCollisions = true;
+            break;
+        case '-':
+            // hit
+            debugCollisions = false;
+            break;
     }
 })
 window.addEventListener('keyup', (event) => {

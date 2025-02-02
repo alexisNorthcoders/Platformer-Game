@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="38">
+<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="68">
+ <editorsettings>
+  <export target="Level_7.json" format="json"/>
+ </editorsettings>
  <tileset firstgid="1" source="tile_set_1.tsx"/>
  <tileset firstgid="248" source="tile_set_2.tsx"/>
  <tileset firstgid="290" source="tile_set_3.tsx"/>
@@ -60,23 +63,25 @@
  </layer>
  <objectgroup id="5" name="porta">
   <object id="21" gid="290" x="429.049" y="159.473" width="46" height="56"/>
-  <object id="23" gid="293" x="191.162" y="256.087" width="22" height="16"/>
-  <object id="24" gid="293" x="203.318" y="255.637" width="22" height="16"/>
-  <object id="25" gid="293" x="193.863" y="239.878" width="22" height="16"/>
-  <object id="26" gid="293" x="319.482" y="256.087" width="22" height="16"/>
-  <object id="27" gid="293" x="331.189" y="256.087" width="22" height="16"/>
-  <object id="28" gid="293" x="324.885" y="240.328" width="22" height="16"/>
-  <object id="29" gid="293" x="255.997" y="256.087" width="22" height="16"/>
-  <object id="30" gid="293" x="267.704" y="256.087" width="22" height="16"/>
-  <object id="31" gid="293" x="260.95" y="240.778" width="22" height="16"/>
-  <object id="32" gid="293" x="287.965" y="256.537" width="22" height="16"/>
-  <object id="33" gid="293" x="300.122" y="256.087" width="22" height="16"/>
-  <object id="34" gid="293" x="293.368" y="240.328" width="22" height="16"/>
-  <object id="35" gid="293" x="382.967" y="256.537" width="22" height="16"/>
-  <object id="36" gid="293" x="396.025" y="257.438" width="22" height="16"/>
-  <object id="37" gid="293" x="389.271" y="240.328" width="22" height="16"/>
  </objectgroup>
- <layer id="6" name="collisions" width="16" height="9" opacity="0.54">
+ <objectgroup id="8" name="boxes" visible="0">
+  <object id="53" gid="293" x="191.319" y="256.221" width="22" height="16"/>
+  <object id="54" gid="293" x="203.475" y="255.771" width="22" height="16"/>
+  <object id="55" gid="293" x="194.019" y="240.012" width="22" height="16"/>
+  <object id="56" gid="293" x="319.639" y="256.221" width="22" height="16"/>
+  <object id="57" gid="293" x="331.346" y="256.221" width="22" height="16"/>
+  <object id="58" gid="293" x="325.041" y="240.462" width="22" height="16"/>
+  <object id="59" gid="293" x="256.154" y="256.221" width="22" height="16"/>
+  <object id="60" gid="293" x="267.861" y="256.221" width="22" height="16"/>
+  <object id="61" gid="293" x="261.106" y="240.912" width="22" height="16"/>
+  <object id="62" gid="293" x="288.121" y="256.671" width="22" height="16"/>
+  <object id="63" gid="293" x="300.279" y="256.221" width="22" height="16"/>
+  <object id="64" gid="293" x="293.524" y="240.462" width="22" height="16"/>
+  <object id="65" gid="293" x="383.123" y="256.671" width="22" height="16"/>
+  <object id="66" gid="293" x="396.181" y="257.572" width="22" height="16"/>
+  <object id="67" gid="293" x="389.428" y="240.462" width="22" height="16"/>
+ </objectgroup>
+ <layer id="6" name="collisions" width="16" height="9" visible="0" opacity="0.54">
   <data encoding="csv">
 292,292,292,292,292,292,292,292,292,292,292,292,292,292,292,292,
 292,0,0,0,0,0,0,0,0,0,0,0,0,0,0,292,

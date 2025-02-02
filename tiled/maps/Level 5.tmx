@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="8">
+<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="16" height="9" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="11">
  <tileset firstgid="1" source="tile_set_1.tsx"/>
  <tileset firstgid="248" source="tile_set_2.tsx"/>
  <tileset firstgid="290" source="tile_set_3.tsx"/>
@@ -59,9 +59,11 @@
  </layer>
  <objectgroup id="5" name="porta">
   <object id="1" gid="290" x="428.5" y="127.5" width="46" height="56"/>
-  <object id="5" gid="291" x="60.75" y="253.25" width="22" height="16"/>
-  <object id="6" gid="291" x="76" y="236.75" width="22" height="16"/>
-  <object id="7" gid="291" x="82.25" y="253.25" width="22" height="16"/>
+ </objectgroup>
+ <objectgroup id="7" name="boxes" visible="0">
+  <object id="8" gid="291" x="60.9167" y="253.25" width="22" height="16"/>
+  <object id="9" gid="291" x="76.1667" y="236.75" width="22" height="16"/>
+  <object id="10" gid="291" x="82.4167" y="253.25" width="22" height="16"/>
  </objectgroup>
  <layer id="6" name="collisions" width="16" height="9" visible="0" opacity="0.52">
   <data encoding="csv">
