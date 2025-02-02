@@ -33,7 +33,8 @@ const config = {
         boxesPositions: boxes_level_7
     },
     8: {
-        boxesPositions: boxes_level_8
+        boxesPositions: boxes_level_8,
+        platformPositions: platforms_level_8
     },
     9: {
         boxesPositions: boxes_level_9
@@ -266,6 +267,9 @@ const diamond = new Diamond({
 
 function createBoxes(positions) {
     return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
+}
+function createPlatforms(positions) {
+    return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
 }
 
 let level = 8
@@ -602,13 +606,14 @@ let levels = {
     },
     8: {
         init: () => {
-            const { boxesPositions } = config[8]
+            const { boxesPositions, platformPositions } = config[8]
 
             boxes = createBoxes(boxesPositions)
+            platforms = createPlatforms(platformPositions)
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
 
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks),platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -742,6 +747,9 @@ function animate() {
 
     boxes.forEach(box => {
         box.draw(2)
+    })
+    platforms.forEach(platform => {
+        platform.draw(2)
     })
 
     enemy.draw(2)

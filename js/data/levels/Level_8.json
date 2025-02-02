@@ -103,7 +103,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -174,7 +174,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -184,40 +184,28 @@
          "name":"platform",
          "objects":[
                 {
-                 "gid":265,
-                 "height":32,
-                 "id":40,
+                 "gid":293,
+                 "height":22,
+                 "id":49,
                  "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":32,
-                 "x":384,
-                 "y":192
+                 "width":104,
+                 "x":340,
+                 "y":116.5
                 }, 
                 {
-                 "gid":264,
-                 "height":32,
-                 "id":41,
+                 "gid":293,
+                 "height":22,
+                 "id":50,
                  "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":32,
-                 "x":352,
-                 "y":192
-                }, 
-                {
-                 "gid":266,
-                 "height":32,
-                 "id":42,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":32,
-                 "x":416,
-                 "y":192
+                 "width":104,
+                 "x":238.5,
+                 "y":151
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -245,8 +233,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":43,
+ "nextlayerid":10,
+ "nextobjectid":52,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -271,6 +259,10 @@
         {
          "firstgid":292,
          "source":"collision.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"platform.tsx"
         }],
  "tilewidth":32,
  "type":"map",
