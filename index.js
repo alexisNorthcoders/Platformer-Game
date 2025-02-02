@@ -234,7 +234,7 @@ const diamond = new Diamond({
 })
 
 
-let level = 8
+let level = 9
 let levels = {
     1: {
         init: () => {
@@ -562,6 +562,50 @@ let levels = {
                     autoplay: false,
                 })
             ]
+        }
+    },
+    9: {
+        init: () => {
+            parsedCollisions = collisionsLevel9.parse2D()
+            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            player.collisionBlocks = collisionBlocks
+            enemy.collisionBlocks = collisionBlocks
+            kingPig.collisionBlocks = collisionBlocks
+            diamond.collisionBlocks = collisionBlocks
+            kingPig.switchSprite('idle')
+            kingPig.position.y = 200
+            kingPig.position.x = 700
+            player.position.x = 800
+            player.position.y = 300
+            enemy.position.y = 300
+
+            if (player.currentAnimation) player.currentAnimation.isActive = false
+
+            background = new Sprite({
+                position: {
+                    x: 0,
+                    y: 0
+                },
+                imageSrc: './img/Level9.png'
+            })
+            doors = [
+                new Sprite({
+                    position: {
+                        x: 137,
+                        y: 273
+                    },
+                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
+                    frameRate: 5,
+                    frameBuffer: 5,
+                    loop: false,
+                    autoplay: false,
+                })
+            ]
+
+            setTimeout(() => {
+                player.hello()
+            }, 500);
+
         }
     },
 }
