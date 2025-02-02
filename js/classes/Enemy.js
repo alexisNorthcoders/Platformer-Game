@@ -41,8 +41,9 @@ class Enemy extends Sprite {
 
     update() {
         // blue box 
-        /* c.fillStyle = 'rgba(0,0,255,0.3)'
-        c.fillRect(this.position.x,this.position.y,this.width,this.height)  */ 
+        // debug position
+       /*  c.fillStyle = 'rgba(0,0,255,0.3)'
+        c.fillRect(this.position.x,this.position.y,this.width,this.height)   */
         this.position.x += this.velocity.x
 
         this.updateHitbox()
@@ -51,7 +52,8 @@ class Enemy extends Sprite {
         this.applyGravity()
 
         this.updateHitbox()
-
+       // debug hitbox                                  
+        c.fillStyle = 'rgba(255, 217, 0, 0.83)'
         c.fillRect(
             this.hitbox.position.x,
             this.hitbox.position.y,

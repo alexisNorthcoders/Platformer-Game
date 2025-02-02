@@ -233,7 +233,6 @@ const diamond = new Diamond({
     imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png'
 })
 
-
 let level = 9
 let levels = {
     1: {
@@ -602,6 +601,17 @@ let levels = {
                 })
             ]
 
+            box = new Box({
+                position: {
+                    x: 228,
+                    y: 352
+                },
+                imageSrc: './Sprites/08-Box/Idle.png'
+            })
+
+            collisionBlocks = collisionBlocks.concat(box.collisionBlocks);
+            player.collisionBlocks = collisionBlocks
+
             setTimeout(() => {
                 player.hello()
             }, 500);
@@ -645,10 +655,6 @@ function animate() {
     diamond.draw(2)
     diamond.update()
 
-    // debug collisionBlocks
-  /*   collisionBlocks.forEach(collisionBlock => {
-      collisionBlock.draw()
-  })   */
     doors.forEach(door => {
         door.draw(2)
     })
@@ -656,7 +662,8 @@ function animate() {
 
     player.handleInput(keys)
 
-
+    box.draw(2)
+    box.update()
     enemy.draw(2)
     kingPig.draw(2)
     enemy.update()
@@ -668,6 +675,10 @@ function animate() {
         helloDialogue.draw(2)
     }
 
+    // debug collisionBlocks
+    collisionBlocks.forEach(collisionBlock => {
+        collisionBlock.draw()
+    })
 
 
     c.save()

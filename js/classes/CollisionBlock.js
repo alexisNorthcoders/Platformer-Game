@@ -1,8 +1,8 @@
 class CollisionBlock {
-    constructor({position}) {
+    constructor({ width = 64, height = 64, position }) {
         this.position = position
-        this.width = 64
-        this.height = 64
+        this.width = width
+        this.height = height
     }
     draw() {
         c.fillStyle = 'rgba(255, 0, 0, 0.5)'

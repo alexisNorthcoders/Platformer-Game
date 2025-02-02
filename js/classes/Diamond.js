@@ -34,6 +34,8 @@ class Diamond extends Sprite {
 
         this.updateHitbox()
 
+        // debug hitbox
+        c.fillStyle = 'rgba(248, 8, 120, 0.56)'
         c.fillRect(
             this.hitbox.position.x,
             this.hitbox.position.y,
