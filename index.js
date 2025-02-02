@@ -9,6 +9,15 @@ let collisionBlocks
 let background
 let doors
 
+const config = {
+    1: {
+        boxesPositions: boxes_level_1
+    },
+    9: {
+        boxesPositions: boxes_level_9
+    }
+}
+
 const enemy = new Enemy({
     imageSrc: './Sprites/03-Pig/Idle (34x28).png',
     frameRate: 11,
@@ -233,12 +242,22 @@ const diamond = new Diamond({
     imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png'
 })
 
-let level = 9
+function createBoxes(positions) {
+    return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
+}
+
+let level = 1
 let levels = {
     1: {
         init: () => {
+            const { boxesPositions } = config[1]
+
+            boxes = createBoxes(boxesPositions)
+
             parsedCollisions = collisionsLevel1.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -565,8 +584,14 @@ let levels = {
     },
     9: {
         init: () => {
+            const { boxesPositions } = config[9]
+
+            boxes = createBoxes(boxesPositions)
             parsedCollisions = collisionsLevel9.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
+
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
@@ -600,17 +625,6 @@ let levels = {
                     autoplay: false,
                 })
             ]
-
-            box = new Box({
-                position: {
-                    x: 228,
-                    y: 352
-                },
-                imageSrc: './Sprites/08-Box/Idle.png'
-            })
-
-            collisionBlocks = collisionBlocks.concat(box.collisionBlocks);
-            player.collisionBlocks = collisionBlocks
 
             setTimeout(() => {
                 player.hello()
@@ -662,8 +676,10 @@ function animate() {
 
     player.handleInput(keys)
 
-    box.draw(2)
-    box.update()
+    boxes.forEach(box => {
+        box.draw(2)
+    })
+
     enemy.draw(2)
     kingPig.draw(2)
     enemy.update()
