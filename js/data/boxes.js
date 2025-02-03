@@ -38,8 +38,16 @@ const boxes_level_4 = loadBoxesSync(4).boxes
 const boxes_level_5 = loadBoxesSync(5).boxes
 const boxes_level_6 = loadBoxesSync(6).boxes
 const boxes_level_7 = loadBoxesSync(7).boxes
-
 const boxes_level_8 = loadBoxesSync(8).boxes
-const platforms_level_8 = loadBoxesSync(8).platforms
+const boxes_level_9 = loadBoxesSync(9).boxes
 
-const boxes_level_9 = loadBoxesSync(9)
+const platforms_level_1 = loadBoxesSync(1).platforms
+const platforms_level_2 = loadBoxesSync(2).platforms
+const platforms_level_3 = loadBoxesSync(3).platforms
+const platforms_level_4 = loadBoxesSync(4).platforms
+const platforms_level_5 = loadBoxesSync(5).platforms
+const platforms_level_6 = loadBoxesSync(6).platforms
+const platforms_level_7 = loadBoxesSync(7).platforms
+const platforms_level_8 = loadBoxesSync(8).platforms
+const platforms_level_9 = loadBoxesSync(9).platforms
+

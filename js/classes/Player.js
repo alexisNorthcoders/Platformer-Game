@@ -37,12 +37,12 @@ class Player extends Sprite {
         setTimeout(() => {
             helloDialogue.switchSprite('helloOut')
             helloDialogue.currentFrame = 0
-        }, 2000);
+        }, 1000);
 
         setTimeout(() => {
             this.preventInput = false
             this.isShowingHello = false;
-        }, 3000);
+        }, 2000);
 
     }
 

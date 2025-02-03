@@ -8,36 +8,45 @@ let parsedCollisions
 let collisionBlocks
 let background
 let doors
+let platforms
 let debugCollisions = false
 
 const config = {
     1: {
-        boxesPositions: boxes_level_1
+        boxesPositions: boxes_level_1,
+        platformPositions: platforms_level_1
     },
     2: {
-        boxesPositions: boxes_level_2
+        boxesPositions: boxes_level_2,
+        platformPositions: platforms_level_2
     },
     3: {
-        boxesPositions: boxes_level_3
+        boxesPositions: boxes_level_3,
+        platformPositions: platforms_level_3
     },
     4: {
-        boxesPositions: boxes_level_4
+        boxesPositions: boxes_level_4,
+        platformPositions: platforms_level_4
     },
     5: {
-        boxesPositions: boxes_level_5
+        boxesPositions: boxes_level_5,
+        platformPositions: platforms_level_5
     },
     6: {
-        boxesPositions: boxes_level_6
+        boxesPositions: boxes_level_6,
+        platformPositions: platforms_level_6
     },
     7: {
-        boxesPositions: boxes_level_7
+        boxesPositions: boxes_level_7,
+        platformPositions: platforms_level_7
     },
     8: {
         boxesPositions: boxes_level_8,
         platformPositions: platforms_level_8
     },
     9: {
-        boxesPositions: boxes_level_9
+        boxesPositions: boxes_level_9,
+        platformPositions: platforms_level_9
     }
 }
 
@@ -153,7 +162,7 @@ const player = new Player({
                     onComplete: () => {
                         level++
                         if (level === Object.keys(levels).length + 1) level = 1
-                        levels[level].init()
+                        levels[level].init(level)
                         player.switchSprite('idleRight')
 
                         gsap.to(overlay, {
@@ -162,7 +171,6 @@ const player = new Player({
                         if (level != 1) {
                             setTimeout(() => {
                                 player.hello()
-                                player.preventInput = false
                             }, 500);
                         }
 
@@ -188,13 +196,13 @@ const helloDialogue = new DialogBox({
         helloIn: {
             imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
             frameRate: 3,
-            frameBuffer: 18,
+            frameBuffer: 9,
             autoplay: true,
             loop: false,
         },
         helloOut: {
             frameRate: 3,
-            frameBuffer: 18,
+            frameBuffer: 9,
             autoplay: true,
             loop: false,
             imageSrc: './Sprites/13-Dialogue Boxes/Hello Out (24x8).png',
@@ -271,18 +279,22 @@ function createBoxes(positions) {
 function createPlatforms(positions) {
     return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
 }
+function createAssets(config, level) {
+    const { boxesPositions, platformPositions } = config[level]
+    return {
+        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions)
+    }
+}
 
-let level = 8
+let level = 1
 let levels = {
     1: {
-        init: () => {
-            const { boxesPositions } = config[1]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel1.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -325,14 +337,12 @@ let levels = {
         }
     },
     2: {
-        init: () => {
-            const { boxesPositions } = config[2]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel2.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -374,14 +384,12 @@ let levels = {
         }
     },
     3: {
-        init: () => {
-            const { boxesPositions } = config[3]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel3.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -420,14 +428,12 @@ let levels = {
         }
     },
     4: {
-        init: () => {
-            const { boxesPositions } = config[4]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel4.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -466,14 +472,12 @@ let levels = {
         }
     },
     5: {
-        init: () => {
-            const { boxesPositions } = config[5]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel5.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -513,14 +517,12 @@ let levels = {
         }
     },
     6: {
-        init: () => {
-            const { boxesPositions } = config[6]
-
-            boxes = createBoxes(boxesPositions)
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel6.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -559,14 +561,13 @@ let levels = {
         }
     },
     7: {
-        init: () => {
-            const { boxesPositions } = config[7]
+        init: (level) => {
 
-            boxes = createBoxes(boxesPositions)
+            ({ boxes, platforms } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel7.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -605,15 +606,13 @@ let levels = {
         }
     },
     8: {
-        init: () => {
-            const { boxesPositions, platformPositions } = config[8]
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
-            boxes = createBoxes(boxesPositions)
-            platforms = createPlatforms(platformPositions)
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
 
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks),platforms.flatMap(platform => platform.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -652,14 +651,13 @@ let levels = {
         }
     },
     9: {
-        init: () => {
-            const { boxesPositions } = config[9]
+        init: (level) => {
+            ({ boxes, platforms } = createAssets(config, level))
 
-            boxes = createBoxes(boxesPositions)
             parsedCollisions = collisionsLevel9.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
 
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks));
+            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
             enemy.collisionBlocks = collisionBlocks
@@ -748,9 +746,11 @@ function animate() {
     boxes.forEach(box => {
         box.draw(2)
     })
-    platforms.forEach(platform => {
-        platform.draw(2)
-    })
+    if (platforms) {
+        platforms.forEach(platform => {
+            platform.draw(2)
+        })
+    }
 
     enemy.draw(2)
     kingPig.draw(2)
@@ -776,6 +776,6 @@ function animate() {
     c.fillRect(0, 0, canvas.width, canvas.height)
     c.restore()
 }
-levels[level].init()
+levels[level].init(level)
 animate()
 
