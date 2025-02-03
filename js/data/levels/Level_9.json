@@ -107,7 +107,7 @@
         {
          "draworder":"topdown",
          "id":5,
-         "name":"door",
+         "name":"porta",
          "objects":[
                 {
                  "gid":290,

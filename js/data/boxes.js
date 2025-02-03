@@ -13,41 +13,37 @@ function loadBoxesSync(level) {
     if (request.status === 200) {
         const jsonData = JSON.parse(request.responseText);
         let platformsData = undefined
+        let portaData = undefined
 
         const boxesLayer = jsonData.layers.find(layer => layer.name === "boxes");
+        const portaLayer = jsonData.layers.find(layer => layer.name === "porta");
+        const platformLayer = jsonData.layers.find(layer => layer.name === "platform");
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
-
-        const platformLayer = jsonData.layers.find(layer => layer.name === "platform");
+        if (portaLayer) {
+            portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+        }
 
         if (platformLayer) {
             platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
         }
 
-        return { boxes: transformDataBox(boxesData), platforms: platformsData ? transformDataBox(platformsData) : [] }
+
+        return { door: portaData ? transformDataBox(portaData) : [], boxes: transformDataBox(boxesData), platforms: platformsData ? transformDataBox(platformsData) : [] }
     } else {
         console.error("Failed to load JSON");
         return [];
     }
 }
 
-const boxes_level_1 = loadBoxesSync(1).boxes
-const boxes_level_2 = loadBoxesSync(2).boxes
-const boxes_level_3 = loadBoxesSync(3).boxes
-const boxes_level_4 = loadBoxesSync(4).boxes
-const boxes_level_5 = loadBoxesSync(5).boxes
-const boxes_level_6 = loadBoxesSync(6).boxes
-const boxes_level_7 = loadBoxesSync(7).boxes
-const boxes_level_8 = loadBoxesSync(8).boxes
-const boxes_level_9 = loadBoxesSync(9).boxes
+let boxes = {};
+let platforms = {};
+let doors = {}
 
-const platforms_level_1 = loadBoxesSync(1).platforms
-const platforms_level_2 = loadBoxesSync(2).platforms
-const platforms_level_3 = loadBoxesSync(3).platforms
-const platforms_level_4 = loadBoxesSync(4).platforms
-const platforms_level_5 = loadBoxesSync(5).platforms
-const platforms_level_6 = loadBoxesSync(6).platforms
-const platforms_level_7 = loadBoxesSync(7).platforms
-const platforms_level_8 = loadBoxesSync(8).platforms
-const platforms_level_9 = loadBoxesSync(9).platforms
+for (let i = 1; i <= 9; i++) {
+    const { boxes: b, platforms: p, door: d } = loadBoxesSync(i);
+    boxes[`level_${i}`] = b;
+    platforms[`level_${i}`] = p;
+    doors[`level_${i}`] = d;
+}
 

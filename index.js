@@ -7,46 +7,53 @@ canvas.height = 576 // 64 * 9
 let parsedCollisions
 let collisionBlocks
 let background
-let doors
-let platforms
 let debugCollisions = false
 
 const config = {
     1: {
-        boxesPositions: boxes_level_1,
-        platformPositions: platforms_level_1
+        boxesPositions: boxes.level_1,
+        platformPositions: platforms.level_1,
+        doorPositions: doors.level_1
     },
     2: {
-        boxesPositions: boxes_level_2,
-        platformPositions: platforms_level_2
+        boxesPositions: boxes.level_2,
+        platformPositions: platforms.level_2,
+        doorPositions: doors.level_2
     },
     3: {
-        boxesPositions: boxes_level_3,
-        platformPositions: platforms_level_3
+        boxesPositions: boxes.level_3,
+        platformPositions: platforms.level_3,
+        doorPositions: doors.level_3
     },
     4: {
-        boxesPositions: boxes_level_4,
-        platformPositions: platforms_level_4
+        boxesPositions: boxes.level_4,
+        platformPositions: platforms.level_4,
+        doorPositions: doors.level_4
     },
     5: {
-        boxesPositions: boxes_level_5,
-        platformPositions: platforms_level_5
+        boxesPositions: boxes.level_5,
+        platformPositions: platforms.level_5,
+        doorPositions: doors.level_5
     },
     6: {
-        boxesPositions: boxes_level_6,
-        platformPositions: platforms_level_6
+        boxesPositions: boxes.level_6,
+        platformPositions: platforms.level_6,
+        doorPositions: doors.level_6
     },
     7: {
-        boxesPositions: boxes_level_7,
-        platformPositions: platforms_level_7
+        boxesPositions: boxes.level_7,
+        platformPositions: platforms.level_7,
+        doorPositions: doors.level_7
     },
     8: {
-        boxesPositions: boxes_level_8,
-        platformPositions: platforms_level_8
+        boxesPositions: boxes.level_8,
+        platformPositions: platforms.level_8,
+        doorPositions: doors.level_8
     },
     9: {
-        boxesPositions: boxes_level_9,
-        platformPositions: platforms_level_9
+        boxesPositions: boxes.level_9,
+        platformPositions: platforms.level_9,
+        doorPositions: doors.level_9
     }
 }
 
@@ -279,18 +286,28 @@ function createBoxes(positions) {
 function createPlatforms(positions) {
     return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
 }
+function createDoor(positions) {
+    return positions.map(position => new Sprite({
+        position: { x: position[0], y: position[1] - 56 - 23 },
+        imageSrc: './Sprites/11-Door/Opening (46x56).png',
+        frameRate: 5,
+        frameBuffer: 5,
+        loop: false,
+        autoplay: false,
+    }))
+}
 function createAssets(config, level) {
-    const { boxesPositions, platformPositions } = config[level]
+    const { boxesPositions, platformPositions, doorPositions } = config[level]
     return {
-        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions)
+        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions), doors: createDoor(doorPositions)
     }
 }
 
-let level = 1
+let level = 2
 let levels = {
     1: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel1.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -316,29 +333,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 1.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 846,
-                        y: 273
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
-
-            setTimeout(() => {
-                player.hello()
-            }, 500);
-
         }
     },
     2: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel2.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -366,26 +365,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 2.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 852,
-                        y: 336
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
-
-
         }
     },
     3: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel3.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -412,24 +396,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 3.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 154,
-                        y: 335
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     4: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel4.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -456,24 +427,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 4.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 850,
-                        y: 142
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     5: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel5.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -501,24 +459,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 5.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 858,
-                        y: 145
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     6: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel6.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -545,25 +490,12 @@ let levels = {
                 },
                 imageSrc: './img/Level 6.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 850,
-                        y: 402
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     7: {
         init: (level) => {
 
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel7.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -590,24 +522,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 7.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 850,
-                        y: 402
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     8: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -635,24 +554,11 @@ let levels = {
                 },
                 imageSrc: './img/Level 8.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 750,
-                        y: 402
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
         }
     },
     9: {
         init: (level) => {
-            ({ boxes, platforms } = createAssets(config, level))
+            ({ boxes, platforms, doors } = createAssets(config, level))
 
             parsedCollisions = collisionsLevel9.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -679,24 +585,6 @@ let levels = {
                 },
                 imageSrc: './img/Level 9.png'
             })
-            doors = [
-                new Sprite({
-                    position: {
-                        x: 137,
-                        y: 273
-                    },
-                    imageSrc: './Sprites/11-Door/Opening (46x56).png',
-                    frameRate: 5,
-                    frameBuffer: 5,
-                    loop: false,
-                    autoplay: false,
-                })
-            ]
-
-            setTimeout(() => {
-                player.hello()
-            }, 500);
-
         }
     },
 }

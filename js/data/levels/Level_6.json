@@ -98,22 +98,10 @@
                  "width":46,
                  "x":425,
                  "y":256.5
-                }, 
-                {
-                 "gid":290,
-                 "height":56,
-                 "id":3,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":46,
-                 "x":42.1667,
-                 "y":256
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -215,7 +203,7 @@
          "name":"collisions",
          "opacity":0.54,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
