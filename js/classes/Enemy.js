@@ -1,19 +1,10 @@
 class Enemy extends Sprite {
-    constructor({ collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
-        super({ imageSrc, frameRate, animations, loop })
-
-        this.position = {
-            x: 500,
-            y: 200
-        }
+    constructor({ position, collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
+        super({ position, imageSrc, frameRate, animations, loop })
 
         this.velocity = {
             x: 0,
             y: 0
-        }
-
-        this.sides = {
-            bottom: this.position.y + this.height
         }
         this.gravity = 0.4
 

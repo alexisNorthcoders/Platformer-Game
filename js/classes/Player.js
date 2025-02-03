@@ -142,29 +142,30 @@ class Player extends Sprite {
     }
 
     checkForHorizontalCollisions() {
-        if (!this.hitCooldown && player.hitbox.position.x + player.hitbox.width >= enemy.hitbox.position.x &&
-            player.hitbox.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-            player.hitbox.position.y + player.hitbox.height >= enemy.hitbox.position.y) {
+        enemies.forEach((enemy) => {
+            if (!this.hitCooldown && player.hitbox.position.x + player.hitbox.width >= enemy.hitbox.position.x &&
+                player.hitbox.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                player.hitbox.position.y + player.hitbox.height >= enemy.hitbox.position.y) {
 
-            kingPig.switchSprite('runLeft')
-            kingPig.move()
-            enemy.switchSprite('runLeft')
-            enemy.move(-3)
-            /*       this.switchSprite('hit')
-                  this.velocity.y = -8
-      
-                  this.hitCooldown = true;
-      
-                  // Set a timer to reset the hitCooldown flag after a certain duration
-                  setTimeout(() => {
-                      this.hitCooldown = false;
-      
-      
-                      // Reset animation or switch to another state after cooldown
-                      this.switchSprite('idleRight');
-                  }, this.hitCooldownDuration); */
-        }
-
+                kingPig.switchSprite('runLeft')
+                kingPig.move()
+                enemy.switchSprite('runLeft')
+                enemy.move(-3)
+                /*       this.switchSprite('hit')
+                      this.velocity.y = -8
+          
+                      this.hitCooldown = true;
+          
+                      // Set a timer to reset the hitCooldown flag after a certain duration
+                      setTimeout(() => {
+                          this.hitCooldown = false;
+          
+          
+                          // Reset animation or switch to another state after cooldown
+                          this.switchSprite('idleRight');
+                      }, this.hitCooldownDuration); */
+            }
+        })
 
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
@@ -187,6 +188,7 @@ class Player extends Sprite {
 
             }
         }
+
     }
     checkForVerticalCollisions() {
         // check for vertical collisions

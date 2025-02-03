@@ -14,10 +14,13 @@ function loadBoxesSync(level) {
         const jsonData = JSON.parse(request.responseText);
         let platformsData = undefined
         let portaData = undefined
+        let enemyData = undefined
 
         const boxesLayer = jsonData.layers.find(layer => layer.name === "boxes");
         const portaLayer = jsonData.layers.find(layer => layer.name === "porta");
         const platformLayer = jsonData.layers.find(layer => layer.name === "platform");
+        const enemyLayer = jsonData.layers.find(layer => layer.name === "enemy");
+        const kingLayer = jsonData.layers.find(layer => layer.name === "enemyKing");
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
         if (portaLayer) {
@@ -27,9 +30,17 @@ function loadBoxesSync(level) {
         if (platformLayer) {
             platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
         }
+        if (enemyLayer) {
+            enemyData = enemyLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+        }
 
 
-        return { door: portaData ? transformDataBox(portaData) : [], boxes: transformDataBox(boxesData), platforms: platformsData ? transformDataBox(platformsData) : [] }
+        return {
+            enemy: enemyData ? transformDataBox(enemyData) : [],
+            door: portaData ? transformDataBox(portaData) : [],
+            boxes: transformDataBox(boxesData),
+            platforms: platformsData ? transformDataBox(platformsData) : []
+        }
     } else {
         console.error("Failed to load JSON");
         return [];
@@ -39,11 +50,13 @@ function loadBoxesSync(level) {
 let boxes = {};
 let platforms = {};
 let doors = {}
+let enemies = {}
 
 for (let i = 1; i <= 9; i++) {
-    const { boxes: b, platforms: p, door: d } = loadBoxesSync(i);
+    const { boxes: b, platforms: p, door: d, enemy: e } = loadBoxesSync(i);
     boxes[`level_${i}`] = b;
     platforms[`level_${i}`] = p;
     doors[`level_${i}`] = d;
+    enemies[`level_${i}`] = e;
 }
 

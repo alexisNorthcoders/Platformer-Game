@@ -48,7 +48,8 @@ const config = {
     8: {
         boxesPositions: boxes.level_8,
         platformPositions: platforms.level_8,
-        doorPositions: doors.level_8
+        doorPositions: doors.level_8,
+        enemyPositions: enemies.level_8
     },
     9: {
         boxesPositions: boxes.level_9,
@@ -57,29 +58,8 @@ const config = {
     }
 }
 
-const enemy = new Enemy({
-    imageSrc: './Sprites/03-Pig/Idle (34x28).png',
-    frameRate: 11,
-    loop: true,
-    autoplay: true,
-    animations: {
-        idle: {
-            frameRate: 11,
-            frameBuffer: 11,
-            loop: true,
-            imageSrc: './Sprites/03-Pig/Idle (34x28).png',
-        },
-        runLeft: {
-            frameRate: 6,
-            frameBuffer: 6,
-            loop: true,
-            imageSrc: './Sprites/03-Pig/Run (34x28).png',
-        }
-    }
-
-})
-
 const kingPig = new Enemy({
+    position: { x: 200, y: 700 },
     imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
     frameRate: 12,
 
@@ -283,6 +263,30 @@ const diamond = new Diamond({
 function createBoxes(positions) {
     return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
 }
+function createEnemies(positions) {
+    return positions.map(position => new Enemy({
+        position: { x: position[0], y: position[1] },
+        imageSrc: './Sprites/03-Pig/Idle (34x28).png',
+        frameRate: 11,
+        loop: true,
+        autoplay: true,
+        animations: {
+            idle: {
+                frameRate: 11,
+                frameBuffer: 11,
+                loop: true,
+                imageSrc: './Sprites/03-Pig/Idle (34x28).png',
+            },
+            runLeft: {
+                frameRate: 6,
+                frameBuffer: 6,
+                loop: true,
+                imageSrc: './Sprites/03-Pig/Run (34x28).png',
+            }
+        }
+
+    }))
+}
 function createPlatforms(positions) {
     return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
 }
@@ -297,13 +301,13 @@ function createDoor(positions) {
     }))
 }
 function createAssets(config, level) {
-    const { boxesPositions, platformPositions, doorPositions } = config[level]
+    const { boxesPositions, platformPositions, doorPositions, enemyPositions } = config[level]
     return {
-        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions), doors: createDoor(doorPositions)
+        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions), doors: createDoor(doorPositions), enemies: createEnemies(enemyPositions)
     }
 }
 
-let level = 2
+let level = 8
 let levels = {
     1: {
         init: (level) => {
@@ -314,7 +318,6 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             diamond.collisionBlocks = collisionBlocks
             kingPig.switchSprite('idle')
@@ -322,7 +325,6 @@ let levels = {
             kingPig.position.x = 400
             player.position.x = 50
             player.position.y = 200
-            enemy.position.y = 300
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -344,17 +346,13 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             player.position.x = 40
             player.position.y = 30
             kingPig.velocity.x = 0
             kingPig.switchSprite('idle')
-            enemy.velocity.x = 0
             kingPig.position.x = 400
             kingPig.position.y = 400
-            enemy.position.x = 700
-            enemy.position.y = 400
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -376,14 +374,10 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
             player.position.x = 770
             player.position.y = 100
-            enemy.position.y = 200
-            enemy.position.x = 380
             kingPig.position.y = 200
             kingPig.position.x = 500
 
@@ -407,14 +401,10 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
             player.position.x = 100
             player.position.y = 500
-            enemy.position.x = 700
-            enemy.position.y = 100
             kingPig.position.x = 500
             kingPig.position.y = 100
 
@@ -438,17 +428,12 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
             kingPig.position.x = 350
             kingPig.position.y = 100
             player.position.x = 30
             player.position.y = 400
-            enemy.position.x = 600
-            enemy.position.y = 100
-
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -470,16 +455,12 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
             kingPig.position.x = 350
             kingPig.position.y = 200
             player.position.x = 80
             player.position.y = 500
-            enemy.position.x = 700
-            enemy.position.y = 500
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -502,16 +483,12 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
             kingPig.position.x = 350
             kingPig.position.y = 200
             player.position.x = 50
             player.position.y = 100
-            enemy.position.x = 700
-            enemy.position.y = 500
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -526,24 +503,23 @@ let levels = {
     },
     8: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
-
+            ({ boxes, platforms, doors, enemies } = createAssets(config, level))
+            console.log(enemies)
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             kingPig.collisionBlocks = collisionBlocks
             kingPig.velocity.x = 0
-            enemy.velocity.x = 0
+
             kingPig.position.x = 750
             kingPig.position.y = 100
             player.position.x = 50
             player.position.y = 500
-            enemy.position.x = 700
-            enemy.position.y = 100
+
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -566,15 +542,11 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            enemy.collisionBlocks = collisionBlocks
             kingPig.collisionBlocks = collisionBlocks
             diamond.collisionBlocks = collisionBlocks
             kingPig.switchSprite('idle')
-            kingPig.position.y = 200
-            kingPig.position.x = 700
             player.position.x = 800
             player.position.y = 300
-            enemy.position.y = 300
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -639,10 +611,16 @@ function animate() {
             platform.draw(2)
         })
     }
+    if (enemies) {
+        enemies.forEach(enemy => {
+            enemy.draw(2)
+            enemy.update()
+        })
+    }
 
-    enemy.draw(2)
+
     kingPig.draw(2)
-    enemy.update()
+
     kingPig.update()
     player.update()
     player.draw(2)

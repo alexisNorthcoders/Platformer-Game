@@ -174,7 +174,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -209,7 +209,101 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":10,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":53,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":334.333333333333,
+                 "y":99
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":54,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":366,
+                 "y":98.3333333333333
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":55,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":405.333333333333,
+                 "y":98.6666666666667
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":56,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":349.666666666667,
+                 "y":252.666666666667
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":57,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":261.666666666667,
+                 "y":252.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":11,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":52,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":234.666666666667,
+                 "y":132.666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -228,13 +322,13 @@
          "name":"collisions",
          "opacity":0.52,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
         }],
- "nextlayerid":10,
- "nextobjectid":52,
+ "nextlayerid":12,
+ "nextobjectid":58,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -263,6 +357,14 @@
         {
          "firstgid":293,
          "source":"platform.tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Jump (34x28).tsx"
+        }, 
+        {
+         "firstgid":295,
+         "source":"Fall (38x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",
