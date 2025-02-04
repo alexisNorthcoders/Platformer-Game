@@ -152,6 +152,29 @@
         }, 
         {
          "draworder":"topdown",
+         "id":11,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":14,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":264,
+                 "y":189
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":10,
          "name":"platform",
          "objects":[
@@ -216,8 +239,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":11,
- "nextobjectid":14,
+ "nextlayerid":12,
+ "nextobjectid":15,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -250,6 +273,10 @@
         {
          "firstgid":294,
          "source":"Jump (34x28).tsx"
+        }, 
+        {
+         "firstgid":295,
+         "source":"Fall (38x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",

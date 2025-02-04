@@ -155,6 +155,112 @@
          "y":0
         }, 
         {
+         "draworder":"topdown",
+         "id":8,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":12,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":319,
+                 "y":154
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":13,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":438,
+                 "y":250
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":14,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":399,
+                 "y":251
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":15,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":270,
+                 "y":249
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":16,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":184,
+                 "y":185
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":17,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":265,
+                 "y":154
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":9,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":293,
+                 "height":28,
+                 "id":11,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":379,
+                 "y":123
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "data":[292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 292,
             292, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 292,
             292, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 292,
@@ -169,13 +275,13 @@
          "name":"collisions",
          "opacity":0.52,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":11,
+ "nextlayerid":10,
+ "nextobjectid":18,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -200,6 +306,14 @@
         {
          "firstgid":292,
          "source":"collision.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"Fall (38x28).tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Jump (34x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",

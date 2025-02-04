@@ -154,7 +154,100 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":9,
+         "name":"diamond",
+         "objects":[],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":10,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":37,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":128.5,
+                 "y":93
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":38,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":68.5,
+                 "y":253.5
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":39,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":306.5,
+                 "y":252.5
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":40,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":182,
+                 "y":222.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":11,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":296,
+                 "height":28,
+                 "id":41,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":362,
+                 "y":220.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -193,13 +286,13 @@
          "name":"collisions",
          "opacity":0.52,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":31,
+ "nextlayerid":12,
+ "nextobjectid":42,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -224,6 +317,22 @@
         {
          "firstgid":292,
          "source":"tile_set_3.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"Big Diamond Idle (18x14).tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Bomb Off.tsx"
+        }, 
+        {
+         "firstgid":295,
+         "source":"Jump (34x28).tsx"
+        }, 
+        {
+         "firstgid":296,
+         "source":"Fall (38x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",

@@ -248,11 +248,16 @@ function createDoor(positions) {
     }))
 }
 function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions } = loadBoxesSync(level)
+    const { boxes, platforms, door, enemy, collisions, enemyKing } = loadBoxesSync(level)
     const parsedCollisions = collisions.parse2D()
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
-        boxes: createBoxes(boxes), platforms: createPlatforms(platforms), doors: createDoor(door), enemies: createEnemies(enemy), collisionBlocks
+        boxes: createBoxes(boxes),
+        platforms: createPlatforms(platforms),
+        doors: createDoor(door),
+        enemies: createEnemies(enemy),
+        enemyKing: createEnemyKing(enemyKing),
+        collisionBlocks
     }
 }
 

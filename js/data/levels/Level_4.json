@@ -89,6 +89,76 @@
         }, 
         {
          "draworder":"topdown",
+         "id":8,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":31,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":317,
+                 "y":155
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":32,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":283,
+                 "y":187
+                }, 
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":33,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":250,
+                 "y":220
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":9,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":293,
+                 "height":28,
+                 "id":30,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":382,
+                 "y":93
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":7,
          "name":"boxes",
          "objects":[
@@ -130,7 +200,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -169,13 +239,13 @@
          "name":"collisions",
          "opacity":0.52,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":30,
+ "nextlayerid":10,
+ "nextobjectid":34,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -200,6 +270,14 @@
         {
          "firstgid":292,
          "source":"tile_set_3.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"Fall (38x28).tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Jump (34x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",

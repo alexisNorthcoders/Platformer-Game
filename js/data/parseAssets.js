@@ -1,4 +1,4 @@
-function transformDataBox(data) {
+function getAssetsPositions(data) {
     return data.map(obj => [
         2 * Math.round(obj.x),
         -32 + Math.round((2 * obj.y))
@@ -46,11 +46,11 @@ function loadBoxesSync(level) {
 
         return {
             collisions: collisionsLayer.data,
-            boxes: transformDataBox(boxesData),
-            door: transformDataBox(portaData),
-            enemy: enemyData ? transformDataBox(enemyData) : [],
-            platforms: platformsData ? transformDataBox(platformsData) : [],
-            kingPig: kingData ? transformDataBox(kingData) : []
+            boxes: getAssetsPositions(boxesData),
+            door: getAssetsPositions(portaData),
+            enemy: enemyData ? getAssetsPositions(enemyData) : [],
+            platforms: platformsData ? getAssetsPositions(platformsData) : [],
+            enemyKing: kingData ? getAssetsPositions(kingData) : []
         }
     } else {
         console.error("Failed to load JSON");

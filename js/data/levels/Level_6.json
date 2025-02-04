@@ -101,7 +101,89 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":9,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":28,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":223.666666666667,
+                 "y":220.666666666667
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":29,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":91.6666666666667,
+                 "y":254.666666666667
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":30,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":169.666666666667,
+                 "y":254
+                }, 
+                {
+                 "gid":295,
+                 "height":28,
+                 "id":31,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":273,
+                 "y":254
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":10,
+         "name":"enemyKing",
+         "objects":[
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":27,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":38,
+                 "x":387.666666666667,
+                 "y":254
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -184,7 +266,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -208,8 +290,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":27,
+ "nextlayerid":11,
+ "nextobjectid":32,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -238,6 +320,14 @@
         {
          "firstgid":293,
          "source":"Box.tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Fall (38x28).tsx"
+        }, 
+        {
+         "firstgid":295,
+         "source":"Jump (34x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",
