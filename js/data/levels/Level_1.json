@@ -109,6 +109,41 @@
         }, 
         {
          "draworder":"topdown",
+         "id":8,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":293,
+                 "height":28,
+                 "id":14,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":321.5,
+                 "y":159.5
+                }, 
+                {
+                 "gid":293,
+                 "height":28,
+                 "id":15,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":75,
+                 "y":159.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":7,
          "name":"boxes",
          "objects":[
@@ -186,7 +221,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -205,13 +240,13 @@
          "name":"collisions",
          "opacity":0.52,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":16,
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":14,
+ "nextlayerid":9,
+ "nextobjectid":16,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -236,6 +271,10 @@
         {
          "firstgid":292,
          "source":"collision.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"Jump (34x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",

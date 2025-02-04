@@ -147,8 +147,6 @@ class Player extends Sprite {
                 player.hitbox.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
                 player.hitbox.position.y + player.hitbox.height >= enemy.hitbox.position.y) {
 
-                kingPig.switchSprite('runLeft')
-                kingPig.move()
                 enemy.switchSprite('runLeft')
                 enemy.move(-3)
                 /*       this.switchSprite('hit')

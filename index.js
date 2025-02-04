@@ -9,79 +9,6 @@ let collisionBlocks
 let background
 let debugCollisions = false
 
-const config = {
-    1: {
-        boxesPositions: boxes.level_1,
-        platformPositions: platforms.level_1,
-        doorPositions: doors.level_1
-    },
-    2: {
-        boxesPositions: boxes.level_2,
-        platformPositions: platforms.level_2,
-        doorPositions: doors.level_2
-    },
-    3: {
-        boxesPositions: boxes.level_3,
-        platformPositions: platforms.level_3,
-        doorPositions: doors.level_3
-    },
-    4: {
-        boxesPositions: boxes.level_4,
-        platformPositions: platforms.level_4,
-        doorPositions: doors.level_4
-    },
-    5: {
-        boxesPositions: boxes.level_5,
-        platformPositions: platforms.level_5,
-        doorPositions: doors.level_5
-    },
-    6: {
-        boxesPositions: boxes.level_6,
-        platformPositions: platforms.level_6,
-        doorPositions: doors.level_6
-    },
-    7: {
-        boxesPositions: boxes.level_7,
-        platformPositions: platforms.level_7,
-        doorPositions: doors.level_7
-    },
-    8: {
-        boxesPositions: boxes.level_8,
-        platformPositions: platforms.level_8,
-        doorPositions: doors.level_8,
-        enemyPositions: enemies.level_8
-    },
-    9: {
-        boxesPositions: boxes.level_9,
-        platformPositions: platforms.level_9,
-        doorPositions: doors.level_9
-    }
-}
-
-const kingPig = new Enemy({
-    position: { x: 200, y: 700 },
-    imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
-    frameRate: 12,
-
-    loop: true,
-    autoplay: true,
-    animations: {
-        idle: {
-            frameRate: 12,
-            frameBuffer: 6,
-            loop: true,
-            imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
-        },
-        runLeft: {
-            frameRate: 6,
-            frameBuffer: 6,
-            loop: true,
-            imageSrc: './Sprites/02-King Pig/Run (38x28).png',
-        }
-    }
-
-})
-
 const player = new Player({
 
     imageSrc: './img/king/IdleRight.png',
@@ -155,12 +82,9 @@ const player = new Player({
                         gsap.to(overlay, {
                             opacity: 0,
                         })
-                        if (level != 1) {
-                            setTimeout(() => {
-                                player.hello()
-                            }, 500);
-                        }
-
+                        setTimeout(() => {
+                            player.hello()
+                        }, 500);
                     }
                 })
             },
@@ -287,6 +211,30 @@ function createEnemies(positions) {
 
     }))
 }
+
+function createEnemyKing(positions) {
+    return positions.map(position => new Enemy({
+        position: { x: position[0], y: position[1] },
+        imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+        frameRate: 12,
+        loop: true,
+        autoplay: true,
+        animations: {
+            idle: {
+                frameRate: 12,
+                frameBuffer: 6,
+                loop: true,
+                imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+            },
+            runLeft: {
+                frameRate: 6,
+                frameBuffer: 6,
+                loop: true,
+                imageSrc: './Sprites/02-King Pig/Run (38x28).png',
+            }
+        }
+    }))
+}
 function createPlatforms(positions) {
     return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
 }
@@ -300,29 +248,28 @@ function createDoor(positions) {
         autoplay: false,
     }))
 }
-function createAssets(config, level) {
-    const { boxesPositions, platformPositions, doorPositions, enemyPositions } = config[level]
+function createAssets(level) {
+    const { boxes, platforms, door, enemy } = loadBoxesSync(level)
     return {
-        boxes: createBoxes(boxesPositions), platforms: createPlatforms(platformPositions), doors: createDoor(doorPositions), enemies: createEnemies(enemyPositions)
+        boxes: createBoxes(boxes), platforms: createPlatforms(platforms), doors: createDoor(door), enemies: createEnemies(enemy)
     }
 }
 
-let level = 8
+let level = 1
 let levels = {
     1: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            // load assets
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel1.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
+
             diamond.collisionBlocks = collisionBlocks
-            kingPig.switchSprite('idle')
-            kingPig.position.y = 200
-            kingPig.position.x = 400
             player.position.x = 50
             player.position.y = 200
 
@@ -339,20 +286,16 @@ let levels = {
     },
     2: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel2.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 40
             player.position.y = 30
-            kingPig.velocity.x = 0
-            kingPig.switchSprite('idle')
-            kingPig.position.x = 400
-            kingPig.position.y = 400
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -367,19 +310,17 @@ let levels = {
     },
     3: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel3.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 770
             player.position.y = 100
-            kingPig.position.y = 200
-            kingPig.position.x = 500
+
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -394,19 +335,16 @@ let levels = {
     },
     4: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel4.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 100
             player.position.y = 500
-            kingPig.position.x = 500
-            kingPig.position.y = 100
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
 
@@ -421,17 +359,14 @@ let levels = {
     },
     5: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel5.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
-            kingPig.position.x = 350
-            kingPig.position.y = 100
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 30
             player.position.y = 400
 
@@ -448,17 +383,14 @@ let levels = {
     },
     6: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel6.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
-            kingPig.position.x = 350
-            kingPig.position.y = 200
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 80
             player.position.y = 500
 
@@ -476,17 +408,14 @@ let levels = {
     7: {
         init: (level) => {
 
-            ({ boxes, platforms, doors } = createAssets(config, level))
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel7.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
-            kingPig.position.x = 350
-            kingPig.position.y = 200
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             player.position.x = 50
             player.position.y = 100
 
@@ -503,8 +432,9 @@ let levels = {
     },
     8: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(config, level))
-            console.log(enemies)
+
+            ({ boxes, platforms, doors, enemies } = createAssets(level))
+
             parsedCollisions = collisionsLevel8.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
 
@@ -512,11 +442,7 @@ let levels = {
 
             player.collisionBlocks = collisionBlocks
             enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            kingPig.collisionBlocks = collisionBlocks
-            kingPig.velocity.x = 0
 
-            kingPig.position.x = 750
-            kingPig.position.y = 100
             player.position.x = 50
             player.position.y = 500
 
@@ -534,7 +460,7 @@ let levels = {
     },
     9: {
         init: (level) => {
-            ({ boxes, platforms, doors } = createAssets(config, level))
+           ({ boxes, platforms, doors, enemies } = createAssets(level))
 
             parsedCollisions = collisionsLevel9.parse2D()
             collisionBlocks = parsedCollisions.createObjectsFrom2D()
@@ -542,9 +468,9 @@ let levels = {
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
-            kingPig.collisionBlocks = collisionBlocks
+            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
             diamond.collisionBlocks = collisionBlocks
-            kingPig.switchSprite('idle')
+
             player.position.x = 800
             player.position.y = 300
 
@@ -618,10 +544,6 @@ function animate() {
         })
     }
 
-
-    kingPig.draw(2)
-
-    kingPig.update()
     player.update()
     player.draw(2)
     if (player.isShowingHello) {

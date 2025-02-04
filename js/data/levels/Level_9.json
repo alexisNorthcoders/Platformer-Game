@@ -118,8 +118,54 @@
                  "type":"",
                  "visible":true,
                  "width":46,
-                 "x":67.6766917293233,
-                 "y":192.661654135338
+                 "x":67.6767,
+                 "y":192.662
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":9,
+         "name":"enemy",
+         "objects":[
+                {
+                 "gid":294,
+                 "height":28,
+                 "id":13,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":34,
+                 "x":262.5,
+                 "y":85.5
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":10,
+         "name":"platform",
+         "objects":[
+                {
+                 "gid":293,
+                 "height":22,
+                 "id":12,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":104,
+                 "x":230.5,
+                 "y":104.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -141,8 +187,8 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":112.609022556391,
-                 "y":192.157894736842
+                 "x":112.609,
+                 "y":192.158
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -170,8 +216,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":11,
+ "nextlayerid":11,
+ "nextobjectid":14,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -196,6 +242,14 @@
         {
          "firstgid":292,
          "source":"collision.tsx"
+        }, 
+        {
+         "firstgid":293,
+         "source":"platform.tsx"
+        }, 
+        {
+         "firstgid":294,
+         "source":"Jump (34x28).tsx"
         }],
  "tilewidth":32,
  "type":"map",
