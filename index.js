@@ -4,7 +4,6 @@ const c = canvas.getContext('2d')
 canvas.width = 1024 // 64 * 16
 canvas.height = 576 // 64 * 9
 
-let parsedCollisions
 let collisionBlocks
 let background
 let debugCollisions = false
@@ -249,9 +248,11 @@ function createDoor(positions) {
     }))
 }
 function createAssets(level) {
-    const { boxes, platforms, door, enemy } = loadBoxesSync(level)
+    const { boxes, platforms, door, enemy, collisions } = loadBoxesSync(level)
+    const parsedCollisions = collisions.parse2D()
+    const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
-        boxes: createBoxes(boxes), platforms: createPlatforms(platforms), doors: createDoor(door), enemies: createEnemies(enemy)
+        boxes: createBoxes(boxes), platforms: createPlatforms(platforms), doors: createDoor(door), enemies: createEnemies(enemy), collisionBlocks
     }
 }
 
@@ -260,10 +261,9 @@ let levels = {
     1: {
         init: (level) => {
             // load assets
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel1.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -286,10 +286,8 @@ let levels = {
     },
     2: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel2.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -310,10 +308,8 @@ let levels = {
     },
     3: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel3.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -335,10 +331,8 @@ let levels = {
     },
     4: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel4.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -359,10 +353,8 @@ let levels = {
     },
     5: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel5.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -383,10 +375,8 @@ let levels = {
     },
     6: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel6.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -408,10 +398,8 @@ let levels = {
     7: {
         init: (level) => {
 
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
-            parsedCollisions = collisionsLevel7.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
             player.collisionBlocks = collisionBlocks
@@ -433,10 +421,7 @@ let levels = {
     8: {
         init: (level) => {
 
-            ({ boxes, platforms, doors, enemies } = createAssets(level))
-
-            parsedCollisions = collisionsLevel8.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
@@ -460,10 +445,7 @@ let levels = {
     },
     9: {
         init: (level) => {
-           ({ boxes, platforms, doors, enemies } = createAssets(level))
-
-            parsedCollisions = collisionsLevel9.parse2D()
-            collisionBlocks = parsedCollisions.createObjectsFrom2D()
+            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 

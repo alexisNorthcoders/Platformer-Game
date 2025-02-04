@@ -13,11 +13,10 @@ function loadBoxesSync(level) {
     if (request.status === 200) {
         const jsonData = JSON.parse(request.responseText);
         let platformsData = undefined
-        let portaData = undefined
         let enemyData = undefined
         let kingData = undefined
 
-        const layerNames = ["boxes", "porta", "platform", "enemy", "enemyKing"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -30,11 +29,11 @@ function loadBoxesSync(level) {
         const platformLayer = layers["platform"];
         const enemyLayer = layers["enemy"];
         const kingLayer = layers["enemyKing"];
+        const collisionsLayer = layers["collisions"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
-        if (portaLayer) {
-            portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
-        }
+        const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+
         if (platformLayer) {
             platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
         }
@@ -46,9 +45,10 @@ function loadBoxesSync(level) {
         }
 
         return {
-            enemy: enemyData ? transformDataBox(enemyData) : [],
-            door: portaData ? transformDataBox(portaData) : [],
+            collisions: collisionsLayer.data,
             boxes: transformDataBox(boxesData),
+            door: transformDataBox(portaData),
+            enemy: enemyData ? transformDataBox(enemyData) : [],
             platforms: platformsData ? transformDataBox(platformsData) : [],
             kingPig: kingData ? transformDataBox(kingData) : []
         }
@@ -57,10 +57,3 @@ function loadBoxesSync(level) {
         return [];
     }
 }
-
-let boxes = {};
-let platforms = {};
-let doors = {}
-let enemies = {}
-let kingPig = {}
-
