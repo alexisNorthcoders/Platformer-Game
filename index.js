@@ -247,6 +247,15 @@ function createDoor(positions) {
         autoplay: false,
     }))
 }
+function createBackground(level) {
+    return new Sprite({
+        position: {
+            x: 0,
+            y: 0
+        },
+        imageSrc: `./img/Level ${level}.png`
+    })
+}
 function createAssets(level) {
     const { boxes, platforms, door, enemy, collisions, enemyKing } = loadBoxesSync(level)
     const parsedCollisions = collisions.parse2D()
@@ -257,8 +266,14 @@ function createAssets(level) {
         doors: createDoor(door),
         enemies: createEnemies(enemy),
         enemyKing: createEnemyKing(enemyKing),
-        collisionBlocks
+        collisionBlocks,
+        background: createBackground(level)
     }
+}
+function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
+    player.collisionBlocks = collisionBlocks
+    enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
+    enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
 
 let level = 1
@@ -266,210 +281,127 @@ let levels = {
     1: {
         init: (level) => {
             // load assets
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
-
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
 
             diamond.collisionBlocks = collisionBlocks
-            player.position.x = 50
-            player.position.y = 200
+
+            player.position = { x: 50, y: 200 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 1.png'
-            })
         }
     },
     2: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 40
-            player.position.y = 30
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 40, y: 30 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 2.png'
-            })
         }
     },
     3: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 770
-            player.position.y = 100
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 770, y: 100 }
 
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 3.png'
-            })
         }
     },
     4: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 100
-            player.position.y = 500
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 100, y: 500 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 4.png'
-            })
         }
     },
     5: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 30
-            player.position.y = 400
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 30, y: 400 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 5.png'
-            })
         }
     },
     6: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 80
-            player.position.y = 500
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 80, y: 500 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 6.png'
-            })
         }
     },
     7: {
         init: (level) => {
 
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
-            player.position.x = 50
-            player.position.y = 100
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
+            player.position = { x: 50, y: 100 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 7.png'
-            })
         }
     },
     8: {
         init: (level) => {
 
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
 
-            player.position.x = 50
-            player.position.y = 500
+            player.position = { x: 50, y: 500 }
 
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 8.png'
-            })
         }
     },
     9: {
         init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks } = createAssets(level))
+            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
 
             collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
 
-            player.collisionBlocks = collisionBlocks
-            enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
+            applyCollisions(player, enemies, enemyKing, collisionBlocks)
+
             diamond.collisionBlocks = collisionBlocks
 
-            player.position.x = 800
-            player.position.y = 300
+            player.position = { x: 800, y: 300 }
 
             if (player.currentAnimation) player.currentAnimation.isActive = false
-
-            background = new Sprite({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                imageSrc: './img/Level 9.png'
-            })
         }
     },
 }
@@ -528,6 +460,12 @@ function animate() {
         enemies.forEach(enemy => {
             enemy.draw(2)
             enemy.update()
+        })
+    }
+    if (enemyKing) {
+        enemyKing.forEach(king => {
+            king.draw(2)
+            king.update()
         })
     }
 
