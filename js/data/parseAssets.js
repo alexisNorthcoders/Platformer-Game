@@ -5,16 +5,17 @@ function getAssetsPositions(data) {
     ]);
 }
 
-function loadBoxesSync(level) {
-    let request = new XMLHttpRequest();
-    request.open("GET", `/kings-and-pigs/js/data/levels/Level_${level}.json`, false);
-    request.send(null);
+async function loadAssets(level) {
+    try {
+        const response = await fetch(`/kings-and-pigs/js/data/levels/Level_${level}.json`);
+        if (!response.ok) {
+            throw new Error("Failed to load JSON");
+        }
 
-    if (request.status === 200) {
-        const jsonData = JSON.parse(request.responseText);
-        let platformsData = undefined
-        let enemyData = undefined
-        let kingData = undefined
+        const jsonData = await response.json();
+        let platformsData = undefined;
+        let enemyData = undefined;
+        let kingData = undefined;
 
         const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing"];
         const layers = jsonData.layers.reduce((acc, layer) => {
@@ -31,17 +32,17 @@ function loadBoxesSync(level) {
         const kingLayer = layers["enemyKing"];
         const collisionsLayer = layers["collisions"];
 
-        const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
-        const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+        const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
+        const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
 
         if (platformLayer) {
-            platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+            platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
         if (enemyLayer) {
-            enemyData = enemyLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+            enemyData = enemyLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
         if (kingLayer) {
-            kingData = kingLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))
+            kingData = kingLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
 
         return {
@@ -51,9 +52,9 @@ function loadBoxesSync(level) {
             enemy: enemyData ? getAssetsPositions(enemyData) : [],
             platforms: platformsData ? getAssetsPositions(platformsData) : [],
             enemyKing: kingData ? getAssetsPositions(kingData) : []
-        }
-    } else {
-        console.error("Failed to load JSON");
+        };
+    } catch (error) {
+        console.error(error.message);
         return [];
     }
 }

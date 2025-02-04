@@ -75,7 +75,7 @@ const player = new Player({
                     onComplete: () => {
                         level++
                         if (level === Object.keys(levels).length + 1) level = 1
-                        levels[level].init(level)
+                        initLevel(level)
                         player.switchSprite('idleRight')
 
                         gsap.to(overlay, {
@@ -256,8 +256,8 @@ function createBackground(level) {
         imageSrc: `./img/Level ${level}.png`
     })
 }
-function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing } = loadBoxesSync(level)
+async function createAssets(level) {
+    const { boxes, platforms, door, enemy, collisions, enemyKing } = await loadAssets(level)
     const parsedCollisions = collisions.parse2D()
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
@@ -275,136 +275,46 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
+async function initializeLevel(level, playerPosition) {
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = await createAssets(level));
+
+    collisionBlocks = collisionBlocks.concat(
+        boxes.flatMap(box => box.collisionBlocks),
+        platforms.flatMap(platform => platform.collisionBlocks)
+    );
+
+    applyCollisions(player, enemies, enemyKing, collisionBlocks);
+
+    player.position = playerPosition;
+
+    if (player.currentAnimation) player.currentAnimation.isActive = false;
+    if (level === 1) {
+        setTimeout(() => {
+            player.hello()
+        }, 500);
+    }
+}
+async function initLevel(levelNumber) {
+    const level = levels[levelNumber];
+    if (!level) {
+        console.error(`Level ${levelNumber} does not exist.`);
+        return;
+    }
+    await initializeLevel(levelNumber, level.playerPosition);
+}
 
 let level = 1
-let levels = {
-    1: {
-        init: (level) => {
-            // load assets
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            diamond.collisionBlocks = collisionBlocks
-
-            player.position = { x: 50, y: 200 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    2: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 40, y: 30 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    3: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 770, y: 100 }
-
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    4: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 100, y: 500 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    5: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 30, y: 400 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    6: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 80, y: 500 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    7: {
-        init: (level) => {
-
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 50, y: 100 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    8: {
-        init: (level) => {
-
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            player.position = { x: 50, y: 500 }
-
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-    9: {
-        init: (level) => {
-            ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = createAssets(level))
-
-            collisionBlocks = collisionBlocks.concat(boxes.flatMap(box => box.collisionBlocks), platforms.flatMap(platform => platform.collisionBlocks));
-
-            applyCollisions(player, enemies, enemyKing, collisionBlocks)
-
-            diamond.collisionBlocks = collisionBlocks
-
-            player.position = { x: 800, y: 300 }
-
-            if (player.currentAnimation) player.currentAnimation.isActive = false
-        }
-    },
-}
+const levels = {
+    1: { playerPosition: { x: 50, y: 200 } },
+    2: { playerPosition: { x: 40, y: 30 } },
+    3: { playerPosition: { x: 770, y: 100 } },
+    4: { playerPosition: { x: 100, y: 500 } },
+    5: { playerPosition: { x: 30, y: 400 } },
+    6: { playerPosition: { x: 80, y: 500 } },
+    7: { playerPosition: { x: 50, y: 100 } },
+    8: { playerPosition: { x: 50, y: 500 } },
+    9: { playerPosition: { x: 800, y: 300 } }
+};
 
 const keys = {
     w: {
@@ -489,6 +399,7 @@ function animate() {
     c.fillRect(0, 0, canvas.width, canvas.height)
     c.restore()
 }
-levels[level].init(level)
-animate()
+
+initLevel(level).then(()=> animate())
+
 
