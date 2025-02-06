@@ -35,12 +35,12 @@ class Sprite {
                 image.src = this.animations[key].imageSrc
                 this.animations[key].image = image
             }
-            
+
         }
     }
     draw(scale = 1) {
         if (!this.loaded) return
-
+    
         const cropbox = {
             position: {
                 x: this.width * this.currentFrame,
@@ -49,18 +49,38 @@ class Sprite {
             width: this.width,
             height: this.height
         }
-
-        c.drawImage(
-            this.image,
-            cropbox.position.x,
-            cropbox.position.y,
-            cropbox.width,
-            cropbox.height,
-            this.position.x,
-            this.position.y,
-            this.width * scale,  // Scale the width
-            this.height * scale  // Scale the height
-        )
+    
+        c.save() // Save the canvas state
+    
+        if (this.flip) {
+            c.scale(-1, 1) // Flip horizontally
+            c.translate(30,0)
+            c.drawImage(
+                this.image,
+                cropbox.position.x,
+                cropbox.position.y,
+                cropbox.width,
+                cropbox.height,
+                -this.position.x - this.width * scale, // Adjust flipped position
+                this.position.y,
+                this.width * scale,
+                this.height * scale
+            )
+        } else {
+            c.drawImage(
+                this.image,
+                cropbox.position.x,
+                cropbox.position.y,
+                cropbox.width,
+                cropbox.height,
+                this.position.x,
+                this.position.y,
+                this.width * scale,
+                this.height * scale
+            )
+        }
+    
+        c.restore() // Restore the canvas state
         this.updateFrames()
     }
 

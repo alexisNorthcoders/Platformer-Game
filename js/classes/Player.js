@@ -80,8 +80,12 @@ class Player extends Sprite {
         this.velocity.x = 0
 
         if (keys.w.pressed) {
-
-            this.switchSprite('jump')
+            if (this.lastDirection === 'right'){
+                this.switchSprite('jump')
+            }
+            else {
+                this.switchSprite('jumpLeft')
+            }
         }
 
         if (keys.d.pressed) {
@@ -127,6 +131,7 @@ class Player extends Sprite {
             this.frameBuffer = this.animations[name].frameBuffer
             this.loop = this.animations[name].loop
             this.currentAnimation = this.animations[name]
+            this.flip = this.animations[name].flip || false
         }
     }
 

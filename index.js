@@ -31,7 +31,13 @@ const player = new Player({
             frameBuffer: 2,
             loop: true,
             imageSrc: './img/king/Jump (78x58).png',
-
+        },
+        jumpLeft: {
+            frameRate: 1,
+            frameBuffer: 2,
+            loop: true,
+            imageSrc: './img/king/Jump (78x58).png',
+            flip: true
         },
 
         idleLeft: {
@@ -62,7 +68,8 @@ const player = new Player({
             frameRate: 3,
             frameBuffer: 6,
             loop: false,
-            imageSrc: './img/king/AttackLeft (78x58).png',
+            imageSrc: './img/king/Attack (78x58).png',
+            flip: true
         },
         enterDoor: {
             frameRate: 8,
@@ -166,7 +173,7 @@ const diamond_1 = new Sprite({
     imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
 })
 const numberSprites = createNumberSprites(
-    1,
+    0,
     { x: 59, y: 55 },
     10,
     './Sprites/12-Live and Coins/Numbers (6x8).png',
@@ -210,7 +217,6 @@ function createEnemies(positions) {
 
     }))
 }
-
 function createEnemyKing(positions) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
@@ -400,6 +406,6 @@ function animate() {
     c.restore()
 }
 
-initLevel(level).then(()=> animate())
+initLevel(level).then(() => animate())
 
 
