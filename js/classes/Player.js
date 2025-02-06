@@ -80,10 +80,10 @@ class Player extends Sprite {
         this.velocity.x = 0
 
         if (keys.w.pressed) {
-            if (this.lastDirection === 'right'){
+            if (!this.isGrounded && this.lastDirection === 'right') {
                 this.switchSprite('jump')
             }
-            else {
+            else if (!this.isGrounded && this.lastDirection === 'left') {
                 this.switchSprite('jumpLeft')
             }
         }
@@ -101,12 +101,17 @@ class Player extends Sprite {
             this.velocity.x = -4
             this.lastDirection = 'left'
         }
-        if (keys.space.pressed) {
+        if (keys.space.pressed && !this.preventAttack) {
             this.action = true
             this.lastDirection === 'right' ? this.switchSprite('attack') : this.switchSprite('attackLeft')
-            setTimeout(() => {
-                this.action = false;
-            }, 300);
+            this.preventAttack = true
+            this.currentAnimation = {
+                onComplete: () => {
+                    this.action = false;
+                    console.log('animation complete')
+                },
+                isActive: false,
+            };
         }
         if (this.lastDirection === 'right' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleRight')
         if (this.lastDirection === 'left' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleLeft')

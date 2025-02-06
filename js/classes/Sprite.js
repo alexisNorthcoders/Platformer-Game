@@ -50,18 +50,17 @@ class Sprite {
             height: this.height
         }
     
-        c.save() // Save the canvas state
+        c.save() 
     
         if (this.flip) {
-            c.scale(-1, 1) // Flip horizontally
-            c.translate(30,0)
+            c.scale(-1, 1)
             c.drawImage(
                 this.image,
                 cropbox.position.x,
                 cropbox.position.y,
                 cropbox.width,
                 cropbox.height,
-                -this.position.x - this.width * scale, // Adjust flipped position
+                -this.position.x - this.width * scale + 30,
                 this.position.y,
                 this.width * scale,
                 this.height * scale

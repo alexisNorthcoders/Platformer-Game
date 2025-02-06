@@ -67,6 +67,7 @@ window.addEventListener('keyup', (event) => {
         case ' ':
             // hit
             keys.space.pressed = false
+            player.preventAttack  = false
             break
     }
 })
