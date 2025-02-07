@@ -9,6 +9,7 @@ class Player extends Sprite {
         this.hitCooldownDuration = 1000
         this.isShowingHello = false;
         this.canJump = true
+        this.attacking = false
         this.position = {
             x: 200,
             y: 200
@@ -70,18 +71,18 @@ class Player extends Sprite {
             if (this.lastDirection === 'right') {
                 c.fillStyle = 'rgba(81, 255, 0, 0.76)';
                 c.fillRect(
-                    this.hitbox.position.x + this.hitbox.width * 0.8,
-                    this.hitbox.position.y - this.hitbox.height / 2,
-                    this.hitbox.width * 1.3,
-                    this.hitbox.height * 1.5
+                    this.attackHitboxRight.position.x,
+                    this.attackHitboxRight.position.y,
+                    this.attackHitboxRight.width,
+                    this.attackHitboxRight.height
                 );
             } else {
                 c.fillStyle = 'rgba(81, 255, 0, 0.76)';
                 c.fillRect(
-                    this.hitbox.position.x - this.hitbox.width,
-                    this.hitbox.position.y - this.hitbox.height / 2,
-                    this.hitbox.width * 1.3,
-                    this.hitbox.height * 1.5
+                    this.attackHitboxLeft.position.x,
+                    this.attackHitboxLeft.position.y,
+                    this.attackHitboxLeft.width,
+                    this.attackHitboxLeft.height
                 );
             }
 
@@ -132,11 +133,13 @@ class Player extends Sprite {
         // Attacking
         if (keys.space.pressed && !this.preventAttack) {
             this.action = true;
+            this.attacking = true
             this.switchSprite(this.lastDirection === 'right' ? 'attack' : 'attackLeft');
             this.preventAttack = true;
             this.currentAnimation = {
                 onComplete: () => {
                     this.action = false;
+                    this.attacking = false
                 },
                 isActive: false,
             };
@@ -177,31 +180,38 @@ class Player extends Sprite {
             width: 55,
             height: 53
         }
+        this.attackHitboxRight = {
+            position: {
+                x: this.position.x + 80,
+                y: this.position.y + 10
+            },
+            width: 65,
+            height: 75
+        }
+        this.attackHitboxLeft = {
+            position: {
+                x: this.position.x + 80 - 1.25 * this.width,
+                y: this.position.y + 10
+            },
+            width: 65,
+            height: 75
+        }
     }
 
     checkForHorizontalCollisions() {
-        enemies.forEach((enemy) => {
-            if (!this.hitCooldown && player.hitbox.position.x + player.hitbox.width >= enemy.hitbox.position.x &&
-                player.hitbox.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                player.hitbox.position.y + player.hitbox.height >= enemy.hitbox.position.y) {
 
-                enemy.switchSprite('runLeft')
-                enemy.move(-3)
-                /*       this.switchSprite('hit')
-                      this.velocity.y = -8
-          
-                      this.hitCooldown = true;
-          
-                      // Set a timer to reset the hitCooldown flag after a certain duration
-                      setTimeout(() => {
-                          this.hitCooldown = false;
-          
-          
-                          // Reset animation or switch to another state after cooldown
-                          this.switchSprite('idleRight');
-                      }, this.hitCooldownDuration); */
-            }
-        })
+        if (this.attacking){
+            enemies.forEach((enemy) => {
+                if (player.attackHitboxRight.position.x + player.attackHitboxRight.width >= enemy.hitbox.position.x &&
+                    player.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                    player.attackHitboxRight.position.y + player.attackHitboxRight.height >= enemy.hitbox.position.y) {
+    
+                    enemy.switchSprite('runLeft')
+                    enemy.move(-3)
+                }
+            })
+        }
+      
 
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
