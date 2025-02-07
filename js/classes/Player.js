@@ -1,11 +1,14 @@
 class Player extends Sprite {
     constructor({ collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
         super({ imageSrc, frameRate, animations, loop })
+        this.preventInput = false
+        this.isGrounded = true
         this.hitCooldown = false
         this.action = false
         this.running = false
         this.hitCooldownDuration = 1000
         this.isShowingHello = false;
+        this.canJump = true
         this.position = {
             x: 200,
             y: 200
@@ -69,42 +72,53 @@ class Player extends Sprite {
 
     }
 
+    jump() {
+        if (this.isGrounded && this.canJump) {
+            this.canJump = false
+            this.velocity.y = -10
+            this.isGrounded = false;
+            this.switchSprite(this.lastDirection === 'right' ? 'jump' : 'jumpLeft');
+        }
+    }
+
     handleInput(keys) {
-        if (!keys.a.pressed && !keys.d.pressed) this.running = false
-        if (this.preventInput) return
 
-        this.velocity.x = 0
+        if (!keys.a.pressed && !keys.d.pressed) this.running = false;
+        if (!keys.space.pressed) this.preventAttack = false;
+        if (!keys.w.pressed) this.canJump = true
+        if (this.preventInput || this.action) return;
 
-        if (keys.w.pressed) {
-            if (!this.isGrounded && this.lastDirection === 'right') {
-                this.switchSprite('jump')
-            }
-            else if (!this.isGrounded && this.lastDirection === 'left') {
-                this.switchSprite('jumpLeft')
-            }
+        if (!keys.a.pressed && !keys.d.pressed) {
+            this.velocity.x = 0;
         }
 
-        if (keys.d.pressed) {
-            this.running = true
-            if (this.isGrounded === true && !this.action) this.switchSprite('runRight')
-            this.velocity.x = 4
-            this.lastDirection = 'right'
+        if (keys.w.pressed && this.isGrounded && this.canJump) {
+            this.jump()
         }
 
-        if (keys.a.pressed) {
-            this.running = true
-            if (this.isGrounded === true && !this.action) this.switchSprite('runLeft')
-            this.velocity.x = -4
-            this.lastDirection = 'left'
+        // Running
+        if (keys.d.pressed && !keys.a.pressed) {
+            this.running = true;
+            if (this.isGrounded && !this.action) this.switchSprite('runRight');
+            this.velocity.x = 4;
+            this.lastDirection = 'right';
         }
+
+        if (keys.a.pressed && !keys.d.pressed) {
+            this.running = true;
+            if (this.isGrounded && !this.action) this.switchSprite('runLeft');
+            this.velocity.x = -4;
+            this.lastDirection = 'left';
+        }
+        // Attacking
         if (keys.space.pressed && !this.preventAttack) {
-            this.action = true
-            this.lastDirection === 'right' ? this.switchSprite('attack') : this.switchSprite('attackLeft')
-            this.preventAttack = true
+            this.action = true;
+            this.switchSprite(this.lastDirection === 'right' ? 'attack' : 'attackLeft');
+            this.preventAttack = true;
             this.currentAnimation = {
                 onComplete: () => {
                     this.action = false;
-                    console.log('animation complete')
+                    console.log('animation complete');
                 },
                 isActive: false,
             };

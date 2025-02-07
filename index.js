@@ -76,21 +76,22 @@ const player = new Player({
             frameBuffer: 5,
             loop: false,
             imageSrc: './img/king/Door In (78x58).png',
-            onComplete: () => {
+            onComplete: async () => {
                 gsap.to(overlay, {
                     opacity: 1,
-                    onComplete: () => {
+                    onComplete: async () => {
                         level++
                         if (level === Object.keys(levels).length + 1) level = 1
-                        initLevel(level)
+                        await initLevel(level)
                         player.switchSprite('idleRight')
-
+                        console.log('overlay')
                         gsap.to(overlay, {
                             opacity: 0,
+                            onComplete: () => {
+                                player.hello()
+                                player.preventInput = false
+                            }
                         })
-                        setTimeout(() => {
-                            player.hello()
-                        }, 500);
                     }
                 })
             },

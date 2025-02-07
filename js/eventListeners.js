@@ -21,11 +21,7 @@ window.addEventListener('keydown', (event) => {
                 }
 
             }
-
-            if (!keys.w.pressed && player.isGrounded) {
-                keys.w.pressed = true;
-                player.velocity.y = -10;
-            }
+            keys.w.pressed = true;
             break
         case 'ArrowLeft':
             // move left
@@ -70,7 +66,6 @@ window.addEventListener('keyup', (event) => {
         case ' ':
             // hit
             keys.space.pressed = false
-            player.preventAttack  = false
             break
     }
 })
