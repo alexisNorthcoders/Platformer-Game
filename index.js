@@ -216,13 +216,13 @@ function createEnemies(positions) {
             hit: {
                 frameRate: 2,
                 frameBuffer: 12,
-                loop: false,    
+                loop: false,
                 imageSrc: './Sprites/03-Pig/Hit (34x28).png'
             },
-            dead:{
+            dead: {
                 frameRate: 4,
                 frameBuffer: 12,
-                loop: false,    
+                loop: false,
                 imageSrc: './Sprites/03-Pig/Dead (34x28).png'
             }
         }
@@ -314,11 +314,12 @@ async function initializeLevel(level, playerPosition) {
 }
 async function initLevel(levelNumber) {
     const level = levels[levelNumber];
+    const position = { ...level.playerPosition }
     if (!level) {
         console.error(`Level ${levelNumber} does not exist.`);
         return;
     }
-    await initializeLevel(levelNumber, level.playerPosition);
+    await initializeLevel(levelNumber, position);
 }
 
 let level = 1
