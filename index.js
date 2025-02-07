@@ -113,13 +113,13 @@ const helloDialogue = new DialogBox({
         helloIn: {
             imageSrc: './Sprites/13-Dialogue Boxes/Hello In (24x8).png',
             frameRate: 3,
-            frameBuffer: 9,
+            frameBuffer: 18,
             autoplay: true,
             loop: false,
         },
         helloOut: {
             frameRate: 3,
-            frameBuffer: 9,
+            frameBuffer: 18,
             autoplay: true,
             loop: false,
             imageSrc: './Sprites/13-Dialogue Boxes/Hello Out (24x8).png',

@@ -27,23 +27,17 @@ class Player extends Sprite {
 
     hello() {
         this.isShowingHello = true;
-        this.preventInput = true
 
         helloDialogue.switchSprite('helloIn')
         helloDialogue.currentFrame = 0
         helloDialogue.position.x = this.position.x + 68
         helloDialogue.position.y = this.position.y
 
-        setTimeout(() => {
-            helloDialogue.switchSprite('helloOut')
-            helloDialogue.currentFrame = 0
-        }, 1000);
-
-        setTimeout(() => {
-            this.preventInput = false
-            this.isShowingHello = false;
-        }, 2000);
-
+        helloDialogue.currentAnimation = {
+            onComplete: () => {
+                helloDialogue.switchSprite('helloOut')
+            }
+        }
     }
 
     update() {
@@ -52,6 +46,8 @@ class Player extends Sprite {
         //c.fillStyle = 'rgba(0,0,255,0)'
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
         this.position.x += this.velocity.x
+        helloDialogue.position.x = this.position.x + 68
+        helloDialogue.position.y = this.position.y
 
 
         this.updateHitbox()

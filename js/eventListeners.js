@@ -47,6 +47,9 @@ window.addEventListener('keydown', (event) => {
             // hit
             debugCollisions = false;
             break;
+        case 'h':
+            // hello
+            player.hello()
     }
 })
 window.addEventListener('keyup', (event) => {
