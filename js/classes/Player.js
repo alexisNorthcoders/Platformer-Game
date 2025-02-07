@@ -67,6 +67,25 @@ class Player extends Sprite {
                 this.hitbox.position.y,
                 this.hitbox.width,
                 this.hitbox.height)
+            if (this.lastDirection === 'right') {
+                c.fillStyle = 'rgba(81, 255, 0, 0.76)';
+                c.fillRect(
+                    this.hitbox.position.x + this.hitbox.width * 0.8,
+                    this.hitbox.position.y - this.hitbox.height / 2,
+                    this.hitbox.width * 1.3,
+                    this.hitbox.height * 1.5
+                );
+            } else {
+                c.fillStyle = 'rgba(81, 255, 0, 0.76)';
+                c.fillRect(
+                    this.hitbox.position.x - this.hitbox.width,
+                    this.hitbox.position.y - this.hitbox.height / 2,
+                    this.hitbox.width * 1.3,
+                    this.hitbox.height * 1.5
+                );
+            }
+
+
         }
         this.checkForVerticalCollisions()
 
@@ -118,7 +137,6 @@ class Player extends Sprite {
             this.currentAnimation = {
                 onComplete: () => {
                     this.action = false;
-                    console.log('animation complete');
                 },
                 isActive: false,
             };

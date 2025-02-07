@@ -84,7 +84,6 @@ const player = new Player({
                         if (level === Object.keys(levels).length + 1) level = 1
                         await initLevel(level)
                         player.switchSprite('idleRight')
-                        console.log('overlay')
                         gsap.to(overlay, {
                             opacity: 0,
                             onComplete: () => {
