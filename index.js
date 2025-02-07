@@ -203,7 +203,7 @@ function createEnemies(positions) {
         animations: {
             idle: {
                 frameRate: 11,
-                frameBuffer: 11,
+                frameBuffer: 8,
                 loop: true,
                 imageSrc: './Sprites/03-Pig/Idle (34x28).png',
             },
@@ -212,6 +212,18 @@ function createEnemies(positions) {
                 frameBuffer: 6,
                 loop: true,
                 imageSrc: './Sprites/03-Pig/Run (34x28).png',
+            },
+            hit: {
+                frameRate: 2,
+                frameBuffer: 12,
+                loop: false,    
+                imageSrc: './Sprites/03-Pig/Hit (34x28).png'
+            },
+            dead:{
+                frameRate: 4,
+                frameBuffer: 12,
+                loop: false,    
+                imageSrc: './Sprites/03-Pig/Dead (34x28).png'
             }
         }
 

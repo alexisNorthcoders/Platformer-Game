@@ -5,6 +5,7 @@ class Player extends Sprite {
         this.isGrounded = true
         this.hitCooldown = false
         this.action = false
+        this.canAttack = true
         this.running = false
         this.hitCooldownDuration = 1000
         this.isShowingHello = false;
@@ -101,10 +102,29 @@ class Player extends Sprite {
         }
     }
 
+    attack() {
+        if (this.canAttack) {
+            this.action = true;
+            this.attacking = true;
+            this.switchSprite(this.lastDirection === 'right' ? 'attack' : 'attackLeft');
+            this.canAttack = false
+
+            this.currentAnimation = {
+                onComplete: () => {
+                    this.checkEnemyHitCollision();
+                    this.action = false;
+                    this.attacking = false;
+                    this.canAttack = false;
+                },
+                isActive: false
+            };
+        }
+    }
+
     handleInput(keys) {
 
         if (!keys.a.pressed && !keys.d.pressed) this.running = false;
-        if (!keys.space.pressed) this.preventAttack = false;
+        if (!keys.space.pressed) this.canAttack = true;
         if (!keys.w.pressed) this.canJump = true
         if (this.preventInput || this.action) return;
 
@@ -114,6 +134,9 @@ class Player extends Sprite {
 
         if (keys.w.pressed && this.isGrounded && this.canJump) {
             this.jump()
+        }
+        if (keys.space.pressed && this.canAttack) {
+            this.attack()
         }
 
         // Running
@@ -130,20 +153,7 @@ class Player extends Sprite {
             this.velocity.x = -4;
             this.lastDirection = 'left';
         }
-        // Attacking
-        if (keys.space.pressed && !this.preventAttack) {
-            this.action = true;
-            this.attacking = true
-            this.switchSprite(this.lastDirection === 'right' ? 'attack' : 'attackLeft');
-            this.preventAttack = true;
-            this.currentAnimation = {
-                onComplete: () => {
-                    this.action = false;
-                    this.attacking = false
-                },
-                isActive: false,
-            };
-        }
+
         if (this.lastDirection === 'right' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleRight')
         if (this.lastDirection === 'left' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleLeft')
     }
@@ -198,20 +208,34 @@ class Player extends Sprite {
         }
     }
 
-    checkForHorizontalCollisions() {
+    checkEnemyHitCollision() {
+        if (this.attacking) {
+            if (this.lastDirection === 'right') {
+                enemies.forEach((enemy) => {
+                    if (player.attackHitboxRight.position.x + player.attackHitboxRight.width >= enemy.hitbox.position.x &&
+                        player.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                        player.attackHitboxRight.position.y + player.attackHitboxRight.height >= enemy.hitbox.position.y) {
 
-        if (this.attacking){
-            enemies.forEach((enemy) => {
-                if (player.attackHitboxRight.position.x + player.attackHitboxRight.width >= enemy.hitbox.position.x &&
-                    player.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                    player.attackHitboxRight.position.y + player.attackHitboxRight.height >= enemy.hitbox.position.y) {
-    
-                    enemy.switchSprite('runLeft')
-                    enemy.move(-3)
-                }
-            })
+                        enemy.hit()
+
+                    }
+                })
+            }
+            else {
+                enemies.forEach((enemy) => {
+                    if (player.attackHitboxLeft.position.x + player.attackHitboxLeft.width >= enemy.hitbox.position.x &&
+                        player.attackHitboxLeft.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                        player.attackHitboxLeft.position.y + player.attackHitboxLeft.height >= enemy.hitbox.position.y) {
+
+                        enemy.hit()
+                    }
+                })
+            }
+
         }
-      
+    }
+
+    checkForHorizontalCollisions() {
 
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]

@@ -7,12 +7,37 @@ class Enemy extends Sprite {
             y: 0
         }
         this.gravity = 0.4
+        this.hitpoints = 3
 
         this.collisionBlocks = collisionBlocks
     }
 
     move(runSpeed = -1) {
         this.velocity.x = runSpeed
+    }
+    hit() {
+
+        if (this.hitpoints === 0) {
+            return
+
+        } if (this.hitpoints > 0) {
+            this.hitpoints--
+            this.switchSprite('hit');
+            if (this.hitpoints === 0) {
+                this.currentAnimation = {
+                    onComplete: () => {
+                        this.switchSprite('dead');
+                    }
+                }
+            }
+            else {
+                this.currentAnimation = {
+                    onComplete: () => {
+                        this.switchSprite('idle');
+                    }
+                }
+            }
+        }
     }
 
     switchSprite(name) {
