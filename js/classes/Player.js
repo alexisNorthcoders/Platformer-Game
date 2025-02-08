@@ -250,6 +250,7 @@ class Player extends Sprite {
                 diamond.switchSprite('hit')
                 diamond.currentAnimation = {
                     onComplete: () => {
+                        
                         diamonds.splice(index, 1)
                         numberSprites = createNumberSprites(
                             ++diamondCount,

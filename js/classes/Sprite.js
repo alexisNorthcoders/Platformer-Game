@@ -28,6 +28,7 @@ class Sprite {
         this.loop = loop
         this.autoplay = autoplay
         this.currentAnimation
+        this.opacity = 1
 
         if (this.animations) {
             for (let key in this.animations) {
@@ -39,8 +40,8 @@ class Sprite {
         }
     }
     draw(scale = 1) {
-        if (!this.loaded) return
-    
+        if (!this.loaded || this.opacity <= 0) return
+
         const cropbox = {
             position: {
                 x: this.width * this.currentFrame,
@@ -49,9 +50,10 @@ class Sprite {
             width: this.width,
             height: this.height
         }
-    
-        c.save() 
-    
+
+        c.save()
+        c.globalAlpha = this.opacity;
+
         if (this.flip) {
             c.scale(-1, 1)
             c.drawImage(
@@ -78,8 +80,8 @@ class Sprite {
                 this.height * scale
             )
         }
-    
-        c.restore() // Restore the canvas state
+
+        c.restore()
         this.updateFrames()
     }
 
@@ -101,5 +103,15 @@ class Sprite {
                 this.currentAnimation.isActive = true
             }
         }
+    }
+    fade(speed = 0.05) {
+        const fadeInterval = setInterval(() => {
+            this.opacity -= speed;
+            if (this.opacity <= 0) {
+                this.opacity = 0;
+                this.loaded = false;
+                clearInterval(fadeInterval);
+            }
+        }, 50);
     }
 }

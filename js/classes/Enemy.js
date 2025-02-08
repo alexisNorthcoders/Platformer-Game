@@ -26,7 +26,8 @@ class Enemy extends Sprite {
             if (this.hitpoints === 0) {
                 this.currentAnimation = {
                     onComplete: () => {
-                        this.switchSprite('dead');
+                        this.switchSprite('dead')
+                        setTimeout(() => this.fade(), 2000)
                     }
                 }
             }

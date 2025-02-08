@@ -274,7 +274,7 @@ function createDiamonds(positions) {
         animations: {
             hit: {
                 frameRate: 2,
-                frameBuffer: 8,
+                frameBuffer: 18,
                 loop: false,
                 imageSrc: './Sprites/12-Live and Coins/Big Diamond Hit (18x14).png',
             }
@@ -387,12 +387,7 @@ function animate() {
         box.draw(2)
     })
 
-    if (diamonds) {
-        diamonds.forEach(diamond => {
-            diamond.draw(2)
-            diamond.update()
-        })
-    }
+
     if (platforms) {
         platforms.forEach(platform => {
             platform.draw(2)
@@ -411,12 +406,21 @@ function animate() {
         })
     }
 
-    player.update()
     player.draw(2)
+    if (diamonds) {
+        diamonds.forEach(diamond => {
+            diamond.draw(2)
+            diamond.update()
+        })
+    }
+    player.update()
+
+
     if (player.isShowingHello) {
 
         helloDialogue.draw(2)
     }
+
 
     // debug collisionBlocks
     if (debugCollisions) {
