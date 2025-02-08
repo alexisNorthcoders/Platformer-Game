@@ -28,7 +28,7 @@ Array.prototype.createObjectsFrom2D = function () {
     return objects
 }
 
-function createNumberSprites(number, position, frameRate, imageSrc, spacing) {
+function createNumberSprites(number, position = { x: 59, y: 55 }, frameRate = 10, imageSrc = './Sprites/12-Live and Coins/Numbers (6x8).png', spacing = 10) {
     const digits = String(number).split('');
     const sprites = [];
 

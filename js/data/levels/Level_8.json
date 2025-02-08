@@ -133,7 +133,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":435.595,
+                 "x":431.595,
                  "y":256.925
                 }, 
                 {
@@ -145,7 +145,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":435.595,
+                 "x":431.595,
                  "y":240.684
                 }, 
                 {
@@ -157,7 +157,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":416.197,
+                 "x":412.197,
                  "y":256.925
                 }, 
                 {
@@ -181,6 +181,7 @@
         {
          "draworder":"topdown",
          "id":8,
+         "locked":true,
          "name":"platform",
          "objects":[
                 {
@@ -216,8 +217,8 @@
                  "type":"",
                  "visible":true,
                  "width":104,
-                 "x":328,
-                 "y":208
+                 "x":305,
+                 "y":201
                 }, 
                 {
                  "gid":293,
@@ -228,7 +229,7 @@
                  "type":"",
                  "visible":true,
                  "width":104,
-                 "x":208,
+                 "x":196,
                  "y":192
                 }],
          "opacity":1,
@@ -240,6 +241,7 @@
         {
          "draworder":"topdown",
          "id":10,
+         "locked":true,
          "name":"enemy",
          "objects":[
                 {
@@ -347,6 +349,7 @@
         {
          "draworder":"topdown",
          "id":11,
+         "locked":true,
          "name":"enemyKing",
          "objects":[
                 {
@@ -370,6 +373,7 @@
         {
          "draworder":"topdown",
          "id":12,
+         "locked":true,
          "name":"diamonds",
          "objects":[
                 {
@@ -381,7 +385,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":216,
+                 "x":201,
                  "y":168
                 }, 
                 {
@@ -393,7 +397,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":232,
+                 "x":217,
                  "y":168
                 }, 
                 {
@@ -405,7 +409,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":248,
+                 "x":233,
                  "y":168
                 }, 
                 {
@@ -417,7 +421,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":264,
+                 "x":249,
                  "y":168
                 }, 
                 {
@@ -429,7 +433,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":280,
+                 "x":265,
                  "y":168
                 }, 
                 {
@@ -441,7 +445,7 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":296,
+                 "x":281,
                  "y":168
                 }, 
                 {
@@ -453,8 +457,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":336,
-                 "y":184
+                 "x":308,
+                 "y":178
                 }, 
                 {
                  "gid":296,
@@ -465,8 +469,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":352,
-                 "y":184
+                 "x":324,
+                 "y":178
                 }, 
                 {
                  "gid":296,
@@ -477,8 +481,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":368,
-                 "y":184
+                 "x":340,
+                 "y":178
                 }, 
                 {
                  "gid":296,
@@ -489,8 +493,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":384,
-                 "y":184
+                 "x":356,
+                 "y":178
                 }, 
                 {
                  "gid":296,
@@ -501,8 +505,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":400,
-                 "y":184
+                 "x":372,
+                 "y":178
                 }, 
                 {
                  "gid":296,
@@ -513,8 +517,8 @@
                  "type":"",
                  "visible":true,
                  "width":12,
-                 "x":416,
-                 "y":184
+                 "x":388,
+                 "y":178
                 }, 
                 {
                  "gid":296,

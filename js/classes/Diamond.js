@@ -1,6 +1,7 @@
 class Diamond extends Sprite {
     constructor({ position, imageSrc, frameRate, animations, loop }) {
         super({ position, imageSrc, frameRate, animations, loop })
+        this.diamondHit = false
     }
     updateHitbox() {
         this.hitbox = {
@@ -46,5 +47,15 @@ class Diamond extends Sprite {
             this.currentAnimation = this.animations[name]
         }
     }
-}
 
+    hit(index) {
+        if (!this.diamondHit) {
+            this.diamondHit = true
+            this.switchSprite('hit')
+            this.fade()
+            setTimeout(() => {
+                numberSprites = createNumberSprites(++diamondCount);
+            }, 100);
+        }
+    }
+}

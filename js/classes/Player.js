@@ -249,20 +249,7 @@ class Player extends Sprite {
                 this.hitbox.position.y + this.hitbox.height >= diamond.hitbox.position.y &&
                 this.hitbox.position.y <= diamond.hitbox.position.y + diamond.hitbox.height) {
 
-                diamond.switchSprite('hit')
-                diamond.currentAnimation = {
-                    onComplete: () => {
-
-                        diamonds.splice(index, 1)
-                        numberSprites = createNumberSprites(
-                            ++diamondCount,
-                            { x: 59, y: 55 },
-                            10,
-                            './Sprites/12-Live and Coins/Numbers (6x8).png',
-                            10
-                        );
-                    }
-                }
+                diamond.hit(index)
             }
         })
     }

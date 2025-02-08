@@ -173,13 +173,7 @@ const diamond_1 = new Sprite({
     frameBuffer: 8,
     imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
 })
-let numberSprites = createNumberSprites(
-    diamondCount,
-    { x: 59, y: 55 },
-    10,
-    './Sprites/12-Live and Coins/Numbers (6x8).png',
-    10
-);
+let numberSprites = createNumberSprites(diamondCount);
 
 function createBoxes(positions) {
     return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
@@ -330,7 +324,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, position);
 }
 
-let level = 1
+let level = 8
 const levels = {
     1: { playerPosition: { x: 50, y: 200 } },
     2: { playerPosition: { x: 40, y: 30 } },
