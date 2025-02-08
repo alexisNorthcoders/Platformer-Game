@@ -8,6 +8,8 @@ class Sprite {
         loop = true,
         autoplay = true,
         width,
+        random = false,
+        randomInterval = [0, 15000]
     }) {
         this.position = position
         this.width = width
@@ -29,6 +31,13 @@ class Sprite {
         this.autoplay = autoplay
         this.currentAnimation
         this.opacity = 1
+        this.runOnce = false
+        this.randomInterval = randomInterval
+        this.random = random
+
+        if (this.random) {
+            this.scheduleRandomAnimation();
+        }
 
         if (this.animations) {
             for (let key in this.animations) {
@@ -39,6 +48,15 @@ class Sprite {
 
         }
     }
+
+    scheduleRandomAnimation() {
+        const delay = Math.random() * (this.randomInterval[1] - this.randomInterval[0]) + this.randomInterval[0];
+        setTimeout(() => {
+            this.playOnce();
+            this.scheduleRandomAnimation();
+        }, delay);
+    }
+
     draw(scale = 1) {
         if (!this.loaded || this.opacity <= 0) return
 
@@ -84,7 +102,10 @@ class Sprite {
         c.restore()
         this.updateFrames()
     }
-
+    playOnce() {
+        this.runOnce = true
+        this.autoplay = true
+    }
     play() {
         this.autoplay = true
     }
@@ -94,7 +115,14 @@ class Sprite {
         this.elapsedFrames++
         if (this.elapsedFrames % this.frameBuffer === 0) {
             if (this.currentFrame < this.frameRate - 1) this.currentFrame++
-            else if (this.loop) this.currentFrame = 0
+            else if (this.loop || this.runOnce) {
+                if (this.runOnce) {
+                    this.runOnce = false
+                    this.autoplay = false
+                }
+
+                this.currentFrame = 0
+            }
         }
 
         if (this.currentAnimation?.onComplete) {

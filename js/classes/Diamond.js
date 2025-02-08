@@ -1,6 +1,6 @@
 class Diamond extends Sprite {
-    constructor({ position, imageSrc, frameRate, animations, loop }) {
-        super({ position, imageSrc, frameRate, animations, loop })
+    constructor({ autoplay, random, frameBuffer, position, imageSrc, frameRate, animations, loop }) {
+        super({ random, frameBuffer, position, imageSrc, frameRate, animations, loop, autoplay })
         this.diamondHit = false
     }
     updateHitbox() {
@@ -48,7 +48,7 @@ class Diamond extends Sprite {
         }
     }
 
-    hit(index) {
+    hit() {
         if (!this.diamondHit) {
             this.diamondHit = true
             this.switchSprite('hit')

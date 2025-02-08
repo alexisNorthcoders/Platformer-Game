@@ -188,7 +188,7 @@ function createEnemies(positions) {
         animations: {
             idle: {
                 frameRate: 11,
-                frameBuffer: 8,
+                frameBuffer: 2,
                 loop: true,
                 imageSrc: './Sprites/03-Pig/Idle (34x28).png',
             },
@@ -209,7 +209,24 @@ function createEnemies(positions) {
                 frameBuffer: 12,
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Dead (34x28).png'
-            }
+            },
+            attack:{
+                frameRate: 5,
+                frameBuffer: 12,
+                loop: false,
+                imageSrc: './Sprites/03-Pig/Attack (34x28).png'
+            },     
+            jump:{
+                frameRate: 1,
+                loop: false,
+                imageSrc: './Sprites/03-Pig/Jump (34x28).png'
+            },
+            fall:{
+                frameRate: 1,
+                loop: false,
+                imageSrc: './Sprites/03-Pig/Fall (34x28).png'
+            },
+
         }
 
     }))
@@ -262,8 +279,11 @@ function createBackground(level) {
 function createDiamonds(positions) {
     return positions.map(position => new Diamond({
         position: { x: position[0], y: position[1] },
+        autoplay: false,
+        loop: false,
         frameRate: 10,
-        frameBuffer: 4,
+        frameBuffer: 10,
+        random: true,
         imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png',
         animations: {
             hit: {

@@ -231,7 +231,8 @@ class Player extends Sprite {
                 enemies.forEach((enemy) => {
                     if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= enemy.hitbox.position.x &&
                         this.attackHitboxLeft.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                        this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= enemy.hitbox.position.y) {
+                        this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= enemy.hitbox.position.y &&
+                        this.attackHitboxLeft.position.y <= enemy.hitbox.position.y + enemy.hitbox.height) {
 
                         enemy.hit()
                     }

@@ -133,7 +133,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":431.595,
+                 "x":429.595,
                  "y":256.925
                 }, 
                 {
@@ -145,7 +145,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":431.595,
+                 "x":429.595,
                  "y":240.684
                 }, 
                 {
@@ -157,7 +157,7 @@
                  "type":"",
                  "visible":true,
                  "width":22,
-                 "x":412.197,
+                 "x":410.197,
                  "y":256.925
                 }, 
                 {
@@ -181,7 +181,6 @@
         {
          "draworder":"topdown",
          "id":8,
-         "locked":true,
          "name":"platform",
          "objects":[
                 {
@@ -217,7 +216,7 @@
                  "type":"",
                  "visible":true,
                  "width":104,
-                 "x":305,
+                 "x":303,
                  "y":201
                 }, 
                 {
