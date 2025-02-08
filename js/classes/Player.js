@@ -217,9 +217,10 @@ class Player extends Sprite {
         if (this.attacking) {
             if (this.lastDirection === 'right') {
                 enemies.forEach((enemy) => {
-                    if (player.attackHitboxRight.position.x + player.attackHitboxRight.width >= enemy.hitbox.position.x &&
-                        player.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                        player.attackHitboxRight.position.y + player.attackHitboxRight.height >= enemy.hitbox.position.y) {
+                    if (this.attackHitboxRight.position.x + this.attackHitboxRight.width >= enemy.hitbox.position.x &&
+                        this.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                        this.attackHitboxRight.position.y + this.attackHitboxRight.height >= enemy.hitbox.position.y &&
+                        this.attackHitboxRight.position.y <= enemy.hitbox.position.y + enemy.hitbox.height) {
 
                         enemy.hit()
 
@@ -228,9 +229,9 @@ class Player extends Sprite {
             }
             else {
                 enemies.forEach((enemy) => {
-                    if (player.attackHitboxLeft.position.x + player.attackHitboxLeft.width >= enemy.hitbox.position.x &&
-                        player.attackHitboxLeft.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                        player.attackHitboxLeft.position.y + player.attackHitboxLeft.height >= enemy.hitbox.position.y) {
+                    if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= enemy.hitbox.position.x &&
+                        this.attackHitboxLeft.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
+                        this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= enemy.hitbox.position.y) {
 
                         enemy.hit()
                     }
@@ -243,14 +244,15 @@ class Player extends Sprite {
     checkDiamondHitCollision() {
 
         diamonds.forEach((diamond, index) => {
-            if (player.position.x + player.width >= diamond.hitbox.position.x &&
-                player.position.x <= diamond.hitbox.position.x + diamond.hitbox.width &&
-                player.position.y + player.height >= diamond.hitbox.position.y) {
+            if (this.hitbox.position.x + this.hitbox.width >= diamond.hitbox.position.x &&
+                this.hitbox.position.x <= diamond.hitbox.position.x + diamond.hitbox.width &&
+                this.hitbox.position.y + this.hitbox.height >= diamond.hitbox.position.y &&
+                this.hitbox.position.y <= diamond.hitbox.position.y + diamond.hitbox.height) {
 
                 diamond.switchSprite('hit')
                 diamond.currentAnimation = {
                     onComplete: () => {
-                        
+
                         diamonds.splice(index, 1)
                         numberSprites = createNumberSprites(
                             ++diamondCount,
