@@ -7,6 +7,7 @@ canvas.height = 576 // 64 * 9
 let collisionBlocks
 let background
 let debugCollisions = false
+let diamondCount = 0
 
 const player = new Player({
 
@@ -172,23 +173,13 @@ const diamond_1 = new Sprite({
     frameBuffer: 8,
     imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
 })
-const numberSprites = createNumberSprites(
-    0,
+let numberSprites = createNumberSprites(
+    diamondCount,
     { x: 59, y: 55 },
     10,
     './Sprites/12-Live and Coins/Numbers (6x8).png',
     10
 );
-
-const diamond = new Diamond({
-    position: {
-        x: 200,
-        y: 200
-    },
-    frameRate: 10,
-    frameBuffer: 4,
-    imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png'
-})
 
 function createBoxes(positions) {
     return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
@@ -274,8 +265,24 @@ function createBackground(level) {
         imageSrc: `./img/Level ${level}.png`
     })
 }
+function createDiamonds(positions) {
+    return positions.map(position => new Diamond({
+        position: { x: position[0], y: position[1] },
+        frameRate: 10,
+        frameBuffer: 4,
+        imageSrc: './Sprites/12-Live and Coins/Big Diamond Idle (18x14).png',
+        animations: {
+            hit: {
+                frameRate: 2,
+                frameBuffer: 8,
+                loop: false,
+                imageSrc: './Sprites/12-Live and Coins/Big Diamond Hit (18x14).png',
+            }
+        }
+    }))
+}
 async function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing } = await loadAssets(level)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds } = await loadAssets(level)
     const parsedCollisions = collisions.parse2D()
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
@@ -285,7 +292,8 @@ async function createAssets(level) {
         enemies: createEnemies(enemy),
         enemyKing: createEnemyKing(enemyKing),
         collisionBlocks,
-        background: createBackground(level)
+        background: createBackground(level),
+        diamonds: createDiamonds(diamonds)
     }
 }
 function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
@@ -294,7 +302,7 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background } = await createAssets(level));
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds } = await createAssets(level));
 
     collisionBlocks = collisionBlocks.concat(
         boxes.flatMap(box => box.collisionBlocks),
@@ -367,8 +375,6 @@ function animate() {
     numberSprites.forEach(sprite => {
         sprite.draw(2);
     });
-    diamond.draw(2)
-    diamond.update()
 
     doors.forEach(door => {
         door.draw(2)
@@ -380,6 +386,13 @@ function animate() {
     boxes.forEach(box => {
         box.draw(2)
     })
+
+    if (diamonds) {
+        diamonds.forEach(diamond => {
+            diamond.draw(2)
+            diamond.update()
+        })
+    }
     if (platforms) {
         platforms.forEach(platform => {
             platform.draw(2)

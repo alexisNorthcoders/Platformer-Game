@@ -1,23 +1,15 @@
 class Diamond extends Sprite {
-    constructor({ imageSrc, frameRate, animations, loop }) {
-        super({ imageSrc, frameRate, animations, loop })
-
-        this.position = {
-            x: 500,
-            y: 200
-        }
-
-        this.collisionBlocks = []
-
+    constructor({ position, imageSrc, frameRate, animations, loop }) {
+        super({ position, imageSrc, frameRate, animations, loop })
     }
     updateHitbox() {
         this.hitbox = {
             position: {
-                x: this.position.x + 23,
-                y: this.position.y + 30
+                x: this.position.x,
+                y: this.position.y
             },
-            width: 37,
-            height: 28
+            width: 2 * this.width,
+            height: 2 * this.height
         }
     }
 
@@ -37,6 +29,21 @@ class Diamond extends Sprite {
                 this.hitbox.position.y,
                 this.hitbox.width,
                 this.hitbox.height)
+        }
+    }
+
+    switchSprite(name) {
+
+        if (this.image === this.animations[name].image) return
+
+        else if (!this.hitCooldown) {
+
+            this.currentFrame = 0
+            this.image = this.animations[name].image
+            this.frameRate = this.animations[name].frameRate
+            this.frameBuffer = this.animations[name].frameBuffer
+            this.loop = this.animations[name].loop
+            this.currentAnimation = this.animations[name]
         }
     }
 }

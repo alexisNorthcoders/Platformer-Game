@@ -58,6 +58,11 @@ class Player extends Sprite {
         this.updateHitbox()
 
         this.checkForHorizontalCollisions()
+
+        if (diamonds.length) {
+            this.checkDiamondHitCollision()
+        }
+
         this.applyGravity()
 
         this.updateHitbox()
@@ -233,6 +238,30 @@ class Player extends Sprite {
             }
 
         }
+    }
+
+    checkDiamondHitCollision() {
+
+        diamonds.forEach((diamond, index) => {
+            if (player.position.x + player.width >= diamond.hitbox.position.x &&
+                player.position.x <= diamond.hitbox.position.x + diamond.hitbox.width &&
+                player.position.y + player.height >= diamond.hitbox.position.y) {
+
+                diamond.switchSprite('hit')
+                diamond.currentAnimation = {
+                    onComplete: () => {
+                        diamonds.splice(index, 1)
+                        numberSprites = createNumberSprites(
+                            ++diamondCount,
+                            { x: 59, y: 55 },
+                            10,
+                            './Sprites/12-Live and Coins/Numbers (6x8).png',
+                            10
+                        );
+                    }
+                }
+            }
+        })
     }
 
     checkForHorizontalCollisions() {
