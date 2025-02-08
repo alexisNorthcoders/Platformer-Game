@@ -14,6 +14,7 @@ async function loadAssets(level) {
 
         const jsonData = await response.json();
         let platformsData = undefined;
+        let diamondsData = undefined;
         let enemyData = undefined;
         let kingData = undefined;
 
@@ -35,10 +36,12 @@ async function loadAssets(level) {
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
-        const diamondsData = diamondsLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
 
         if (platformLayer) {
             platformsData = platformLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
+        }
+        if (diamondsLayer) {
+            diamondsData = diamondsLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
         if (enemyLayer) {
             enemyData = enemyLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -54,7 +57,7 @@ async function loadAssets(level) {
             enemy: enemyData ? getAssetsPositions(enemyData) : [],
             platforms: platformsData ? getAssetsPositions(platformsData) : [],
             enemyKing: kingData ? getAssetsPositions(kingData) : [],
-            diamonds:  getAssetsPositions(diamondsData)
+            diamonds: diamondsData ? getAssetsPositions(diamondsData) : []
         };
     } catch (error) {
         console.error(error.message);

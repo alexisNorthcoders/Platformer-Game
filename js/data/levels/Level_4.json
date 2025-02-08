@@ -136,6 +136,161 @@
         }, 
         {
          "draworder":"topdown",
+         "id":10,
+         "name":"diamonds",
+         "objects":[
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":34,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":96,
+                 "y":224
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":35,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":128,
+                 "y":224
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":36,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":160,
+                 "y":224
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":37,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":192,
+                 "y":224
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":38,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":224,
+                 "y":224
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":39,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":256,
+                 "y":192
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":40,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":288,
+                 "y":160
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":41,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":320,
+                 "y":128
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":42,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":352,
+                 "y":96
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":43,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":384,
+                 "y":64
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":44,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":416,
+                 "y":64
+                }, 
+                {
+                 "gid":295,
+                 "height":10,
+                 "id":45,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":12,
+                 "x":448,
+                 "y":64
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":9,
          "name":"enemyKing",
          "objects":[
@@ -153,7 +308,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -244,8 +399,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":10,
- "nextobjectid":34,
+ "nextlayerid":11,
+ "nextobjectid":46,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.1",
@@ -278,6 +433,10 @@
         {
          "firstgid":294,
          "source":"Jump (34x28).tsx"
+        }, 
+        {
+         "firstgid":295,
+         "source":"diamond.tsx"
         }],
  "tilewidth":32,
  "type":"map",
