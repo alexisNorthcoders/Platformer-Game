@@ -1,96 +1,53 @@
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let hammerBuffer = null;
-let stepbuffer = null;
-let hitbuffer = null;
+const swingBuffer = [null, null, null]
+const hitBuffer = [null, null, null, null]
+let stepBuffer = null;
+let pickBuffer = null;
+let jumpBuffer = null;
 let currentStepSound = null;
 
-function playJumpSound() {
-    let oscillator = audioContext.createOscillator();
-    let gainNode = audioContext.createGain();
-
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2);
-
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.2);
-}
-
 function playDiamondSound() {
-    let osc = audioContext.createOscillator();
-    let gain = audioContext.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(800, audioContext.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1500, audioContext.currentTime + 0.2);
-
-    gain.gain.setValueAtTime(0.1, audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-
-    osc.connect(gain);
-    gain.connect(audioContext.destination);
-
-    osc.start();
-    osc.stop(audioContext.currentTime + 0.3);
-}
-
-
-function loadHammerSound(url) {
-    fetch(url)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-        .then(buffer => {
-            hammerBuffer = buffer;
-        })
-        .catch(error => console.error("Error loading sound file:", error));
-}
-function loadStepSound(url) {
-    fetch(url)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-        .then(buffer => {
-            stepbuffer = buffer;
-        })
-        .catch(error => console.error("Error loading sound file:", error));
-}
-function loadHitSound(url) {
-    fetch(url)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-        .then(buffer => {
-            hitbuffer = buffer;
-        })
-        .catch(error => console.error("Error loading sound file:", error));
-}
-
-function playHammerSound() {
-    if (!hammerBuffer) return;
+    if (!pickBuffer) return;
 
     let sound = audioContext.createBufferSource();
     let gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0.01, audioContext.currentTime);
-    sound.buffer = hammerBuffer;
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    sound.buffer = pickBuffer;
 
     sound.connect(gainNode);
     gainNode.connect(audioContext.destination);
     sound.start();
 }
-function playHitSound() {
-    if (!hitbuffer) return;
+function playJumpSound() {
+    if (!jumpBuffer) return;
 
     let sound = audioContext.createBufferSource();
-    sound.buffer = hitbuffer;
+    sound.buffer = jumpBuffer;
+    sound.connect(audioContext.destination);
+    sound.start();
+}
+
+function playHammerSound() {
+    if (swingBuffer.includes(null)) return;
+
+    let sound = audioContext.createBufferSource();
+    const random = Math.floor(Math.random() * 3)
+    sound.buffer = swingBuffer[random];
+    sound.connect(audioContext.destination);
+    sound.start();
+}
+function playHitSound() {
+    if (hitBuffer.includes(null)) return;
+
+    let sound = audioContext.createBufferSource();
+    const random = Math.floor(Math.random() * hitBuffer.length)
+    console.log(random)
+    sound.buffer = hitBuffer[random];
     sound.connect(audioContext.destination);
     sound.start();
 }
 function playStepSound() {
-    if (!stepbuffer) return;
+    if (!stepBuffer) return;
 
     if (currentStepSound && currentStepSound.playbackState === currentStepSound.PLAYING_STATE) {
         return
@@ -98,7 +55,7 @@ function playStepSound() {
 
     let sound = audioContext.createBufferSource();
     let gainNode = audioContext.createGain();
-    sound.buffer = stepbuffer;
+    sound.buffer = stepBuffer;
     sound.loop = true;
     // slow down the sound
     sound.playbackRate.setValueAtTime(0.5, audioContext.currentTime);
@@ -120,7 +77,32 @@ function stopStepSound() {
         currentStepSound = null;
     }
 }
+// load sound files
 
-loadHammerSound("sounds/swoosh.wav");
-loadHitSound("sounds/hit.wav");
-loadStepSound("sounds/step.wav");
+async function loadSound(url) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await audioContext.decodeAudioData(arrayBuffer);
+        return buffer;
+    } catch (error) {
+        console.error("Error loading sound file:", error);
+        return null;
+    }
+}
+
+async function loadSounds() {
+
+    swingBuffer[0] = await loadSound("sounds/swing.wav");
+    swingBuffer[1] = await loadSound("sounds/swing2.wav");
+    swingBuffer[2] = await loadSound("sounds/swing3.wav");
+    hitBuffer[0] = await loadSound("sounds/hit.wav");
+    hitBuffer[1] = await loadSound("sounds/hit2.wav");
+    hitBuffer[2] = await loadSound("sounds/hit3.wav");
+    hitBuffer[3] = await loadSound("sounds/hit4.wav");
+    stepBuffer = await loadSound("sounds/step.wav");
+    jumpBuffer = await loadSound("sounds/jump.wav");
+    pickBuffer = await loadSound("sounds/pick.wav");
+}
+
+loadSounds();
