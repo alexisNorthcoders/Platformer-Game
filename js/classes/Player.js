@@ -47,6 +47,9 @@ class Player extends Sprite {
 
     update() {
 
+        if (this.isGrounded && this.running) playStepSound()
+        if (!this.running || !this.isGrounded) stopStepSound()
+
         // blue box 
         //c.fillStyle = 'rgba(0,0,255,0)'
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
@@ -100,6 +103,7 @@ class Player extends Sprite {
 
     jump() {
         if (this.isGrounded && this.canJump) {
+            playJumpSound()
             this.canJump = false
             this.velocity.y = -10
             this.isGrounded = false;
@@ -109,6 +113,7 @@ class Player extends Sprite {
 
     attack() {
         if (this.canAttack) {
+            playHammerSound()
             this.action = true;
             this.attacking = true;
             this.switchSprite(this.lastDirection === 'right' ? 'attack' : 'attackLeft');

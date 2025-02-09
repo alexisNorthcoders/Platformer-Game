@@ -50,6 +50,7 @@ class Diamond extends Sprite {
 
     hit() {
         if (!this.diamondHit) {
+            playDiamondSound()
             this.diamondHit = true
             this.switchSprite('hit')
             this.fade()

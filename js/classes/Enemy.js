@@ -9,6 +9,7 @@ class Enemy extends Sprite {
         this.gravity = 0.4
         this.hitpoints = 3
         this.playerHit = false
+        this.attacking = false
 
         this.collisionBlocks = collisionBlocks
     }
@@ -18,6 +19,7 @@ class Enemy extends Sprite {
     }
     hit() {
         if (!this.playerHit) {
+            playHitSound()
             if (this.hitpoints === 0) {
                 this.playerHit = true
                 return
@@ -47,11 +49,12 @@ class Enemy extends Sprite {
     }
 
     attack() {
+        this.attacking = true
         this.switchSprite('attack')
         this.currentAnimation = {
             onComplete: () => {
                 this.switchSprite('idle')
-
+                this.attacking = false
             }
         }
     }
@@ -125,7 +128,7 @@ class Enemy extends Sprite {
                 if (this.velocity.x < 0) {
                     const offset = this.hitbox.position.x - this.position.x
                     this.position.x = collisionBlock.position.x + collisionBlock.width - offset + 0.01
-                    this.switchSprite('idle')
+                    if (!this.attacking) this.switchSprite('idle')
                     break
                 }
                 if (this.velocity.x > 0) {
@@ -153,13 +156,12 @@ class Enemy extends Sprite {
                     this.velocity.y = 0
                     const offset = this.hitbox.position.y - this.position.y
                     this.position.y = collisionBlock.position.y + collisionBlock.height - offset + 0.01
-                    this.switchSprite('fall')
                     break
                 }
                 if (this.velocity.y > 0) {
-                    if (this.currentAnimation !== this.animations.idle && !this.playerHit) { 
-                        console.log('ground not idle')
-                        this.switchSprite('idle')}
+                    if (this.currentAnimation !== this.animations.idle && !this.playerHit) {
+                        if (!this.attacking) this.switchSprite('idle')
+                    }
                     this.velocity.y = 0
                     const offset = this.hitbox.position.y - this.position.y + this.hitbox.height
                     this.position.y = collisionBlock.position.y - offset - 0.01
@@ -170,7 +172,9 @@ class Enemy extends Sprite {
         }
     }
     applyGravity() {
-
+        if (this.velocity.y > 0) {
+            this.switchSprite('fall')
+        }
         this.velocity.y += this.gravity
         this.position.y += this.velocity.y
     }
