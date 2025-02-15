@@ -52,14 +52,16 @@ class Enemy extends Sprite {
     }
 
     attack() {
-        if (!this.attacking && this.hitpoints) {
+        if (!this.attacking && this.hitpoints > 0 && !this.playerHit) {
             this.attacking = true;
             this.switchSprite('attack');
-            this.currentAnimation = {
-                onComplete: () => {
+
+            if (this.currentAnimation) {
+                this.currentAnimation.onComplete = () => {
                     this.attacking = false;
-                }
-            };
+                    this.switchSprite('idle');
+                };
+            }
         }
     }
 
@@ -69,7 +71,6 @@ class Enemy extends Sprite {
     }
 
     switchSprite(name) {
-
         if (!this.animations[name] || this.image === this.animations[name].image) return
 
         else if (!this.hitCooldown) {
@@ -138,6 +139,7 @@ class Enemy extends Sprite {
                 if (this.velocity.x > 0) {
                     const offset = this.hitbox.position.x - this.position.x + this.hitbox.width
                     this.position.x = collisionBlock.position.x - offset - 0.01
+                    if (!this.attacking) this.switchSprite('idle')
                     break
                 }
 
@@ -176,11 +178,11 @@ class Enemy extends Sprite {
         }
     }
     applyGravity() {
-        if (this.velocity.y > 0) {
-            this.switchSprite('fall')
+        if (this.velocity.y > 0 && this.hitpoints !== 0 && !this.playerHit) {
+            this.switchSprite('fall');
         }
-        this.velocity.y += this.gravity
-        this.position.y += this.velocity.y
+        this.velocity.y += this.gravity;
+        this.position.y += this.velocity.y;
     }
 }
 

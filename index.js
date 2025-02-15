@@ -370,7 +370,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, position);
 }
 
-let level = 10
+let level = 1
 const levels = {
     1: { playerPosition: { x: 50, y: 200 } },
     2: { playerPosition: { x: 40, y: 30 } },

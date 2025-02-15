@@ -2,7 +2,7 @@ class Box extends Sprite {
     constructor({ position, imageSrc = './Sprites/08-Box/Idle.png', frameRate, animations, loop }) {
         super({ position, imageSrc, frameRate, animations, loop });
 
-        this.collisionBlocks = [new CollisionBlock({ width: 22 * 2, height: 16 * 2, position })];
+        this.collisionBlocks = [new CollisionBlock({ width: 22 * 2, height: 16 * 2, position, type: 'box' })];
         this.hitpoints = 2;
         this.hitbox = {
             position: { x: this.position.x, y: this.position.y },
@@ -11,7 +11,6 @@ class Box extends Sprite {
         };
 
         this.isBreaking = false;
-        this.breakFrame = 0;
         this.breakPieces = [];
     }
 
@@ -39,11 +38,12 @@ class Box extends Sprite {
                 velocity: { x: (Math.random() - 0.5) * 2, y: -Math.random() * 2 },
                 rotation: Math.random() * 360
             }));
+            this.breakPieces[i].collisionBlocks = collisionBlocks
         }
         setTimeout(() => {
             this.collisionBlocks[0].position = 0;
-            this.position = 0;
-        }, 100);
+            this.fade()
+        }, 100); 
     }
 
     update() {

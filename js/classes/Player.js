@@ -232,6 +232,7 @@ class Player extends Sprite {
                     }
                 })
                 boxes.forEach((box) => {
+                    if (box.isBreaking) return
                     if (this.attackHitboxRight.position.x + this.attackHitboxRight.width >= box.hitbox.position.x &&
                         this.attackHitboxRight.position.x <= box.hitbox.position.x + box.hitbox.width &&
                         this.attackHitboxRight.position.y + this.attackHitboxRight.height >= box.hitbox.position.y &&
@@ -253,6 +254,7 @@ class Player extends Sprite {
                     }
                 })
                 boxes.forEach((box) => {
+                    if (box.isBreaking) return
                     if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= box.hitbox.position.x &&
                         this.attackHitboxLeft.position.x <= box.hitbox.position.x + box.hitbox.width &&
                         this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= box.hitbox.position.y &&
