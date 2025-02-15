@@ -40,10 +40,11 @@ class Box extends Sprite {
             }));
             this.breakPieces[i].collisionBlocks = collisionBlocks
         }
+        diamonds.push(...createDiamonds([[this.position.x, this.position.y]]))
         setTimeout(() => {
             this.collisionBlocks[0].position = 0;
             this.fade()
-        }, 100); 
+        }, 100);
     }
 
     update() {
