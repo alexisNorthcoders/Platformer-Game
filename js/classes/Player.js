@@ -231,6 +231,16 @@ class Player extends Sprite {
 
                     }
                 })
+                boxes.forEach((box) => {
+                    if (this.attackHitboxRight.position.x + this.attackHitboxRight.width >= box.hitbox.position.x &&
+                        this.attackHitboxRight.position.x <= box.hitbox.position.x + box.hitbox.width &&
+                        this.attackHitboxRight.position.y + this.attackHitboxRight.height >= box.hitbox.position.y &&
+                        this.attackHitboxRight.position.y <= box.hitbox.position.y + box.hitbox.height) {
+
+                        box.hit()
+
+                    }
+                })
             }
             else {
                 enemies.forEach((enemy) => {
@@ -242,6 +252,15 @@ class Player extends Sprite {
                         enemy.hit()
                     }
                 })
+                boxes.forEach((box) => {
+                    if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= box.hitbox.position.x &&
+                        this.attackHitboxLeft.position.x <= box.hitbox.position.x + box.hitbox.width &&
+                        this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= box.hitbox.position.y &&
+                        this.attackHitboxLeft.position.y <= box.hitbox.position.y + box.hitbox.height) {
+
+                        box.hit()
+                    }
+                })
             }
 
         }
@@ -249,13 +268,15 @@ class Player extends Sprite {
 
     checkDiamondHitCollision() {
 
-        diamonds.forEach((diamond, index) => {
-            if (this.hitbox.position.x + this.hitbox.width >= diamond.hitbox.position.x &&
-                this.hitbox.position.x <= diamond.hitbox.position.x + diamond.hitbox.width &&
-                this.hitbox.position.y + this.hitbox.height >= diamond.hitbox.position.y &&
-                this.hitbox.position.y <= diamond.hitbox.position.y + diamond.hitbox.height) {
+        diamonds.forEach((diamond) => {
+            if (diamond.loaded) {
+                if (this.hitbox.position.x + this.hitbox.width >= diamond.hitbox.position.x &&
+                    this.hitbox.position.x <= diamond.hitbox.position.x + diamond.hitbox.width &&
+                    this.hitbox.position.y + this.hitbox.height >= diamond.hitbox.position.y &&
+                    this.hitbox.position.y <= diamond.hitbox.position.y + diamond.hitbox.height) {
 
-                diamond.hit(index)
+                    diamond.hit()
+                }
             }
         })
     }

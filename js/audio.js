@@ -26,7 +26,6 @@ function playJumpSound() {
     sound.connect(audioContext.destination);
     sound.start();
 }
-
 function playHammerSound() {
     if (swingBuffer.includes(null)) return;
 
@@ -41,7 +40,6 @@ function playHitSound() {
 
     let sound = audioContext.createBufferSource();
     const random = Math.floor(Math.random() * hitBuffer.length)
-    console.log(random)
     sound.buffer = hitBuffer[random];
     sound.connect(audioContext.destination);
     sound.start();
@@ -77,6 +75,7 @@ function stopStepSound() {
         currentStepSound = null;
     }
 }
+
 // load sound files
 
 async function loadSound(url) {
@@ -93,13 +92,17 @@ async function loadSound(url) {
 
 async function loadSounds() {
 
-    swingBuffer[0] = await loadSound("sounds/swing.wav");
-    swingBuffer[1] = await loadSound("sounds/swing2.wav");
-    swingBuffer[2] = await loadSound("sounds/swing3.wav");
-    hitBuffer[0] = await loadSound("sounds/hit.wav");
-    hitBuffer[1] = await loadSound("sounds/hit2.wav");
-    hitBuffer[2] = await loadSound("sounds/hit3.wav");
-    hitBuffer[3] = await loadSound("sounds/hit4.wav");
+    const swingFiles = ["swing.wav", "swing2.wav", "swing3.wav"];
+    const hitFiles = ["hit.wav", "hit2.wav", "hit3.wav", "hit4.wav"];
+
+    // Load swing sounds
+    for (let i = 0; i < swingFiles.length; i++) {
+        swingBuffer[i] = await loadSound(`sounds/${swingFiles[i]}`);
+    }
+    // Load hit sounds
+    for (let i = 0; i < hitFiles.length; i++) {
+        hitBuffer[i] = await loadSound(`sounds/${hitFiles[i]}`);
+    }
     stepBuffer = await loadSound("sounds/step.wav");
     jumpBuffer = await loadSound("sounds/jump.wav");
     pickBuffer = await loadSound("sounds/pick.wav");

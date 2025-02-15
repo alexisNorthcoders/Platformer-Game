@@ -12,6 +12,8 @@ class Enemy extends Sprite {
         this.attacking = false
 
         this.collisionBlocks = collisionBlocks
+
+        this.attackInterval = setInterval(() => this.attack(), 3000);
     }
 
     move(runSpeed = -1) {
@@ -22,6 +24,7 @@ class Enemy extends Sprite {
             playHitSound()
             if (this.hitpoints === 0) {
                 this.playerHit = true
+                clearInterval(this.attackInterval);
                 return
 
             } if (this.hitpoints > 0) {
@@ -49,13 +52,14 @@ class Enemy extends Sprite {
     }
 
     attack() {
-        this.attacking = true
-        this.switchSprite('attack')
-        this.currentAnimation = {
-            onComplete: () => {
-                this.switchSprite('idle')
-                this.attacking = false
-            }
+        if (!this.attacking && this.hitpoints) {
+            this.attacking = true;
+            this.switchSprite('attack');
+            this.currentAnimation = {
+                onComplete: () => {
+                    this.attacking = false;
+                }
+            };
         }
     }
 
@@ -66,7 +70,7 @@ class Enemy extends Sprite {
 
     switchSprite(name) {
 
-        if (this.image === this.animations[name].image) return
+        if (!this.animations[name] || this.image === this.animations[name].image) return
 
         else if (!this.hitCooldown) {
 

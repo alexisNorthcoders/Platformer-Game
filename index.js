@@ -9,6 +9,15 @@ let background
 let debugCollisions = false
 let diamondCount = 0
 
+const breakImages = [
+    './Sprites/08-Box/Box Pieces 1.png',
+    './Sprites/08-Box/Box Pieces 2.png',
+    './Sprites/08-Box/Box Pieces 3.png',
+    './Sprites/08-Box/Box Pieces 4.png'
+];
+
+
+
 const player = new Player({
 
     imageSrc: './img/king/IdleRight.png',
@@ -176,7 +185,24 @@ const diamond_1 = new Sprite({
 let numberSprites = createNumberSprites(diamondCount);
 
 function createBoxes(positions) {
-    return positions.map(position => new Box({ position: { x: position[0], y: position[1] } }))
+    return positions.map(position => new Box(
+        {
+            position: { x: position[0], y: position[1] },
+            animations: {
+                hit: {
+                    frameRate: 1,
+                    frameBuffer: 1,
+                    loop: false,
+                    imageSrc: './Sprites/08-Box/Hit.png',
+                },
+                idle: {
+                    frameRate: 1,
+                    frameBuffer: 1,
+                    loop: false,
+                    imageSrc: './Sprites/08-Box/Idle.png',
+                }
+            }
+        }))
 }
 function createEnemies(positions) {
     return positions.map(position => new Enemy({
@@ -210,18 +236,18 @@ function createEnemies(positions) {
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Dead (34x28).png'
             },
-            attack:{
+            attack: {
                 frameRate: 5,
                 frameBuffer: 12,
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Attack (34x28).png'
-            },     
-            jump:{
+            },
+            jump: {
                 frameRate: 1,
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Jump (34x28).png'
             },
-            fall:{
+            fall: {
                 frameRate: 1,
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Fall (34x28).png'
@@ -255,7 +281,7 @@ function createEnemyKing(positions) {
     }))
 }
 function createPlatforms(positions) {
-    return positions.map(position => new Platform({ position: { x: position[0], y: position[1] } }))
+    return positions.map(position => new Platform({ position: { x: position[0], y: position[1] - 13 } }))
 }
 function createDoor(positions) {
     return positions.map(position => new Sprite({
@@ -278,7 +304,7 @@ function createBackground(level) {
 }
 function createDiamonds(positions) {
     return positions.map(position => new Diamond({
-        position: { x: position[0], y: position[1] },
+        position: { x: position[0] - 10, y: position[1] + 10 },
         autoplay: false,
         loop: false,
         frameRate: 10,
@@ -344,7 +370,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, position);
 }
 
-let level = 8
+let level = 10
 const levels = {
     1: { playerPosition: { x: 50, y: 200 } },
     2: { playerPosition: { x: 40, y: 30 } },
@@ -354,7 +380,8 @@ const levels = {
     6: { playerPosition: { x: 80, y: 500 } },
     7: { playerPosition: { x: 50, y: 100 } },
     8: { playerPosition: { x: 50, y: 500 } },
-    9: { playerPosition: { x: 800, y: 300 } }
+    9: { playerPosition: { x: 800, y: 300 } },
+    10: { playerPosition: { x: 800, y: 100 } },
 };
 
 const keys = {
@@ -399,6 +426,7 @@ function animate() {
 
     boxes.forEach(box => {
         box.draw(2)
+        box.update()
     })
 
 
@@ -423,18 +451,18 @@ function animate() {
     player.draw(2)
     if (diamonds) {
         diamonds.forEach(diamond => {
-            diamond.draw(2)
-            diamond.update()
+            if (diamond.loaded) {
+                diamond.draw(2)
+                diamond.update()
+            }
         })
     }
     player.update()
-
 
     if (player.isShowingHello) {
 
         helloDialogue.draw(2)
     }
-
 
     // debug collisionBlocks
     if (debugCollisions) {
