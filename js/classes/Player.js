@@ -8,7 +8,7 @@ class Player extends Sprite {
         this.canAttack = true
         this.running = false
         this.hitCooldownDuration = 1000
-        this.isShowingHello = false;
+        this.isShowingHello = false
         this.canJump = true
         this.attacking = false
         this.position = {
@@ -287,6 +287,7 @@ class Player extends Sprite {
 
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
+            if (collisionBlock.type === 'platform') continue
             // if collision exists
             if (this.hitbox.position.x <= collisionBlock.position.x + collisionBlock.width &&
                 this.hitbox.position.x + this.hitbox.width >= collisionBlock.position.x &&
@@ -309,34 +310,55 @@ class Player extends Sprite {
 
     }
     checkForVerticalCollisions() {
-        // check for vertical collisions
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
-            // if collision exists
-            if (this.hitbox.position.x <= collisionBlock.position.x + collisionBlock.width &&
+
+            if (
+                this.hitbox.position.x <= collisionBlock.position.x + collisionBlock.width &&
                 this.hitbox.position.x + this.hitbox.width >= collisionBlock.position.x &&
                 this.hitbox.position.y + this.hitbox.height >= collisionBlock.position.y &&
-                this.hitbox.position.y <= collisionBlock.position.y + collisionBlock.height) {
-                this.isGrounded = true
+                this.hitbox.position.y <= collisionBlock.position.y + collisionBlock.height
+            ) {
+                this.isGrounded = true;
+
+                if (collisionBlock.type === "platform") {
+                    // Ignore collision if moving UP (jumping through)
+                    if (this.velocity.y < 0) {
+                        continue; // Ignore platform when going up
+                    }
+
+                    // If moving DOWN, allow landing only if feet are above the platform
+                    if (this.velocity.y > 0) {
+                        if (this.hitbox.position.y + this.hitbox.height - this.velocity.y <= collisionBlock.position.y) {
+                            this.velocity.y = 0;
+                            const offset = this.hitbox.position.y - this.position.y + this.hitbox.height;
+                            this.position.y = collisionBlock.position.y - offset - 0.01;
+                            break;
+                        }
+                    }
+
+                    continue;
+                }
+
                 if (this.velocity.y < 0) {
-                    this.velocity.y = 0
-                    const offset = this.hitbox.position.y - this.position.y
-                    this.position.y = collisionBlock.position.y + collisionBlock.height - offset + 0.01
-
-                    break
+                    this.velocity.y = 0;
+                    const offset = this.hitbox.position.y - this.position.y;
+                    this.position.y = collisionBlock.position.y + collisionBlock.height - offset + 0.01;
+                    break;
                 }
+
                 if (this.velocity.y > 0) {
-                    this.velocity.y = 0
-                    const offset = this.hitbox.position.y - this.position.y + this.hitbox.height
-                    this.position.y = collisionBlock.position.y - offset - 0.01
-
-                    break
+                    this.velocity.y = 0;
+                    const offset = this.hitbox.position.y - this.position.y + this.hitbox.height;
+                    this.position.y = collisionBlock.position.y - offset - 0.01;
+                    break;
                 }
-
-
-            } else { this.isGrounded = false }
+            } else {
+                this.isGrounded = false;
+            }
         }
     }
+
     applyGravity() {
 
         this.velocity.y += this.gravity

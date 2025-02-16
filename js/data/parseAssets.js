@@ -18,7 +18,7 @@ async function loadAssets(level) {
         let enemyData = undefined;
         let kingData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -32,6 +32,7 @@ async function loadAssets(level) {
         const enemyLayer = layers["enemy"];
         const kingLayer = layers["enemyKing"];
         const collisionsLayer = layers["collisions"];
+        const platforms_2Layer = layers["platform_2"];
         const diamondsLayer = layers["diamonds"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -51,6 +52,7 @@ async function loadAssets(level) {
         }
 
         return {
+            platforms_2: platforms_2Layer.data,
             collisions: collisionsLayer.data,
             boxes: getAssetsPositions(boxesData),
             door: getAssetsPositions(portaData),

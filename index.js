@@ -322,7 +322,9 @@ function createDiamonds(positions) {
     }))
 }
 async function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds } = await loadAssets(level)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2 } = await loadAssets(level)
+    const platforms_2Collisiongs = platforms_2.parse2D()
+    const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D()
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
@@ -332,6 +334,7 @@ async function createAssets(level) {
         enemies: createEnemies(enemy),
         enemyKing: createEnemyKing(enemyKing),
         collisionBlocks,
+        platformsBlocks,
         background: createBackground(level),
         diamonds: createDiamonds(diamonds)
     }
@@ -342,9 +345,9 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds } = await createAssets(level));
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks } = await createAssets(level));
 
-    collisionBlocks = collisionBlocks.concat(
+    collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),
         platforms.flatMap(platform => platform.collisionBlocks)
     );
@@ -370,7 +373,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, position);
 }
 
-let level = 1
+let level = 7
 const levels = {
     1: { playerPosition: { x: 50, y: 200 } },
     2: { playerPosition: { x: 40, y: 30 } },
