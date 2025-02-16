@@ -390,7 +390,7 @@ const levels = {
     9: { playerPosition: { x: 800, y: 300 }, lastDirection: 'left' },
     10: { playerPosition: { x: 800, y: 100 }, lastDirection: 'left' },
     11: { playerPosition: { x: 34, y: 425 }, lastDirection: 'right' },
-    12: { playerPosition: { x: 34, y: 425 }, lastDirection: 'right' },
+    12: { playerPosition: { x: 34, y: 325 }, lastDirection: 'right' },
 };
 
 const keys = {
