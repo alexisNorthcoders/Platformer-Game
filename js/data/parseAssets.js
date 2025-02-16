@@ -52,7 +52,7 @@ async function loadAssets(level) {
         }
 
         return {
-            platforms_2: platforms_2Layer.data,
+            platforms_2: platforms_2Layer ? platforms_2Layer.data : [],
             collisions: collisionsLayer.data,
             boxes: getAssetsPositions(boxesData),
             door: getAssetsPositions(portaData),
