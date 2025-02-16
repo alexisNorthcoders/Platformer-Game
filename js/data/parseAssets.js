@@ -5,7 +5,7 @@ function getAssetsPositions(data) {
     ]);
 }
 
-async function loadAssets(level) {
+async function loadAssets(level, scale) {
     try {
         const response = await fetch(`/kings-and-pigs/js/data/levels/Level_${level}.json`);
         if (!response.ok) {
@@ -50,7 +50,7 @@ async function loadAssets(level) {
         if (kingLayer) {
             kingData = kingLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
-
+console.log(jsonData)
         return {
             platforms_2: platforms_2Layer ? platforms_2Layer.data : [],
             collisions: collisionsLayer.data,
@@ -59,7 +59,8 @@ async function loadAssets(level) {
             enemy: enemyData ? getAssetsPositions(enemyData) : [],
             platforms: platformsData ? getAssetsPositions(platformsData) : [],
             enemyKing: kingData ? getAssetsPositions(kingData) : [],
-            diamonds: diamondsData ? getAssetsPositions(diamondsData) : []
+            diamonds: diamondsData ? getAssetsPositions(diamondsData) : [],
+            levelWidth: jsonData.width * scale * 32
         };
     } catch (error) {
         console.error(error.message);

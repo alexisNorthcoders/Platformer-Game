@@ -8,6 +8,7 @@ let collisionBlocks
 let background
 let debugCollisions = false
 let diamondCount = 0
+let mapWidth
 
 const breakImages = [
     './Sprites/08-Box/Box Pieces 1.png',
@@ -322,7 +323,7 @@ function createDiamonds(positions) {
     }))
 }
 async function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2 } = await loadAssets(level)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D()
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D()
@@ -336,7 +337,8 @@ async function createAssets(level) {
         collisionBlocks,
         platformsBlocks,
         background: createBackground(level),
-        diamonds: createDiamonds(diamonds)
+        diamonds: createDiamonds(diamonds),
+        levelWidth
     }
 }
 function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
@@ -345,7 +347,7 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks } = await createAssets(level));
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth } = await createAssets(level));
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),
@@ -356,6 +358,8 @@ async function initializeLevel(level, playerPosition, lastDirection) {
 
     player.position = playerPosition;
     player.lastDirection = lastDirection
+
+    mapWidth = levelWidth
 
     if (player.currentAnimation) player.currentAnimation.isActive = false;
     if (level === 1) {
@@ -373,7 +377,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, level.playerPosition, level.lastDirection);
 }
 
-let level = 11
+let level = 12
 const levels = {
     1: { playerPosition: { x: 50, y: 200 }, lastDirection: 'right' },
     2: { playerPosition: { x: 40, y: 30 }, lastDirection: 'right' },
@@ -386,6 +390,7 @@ const levels = {
     9: { playerPosition: { x: 800, y: 300 }, lastDirection: 'left' },
     10: { playerPosition: { x: 800, y: 100 }, lastDirection: 'left' },
     11: { playerPosition: { x: 34, y: 425 }, lastDirection: 'right' },
+    12: { playerPosition: { x: 34, y: 425 }, lastDirection: 'right' },
 };
 
 const keys = {
@@ -407,79 +412,99 @@ const overlay = {
     opacity: 0
 }
 
+let camera = {
+    x: 0,
+    y: 0
+}
+
 function animate() {
     c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
 
-    background.draw(2)
-    life.draw(2)
-    heart_1.draw(2)
-    heart_2.draw(2)
-    heart_3.draw(2)
-    diamond_1.draw(2)
+    // Clear canvas
+    c.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Calculate camera position
+    let playerCenterX = player.position.x - canvas.width / 2;
+    let maxCameraX = mapWidth - canvas.width;
+
+    // Clamp camera position
+    camera.x = Math.max(0, Math.min(playerCenterX, maxCameraX));
+
+    // Apply camera transformation
+    c.save();
+    c.translate(-camera.x, 0);  // Move everything relative to camera
+
+    // Draw background & UI elements
+    background.draw(2);
+    life.draw(2);
+    heart_1.draw(2);
+    heart_2.draw(2);
+    heart_3.draw(2);
+    diamond_1.draw(2);
     numberSprites.forEach(sprite => {
         sprite.draw(2);
     });
 
     doors.forEach(door => {
-        door.draw(2)
-    })
+        door.draw(2);
+    });
 
-
-    player.handleInput(keys)
+    player.handleInput(keys);
 
     boxes.forEach(box => {
-        box.draw(2)
-        box.update()
-    })
-
+        box.draw(2);
+        box.update();
+    });
 
     if (platforms) {
         platforms.forEach(platform => {
-            platform.draw(2)
-        })
+            platform.draw(2);
+        });
     }
     if (enemies) {
         enemies.forEach(enemy => {
-            enemy.draw(2)
-            enemy.update()
-        })
+            enemy.draw(2);
+            enemy.update();
+        });
     }
     if (enemyKing) {
         enemyKing.forEach(king => {
-            king.draw(2)
-            king.update()
-        })
+            king.draw(2);
+            king.update();
+        });
     }
 
-    player.draw(2)
+    player.draw(2);
     if (diamonds) {
         diamonds.forEach(diamond => {
             if (diamond.loaded) {
-                diamond.draw(2)
-                diamond.update()
+                diamond.draw(2);
+                diamond.update();
             }
-        })
+        });
     }
-    player.update()
+    player.update();
 
     if (player.isShowingHello) {
-
-        helloDialogue.draw(2)
+        helloDialogue.draw(2);
     }
 
     // debug collisionBlocks
     if (debugCollisions) {
         collisionBlocks.forEach(collisionBlock => {
-            collisionBlock.draw()
-        })
+            collisionBlock.draw();
+        });
     }
 
-    c.save()
-    c.globalAlpha = overlay.opacity
-    c.fillStyle = "black"
-    c.fillRect(0, 0, canvas.width, canvas.height)
-    c.restore()
+    c.restore(); // Restore canvas to default state
+
+    // Overlay effect
+    c.save();
+    c.globalAlpha = overlay.opacity;
+    c.fillStyle = "black";
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.restore();
 }
 
 initLevel(level).then(() => animate())
