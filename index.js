@@ -8,7 +8,10 @@ let collisionBlocks
 let background
 let debugCollisions = false
 let diamondCount = 0
+let enemyCount = 0
 let mapWidth
+let initialEnemies
+let doorClosed = true
 
 const breakImages = [
     './Sprites/08-Box/Box Pieces 1.png',
@@ -184,6 +187,17 @@ const diamond_1 = new Sprite({
     imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
 })
 let numberSprites = createNumberSprites(diamondCount);
+let enemyNumberSprite = createNumberSprites(enemyCount, { x: 50, y: 80 })
+const enemy_face = new Sprite({
+    position: {
+        x: 12,
+        y: 70
+    },
+    frameRate: 4,
+    loop: false,
+    autoplay: false,
+    imageSrc: './Sprites/03-Pig/Dead (34x28).png'
+})
 
 function createBoxes(positions) {
     return positions.map(position => new Box(
@@ -358,6 +372,8 @@ async function initializeLevel(level, playerPosition, lastDirection) {
 
     player.position = playerPosition;
     player.lastDirection = lastDirection
+    initialEnemies = enemies.length
+    doorClosed = true
 
     mapWidth = levelWidth
 
@@ -377,7 +393,7 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, level.playerPosition, level.lastDirection);
 }
 
-let level = 12
+let level = 1
 const levels = {
     1: { playerPosition: { x: 50, y: 200 }, lastDirection: 'right' },
     2: { playerPosition: { x: 40, y: 30 }, lastDirection: 'right' },
@@ -418,8 +434,19 @@ let camera = {
 }
 
 function animate() {
+
+    if (enemies.length) {
+        enemies = enemies.filter(enemy => enemy.opacity)
+    }
     c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
+
+    if (doorClosed && enemies.length <= initialEnemies / 2) {
+        doorClosed = false
+        doors[0].play()
+    }
+
+
 
     // Clear canvas
     c.clearRect(0, 0, canvas.width, canvas.height);
@@ -437,14 +464,6 @@ function animate() {
 
     // Draw background & UI elements
     background.draw(2);
-    life.draw(2);
-    heart_1.draw(2);
-    heart_2.draw(2);
-    heart_3.draw(2);
-    diamond_1.draw(2);
-    numberSprites.forEach(sprite => {
-        sprite.draw(2);
-    });
 
     doors.forEach(door => {
         door.draw(2);
@@ -498,6 +517,22 @@ function animate() {
     }
 
     c.restore(); // Restore canvas to default state
+
+
+    // static life bar
+    life.draw(2);
+    heart_1.draw(2);
+    heart_2.draw(2);
+    heart_3.draw(2);
+    diamond_1.draw(2);
+    enemy_face.draw(1)
+    numberSprites.forEach(sprite => {
+        sprite.draw(2);
+    });
+    enemyNumberSprite.forEach(sprite => {
+        sprite.draw(2);
+    });
+
 
     // Overlay effect
     c.save();

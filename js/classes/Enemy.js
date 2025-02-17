@@ -7,7 +7,7 @@ class Enemy extends Sprite {
             y: 0
         }
         this.gravity = 0.4
-        this.hitpoints = 3
+        this.hitpoints = 2
         this.playerHit = false
         this.attacking = false
 
@@ -35,6 +35,7 @@ class Enemy extends Sprite {
                     this.currentAnimation = {
                         onComplete: () => {
                             this.switchSprite('dead')
+                            enemyNumberSprite = createNumberSprites(++enemyCount, { x: 50, y: 80 });
                             setTimeout(() => this.fade(), 2000)
                         }
                     }

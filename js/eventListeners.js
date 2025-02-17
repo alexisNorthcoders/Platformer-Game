@@ -12,11 +12,12 @@ window.addEventListener('keydown', (event) => {
                     player.hitbox.position.y + player.hitbox.height >= door.position.y &&
                     player.hitbox.position.y <= door.position.y + 2 * door.height
                 ) {
+                    if (doorClosed) return
                     player.velocity.x = 0
                     player.velocity.y = 0
                     player.preventInput = true
                     player.switchSprite('enterDoor')
-                    door.play()
+
                     return
                 }
 

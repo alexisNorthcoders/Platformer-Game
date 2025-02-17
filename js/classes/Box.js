@@ -3,7 +3,7 @@ class Box extends Sprite {
         super({ position, imageSrc, frameRate, animations, loop });
 
         this.collisionBlocks = [new CollisionBlock({ width: 22 * 2, height: 16 * 2, position, type: 'box' })];
-        this.hitpoints = 2;
+        this.hitpoints = 1;
         this.hitbox = {
             position: { x: this.position.x, y: this.position.y },
             width: 44,
