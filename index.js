@@ -370,7 +370,7 @@ async function initializeLevel(level, playerPosition, lastDirection) {
 
     applyCollisions(player, enemies, enemyKing, collisionBlocks);
 
-    player.position = playerPosition;
+    player.setPosition(playerPosition)
     player.lastDirection = lastDirection
     initialEnemies = enemies.length
     doorClosed = true

@@ -29,6 +29,9 @@ class Player extends Sprite {
         this.collisionBlocks = collisionBlocks
 
     }
+    setPosition(position) {
+        this.position = { ...position }
+    }
 
     hello() {
         this.isShowingHello = true;
