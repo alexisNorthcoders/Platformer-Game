@@ -8,9 +8,7 @@ let collisionBlocks
 let background
 let debugCollisions = false
 let diamondCount = 0
-let enemyCount = 0
 let mapWidth
-let initialEnemies
 let doorClosed = true
 
 const breakImages = [
@@ -187,7 +185,7 @@ const diamond_1 = new Sprite({
     imageSrc: './Sprites/12-Live and Coins/Small Diamond (18x14).png'
 })
 let numberSprites = createNumberSprites(diamondCount);
-let enemyNumberSprite = createNumberSprites(enemyCount, { x: 50, y: 80 })
+let enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
 const enemy_face = new Sprite({
     position: {
         x: 12,
@@ -372,7 +370,7 @@ async function initializeLevel(level, playerPosition, lastDirection) {
 
     player.setPosition(playerPosition)
     player.lastDirection = lastDirection
-    initialEnemies = enemies.length
+    EnemyTracker.initializeLevel(enemies.length)
     doorClosed = true
 
     mapWidth = levelWidth
@@ -393,15 +391,15 @@ async function initLevel(levelNumber) {
     await initializeLevel(levelNumber, level.playerPosition, level.lastDirection);
 }
 
-let level = 12
+let level = 1
 const levels = {
     1: { playerPosition: { x: 50, y: 200 }, lastDirection: 'right' },
-    2: { playerPosition: { x: 40, y: 30 }, lastDirection: 'right' },
+    2: { playerPosition: { x: 170, y: 41 }, lastDirection: 'right' },
     3: { playerPosition: { x: 770, y: 100 }, lastDirection: 'left' },
     4: { playerPosition: { x: 100, y: 500 }, lastDirection: 'right' },
     5: { playerPosition: { x: 30, y: 400 }, lastDirection: 'right' },
     6: { playerPosition: { x: 80, y: 500 }, lastDirection: 'right' },
-    7: { playerPosition: { x: 50, y: 100 }, lastDirection: 'right' },
+    7: { playerPosition: { x: 170, y: 41 }, lastDirection: 'right' },
     8: { playerPosition: { x: 50, y: 500 }, lastDirection: 'right' },
     9: { playerPosition: { x: 800, y: 300 }, lastDirection: 'left' },
     10: { playerPosition: { x: 800, y: 100 }, lastDirection: 'left' },
@@ -441,7 +439,7 @@ function animate() {
     c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
 
-    if (doorClosed && enemies.length <= initialEnemies / 2) {
+    if (doorClosed && EnemyTracker.isLevelHalfCleared()) {
         doorClosed = false
         doors[0].play()
     }

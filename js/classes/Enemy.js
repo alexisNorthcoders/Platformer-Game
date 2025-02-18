@@ -35,7 +35,7 @@ class Enemy extends Sprite {
                     this.currentAnimation = {
                         onComplete: () => {
                             this.switchSprite('dead')
-                            enemyNumberSprite = createNumberSprites(++enemyCount, { x: 50, y: 80 });
+                            enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 });
                             setTimeout(() => this.fade(), 2000)
                         }
                     }
