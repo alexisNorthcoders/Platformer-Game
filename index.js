@@ -197,6 +197,15 @@ function animate() {
             king.update();
         });
     }
+    if (cannon) {
+        cannon.forEach(x => {
+            x.draw(2)
+            x.update()
+        })
+    }
+    if (enemyMatch) {
+        enemyMatch.forEach(x => x.draw(2))
+    }
 
     player.draw(2);
     if (diamonds) {

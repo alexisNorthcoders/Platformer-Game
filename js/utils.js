@@ -124,10 +124,38 @@ function createEnemies(positions) {
                 frameRate: 1,
                 loop: false,
                 imageSrc: './Sprites/03-Pig/Fall (34x28).png'
-            },
-
+            }
         }
-
+    }))
+}
+function createEnemiesWithMatch(positions) {
+    return positions.map(position => new Enemy({
+        position: { x: position[0], y: position[1] - 5 },
+        imageSrc: './Sprites/07-Pig With a Match/Match On (26x18).png',
+        frameRate: 3,
+        frameBuffer: 6,
+        loop: true,
+        autoplay: true,
+        animations: {
+            matchOn: {
+                frameRate: 3,
+                frameBuffer: 6,
+                loop: true,
+                imageSrc: './Sprites/07-Pig With a Match/Match On (26x18).png',
+            },
+            lightMatch: {
+                frameRate: 3,
+                frameBuffer: 6,
+                loop: false,
+                imageSrc: './Sprites/07-Pig With a Match/Lighting the Match (26x18).png',
+            },
+            lightCannon: {
+                frameRate: 3,
+                frameBuffer: 12,
+                loop: false,
+                imageSrc: './Sprites/07-Pig With a Match/Lighting the Cannon (26x18).png'
+            }
+        }
     }))
 }
 function createEnemyKing(positions) {
@@ -194,9 +222,26 @@ function createDiamonds(positions) {
         }
     }))
 }
+function createCannon(positions) {
+    return positions.map(position => new Cannon({
+        position: { x: position[0], y: position[1] - 26 },
+        imageSrc: './Sprites/10-Cannon/Idle.png',
+        animations: {
+            idle:{
+                imageSrc: './Sprites/10-Cannon/Idle.png',
+            },
+            shoot: {
+                frameRate: 4,
+                frameBuffer: 10,
+                loop: false,
+                imageSrc: './Sprites/10-Cannon/Shoot (44x28).png',
+            }
+        }
+    }))
+}
 
 async function createAssets(level) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, cannon, enemyMatch } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D()
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D()
@@ -206,6 +251,8 @@ async function createAssets(level) {
         platforms: createPlatforms(platforms),
         doors: createDoor(door),
         enemies: createEnemies(enemy),
+        cannon: createCannon(cannon),
+        enemyMatch: createEnemiesWithMatch(enemyMatch),
         enemyKing: createEnemyKing(enemyKing),
         collisionBlocks,
         platformsBlocks,
@@ -220,7 +267,7 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth } = await createAssets(level));
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level));
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),

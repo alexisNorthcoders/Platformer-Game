@@ -1,7 +1,7 @@
 class Enemy extends Sprite {
-    constructor({ position, collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
-        super({ position, imageSrc, frameRate, animations, loop })
-
+    constructor({ position, collisionBlocks = [], imageSrc, frameRate, frameBuffer, animations, loop }) {
+        super({ position, imageSrc, frameRate, animations, frameBuffer,loop })
+        this.state = 'idle'
         this.velocity = {
             x: 0,
             y: 0
@@ -51,8 +51,27 @@ class Enemy extends Sprite {
             }
         }
     }
+    matchOn(){
+        this.state = 'matchOn'
+        this.switchSprite('matchOn')
+    }
+    shoot(){
+        this.state = 'matchOn'
+        this.switchSprite('lightCannon')
+        this.currentAnimation = {
+            onComplete: () => {
+                this.matchOn()
+            }
+        };
+        cannon[0].shoot()
+    }
+    idle(){
+        this.state = 'idle'
+        this.switchSprite('idle')
+    }
 
     attack() {
+        if (this.state === 'matchOn') return
         if (!this.attacking && this.hitpoints > 0 && !this.playerHit) {
             this.attacking = true;
             this.switchSprite('attack');
@@ -167,7 +186,7 @@ class Enemy extends Sprite {
                 }
                 if (this.velocity.y > 0) {
                     if (this.currentAnimation !== this.animations.idle && !this.playerHit) {
-                        if (!this.attacking) this.switchSprite('idle')
+                        if (!this.attacking && this.state !== 'matchOn') this.switchSprite('idle')
                     }
                     this.velocity.y = 0
                     const offset = this.hitbox.position.y - this.position.y + this.hitbox.height

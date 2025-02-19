@@ -17,8 +17,10 @@ async function loadAssets(level, scale) {
         let diamondsData = undefined;
         let enemyData = undefined;
         let kingData = undefined;
+        let cannonData = undefined;
+        let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -34,6 +36,8 @@ async function loadAssets(level, scale) {
         const collisionsLayer = layers["collisions"];
         const platforms_2Layer = layers["platform_2"];
         const diamondsLayer = layers["diamonds"];
+        const cannonLayer = layers["cannon"];
+        const enemyMatchLayer = layers["enemy_match"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -50,7 +54,13 @@ async function loadAssets(level, scale) {
         if (kingLayer) {
             kingData = kingLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         }
-console.log(jsonData)
+        if (cannonLayer) {
+            cannonData = cannonLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
+        }
+        if (enemyMatchLayer) {
+            enemyMatchData = enemyMatchLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
+        }
+
         return {
             platforms_2: platforms_2Layer ? platforms_2Layer.data : [],
             collisions: collisionsLayer.data,
@@ -60,7 +70,9 @@ console.log(jsonData)
             platforms: platformsData ? getAssetsPositions(platformsData) : [],
             enemyKing: kingData ? getAssetsPositions(kingData) : [],
             diamonds: diamondsData ? getAssetsPositions(diamondsData) : [],
-            levelWidth: jsonData.width * scale * 32
+            levelWidth: jsonData.width * scale * 32,
+            cannon: cannonData ? getAssetsPositions(cannonData) : [],
+            enemyMatch: enemyMatchData ? getAssetsPositions(enemyMatchData) : [],
         };
     } catch (error) {
         console.error(error.message);
