@@ -22,6 +22,7 @@ class Cannon extends Sprite {
 
     shoot() {
         this.switchSprite('shoot')
+        this.cannonBall()
         this.currentAnimation = {
             onComplete: () => {
                 this.switchSprite('idle')

@@ -61,9 +61,10 @@ class Enemy extends Sprite {
         this.currentAnimation = {
             onComplete: () => {
                 this.matchOn()
+                cannon[0].shoot()
             }
         };
-        cannon[0].shoot()
+       
     }
     idle(){
         this.state = 'idle'
