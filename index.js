@@ -111,7 +111,7 @@ const player = new Player({
     }
 })
 
-let level = 1
+let level = 14
 
 const keys = {
     w: {
@@ -234,9 +234,13 @@ function animate() {
 
     // static life bar
     life.draw(2);
-    heart_1.draw(2);
-    heart_2.draw(2);
-    heart_3.draw(2);
+
+    hearts.forEach(heart => {
+        if (heart.loaded) {
+            heart.draw(2);
+        }
+    });
+
     diamond_1.draw(2);
     enemy_face.draw(1)
     numberSprites.forEach(sprite => {

@@ -1,6 +1,7 @@
 class Player extends Sprite {
     constructor({ collisionBlocks = [], imageSrc, frameRate, animations, loop }) {
         super({ imageSrc, frameRate, animations, loop })
+        this.hitpoints = 3
         this.preventInput = false
         this.isGrounded = true
         this.hitCooldown = false
@@ -312,7 +313,24 @@ class Player extends Sprite {
         }
 
     }
+    loseHP() {
+        this.hitpoints--
+        hearts.pop()
+        if (!this.hitpoints) {
+            this.dead = true
+        }
+    }
     checkForVerticalCollisions() {
+
+        if (player.position.y > canvas.height) {
+            this.loseHP()
+            if (this.dead) {
+                console.log('Game Over') // TODO gameover screen
+            }
+            else {
+                this.setPosition(levels[level].playerPosition)
+            }
+        }
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
 

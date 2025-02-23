@@ -34,33 +34,19 @@ const life = new Sprite({
     imageSrc: './img/Live Bar.png'
 })
 
-const heart_1 = new Sprite({
-    position: {
-        x: 22,
-        y: 20
-    },
-    frameRate: 8,
-    frameBuffer: 8,
-    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
-})
-const heart_2 = new Sprite({
-    position: {
-        x: 44,
-        y: 20
-    },
-    frameRate: 8,
-    frameBuffer: 8,
-    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
-})
-const heart_3 = new Sprite({
-    position: {
-        x: 66,
-        y: 20
-    },
-    frameRate: 8,
-    frameBuffer: 8,
-    imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
-})
+const hearts = []
+
+for (let i = 0; i < 3; i++) {
+    hearts.push(new Sprite({
+        position: {
+            x: 22 + i * 22,
+            y: 20
+        },
+        frameRate: 8,
+        frameBuffer: 8,
+        imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
+    }));
+}
 
 const diamond_1 = new Sprite({
     position: {
