@@ -17,3 +17,5 @@
 - Enemy movements jump / run / attack
 
 ![JavaScript platformer game](platformer.gif)
+
+Play the game: https://alexisraspberry.duckdns.org/kings-and-pigs/
