@@ -21,6 +21,8 @@ class BrokenPiece extends Sprite {
         if (this.isGrounded) { super.draw(scale) }
         else {
             c.save();
+
+            c.imageSmoothingEnabled = false;
             c.translate(this.position.x + 5 * scale, this.position.y + 5 * scale);
             c.rotate((this.rotation * Math.PI) / 180);
             c.drawImage(
