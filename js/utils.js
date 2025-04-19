@@ -2,7 +2,8 @@ Array.prototype.parse2D = function () {
     let step;
     if (this.length === 144) step = 16
     else if (this.length === 288) step = 32
-    else step = 30
+    else if (this.length === 432) step = 48
+    else step = 30 
 
     const rows = []
     for (let i = 0; i < this.length; i += step) {

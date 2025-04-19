@@ -111,7 +111,7 @@ const player = new Player({
     }
 })
 
-let level = 1
+let level = 17
 
 const keys = {
     w: {

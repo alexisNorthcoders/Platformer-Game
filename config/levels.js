@@ -14,4 +14,6 @@ const levels = {
     13: { playerPosition: { x: 34, y: 325 }, lastDirection: 'right' },
     14: { playerPosition: { x: 860, y: 70 }, lastDirection: 'left' },
     15: { playerPosition: { x: 50, y: 500 }, lastDirection: 'right' },
+    16: { playerPosition: { x: 1890, y: 100 }, lastDirection: 'left' },
+    17: { playerPosition: { x: 30, y: 400 }, lastDirection: 'right' },
 };
