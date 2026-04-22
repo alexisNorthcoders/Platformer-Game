@@ -1,7 +1,10 @@
 class Diamond extends Sprite {
-    constructor({ autoplay, random, frameBuffer, position, imageSrc, frameRate, animations, loop }) {
+    constructor({ autoplay, random, frameBuffer, position, imageSrc, frameRate, animations, loop, levelId, spawnRawX, spawnRawY }) {
         super({ random, frameBuffer, position, imageSrc, frameRate, animations, loop, autoplay })
         this.diamondHit = false
+        this.levelId = levelId
+        this.spawnRawX = spawnRawX
+        this.spawnRawY = spawnRawY
     }
     updateHitbox() {
         this.hitbox = {
@@ -52,6 +55,9 @@ class Diamond extends Sprite {
         if (!this.diamondHit) {
             playDiamondSound()
             this.diamondHit = true
+            if (this.levelId != null && this.spawnRawX != null && this.spawnRawY != null) {
+                LevelProgressKeys.markDiamondCollected(this.levelId, this.spawnRawX, this.spawnRawY)
+            }
             this.switchSprite('hit')
             this.fade()
             setTimeout(() => {

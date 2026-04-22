@@ -1,6 +1,7 @@
 class Enemy extends Sprite {
-    constructor({ position, collisionBlocks = [], imageSrc, frameRate, frameBuffer, animations, loop }) {
+    constructor({ position, collisionBlocks = [], imageSrc, frameRate, frameBuffer, animations, loop, spawnTrack }) {
         super({ position, imageSrc, frameRate, animations, frameBuffer,loop })
+        this.spawnTrack = spawnTrack || null
         this.state = 'idle'
         this.velocity = {
             x: 0,
@@ -36,6 +37,14 @@ class Enemy extends Sprite {
                         onComplete: () => {
                             this.switchSprite('dead')
                             enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 });
+                            if (this.spawnTrack) {
+                                LevelProgressKeys.markEnemyDefeated(
+                                    this.spawnTrack.levelId,
+                                    this.spawnTrack.kind,
+                                    this.spawnTrack.spawnX,
+                                    this.spawnTrack.spawnY
+                                )
+                            }
                             setTimeout(() => this.fade(), 2000)
                         }
                     }
