@@ -277,6 +277,12 @@ async function initializeLevel(level, playerPosition, lastDirection) {
 
     applyCollisions(player, enemies, enemyKing, collisionBlocks);
 
+    if (player.contactDamageTimeoutId) {
+        clearTimeout(player.contactDamageTimeoutId)
+        player.contactDamageTimeoutId = null
+    }
+    player.hitCooldown = false
+
     player.setPosition(playerPosition)
     player.lastDirection = lastDirection
     EnemyTracker.initializeLevel(enemies.length)
