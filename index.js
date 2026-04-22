@@ -257,6 +257,45 @@ function animate() {
     c.fillStyle = "black";
     c.fillRect(0, 0, canvas.width, canvas.height);
     c.restore();
+
+    if (player.gameOver) {
+        c.save()
+        c.fillStyle = 'rgba(0, 0, 0, 0.45)'
+        c.fillRect(0, 0, canvas.width, canvas.height)
+        c.fillStyle = '#f5f0e6'
+        c.font = 'bold 28px sans-serif'
+        c.textAlign = 'center'
+        c.textBaseline = 'middle'
+        c.fillText('Press R to restart', canvas.width / 2, canvas.height / 2)
+        c.restore()
+    }
+}
+
+window.restartFromGameOver = async () => {
+    if (!player.gameOver || player._restarting) return
+    player._restarting = true
+    try {
+        keys.w.pressed = false
+        keys.a.pressed = false
+        keys.d.pressed = false
+        keys.space.pressed = false
+        player.gameOver = false
+        player.dead = false
+        player.hitpoints = 3
+        player.preventInput = false
+        player.hitCooldown = false
+        player.isShowingHello = false
+        if (player.contactDamageTimeoutId) {
+            clearTimeout(player.contactDamageTimeoutId)
+            player.contactDamageTimeoutId = null
+        }
+        resetHearts()
+        await initLevel(level)
+        if (player.lastDirection === 'left') player.switchSprite('idleLeft')
+        else player.switchSprite('idleRight')
+    } finally {
+        player._restarting = false
+    }
 }
 
 initLevel(level).then(() => animate())

@@ -1,4 +1,10 @@
 window.addEventListener('keydown', (event) => {
+    if (player.gameOver && (event.key === 'r' || event.key === 'R')) {
+        event.preventDefault()
+        if (window.restartFromGameOver) window.restartFromGameOver()
+        return
+    }
+
     if (player.preventInput) return
 
 
