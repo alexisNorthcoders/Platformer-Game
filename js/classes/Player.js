@@ -9,6 +9,7 @@ class Player extends Sprite {
         this.canAttack = true
         this.running = false
         this.hitCooldownDuration = 1000
+        this.contactDamageTimeoutId = null
         this.isShowingHello = false
         this.canJump = true
         this.attacking = false
@@ -68,6 +69,10 @@ class Player extends Sprite {
 
         if (diamonds.length) {
             this.checkDiamondHitCollision()
+        }
+
+        if (enemies?.length) {
+            this.checkEnemyContactDamage()
         }
 
         this.applyGravity()
@@ -270,6 +275,47 @@ class Player extends Sprite {
             }
 
         }
+    }
+
+    checkEnemyContactDamage() {
+        if (this.dead || this.hitCooldown) return
+
+        for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i]
+            if (!enemy.loaded || !enemy.opacity || enemy.hitpoints <= 0) continue
+
+            const e = enemy.hitbox
+            const p = this.hitbox
+            if (p.position.x + p.width >= e.position.x &&
+                p.position.x <= e.position.x + e.width &&
+                p.position.y + p.height >= e.position.y &&
+                p.position.y <= e.position.y + e.height) {
+                this.takeContactDamageFromEnemy(enemy)
+                return
+            }
+        }
+    }
+
+    takeContactDamageFromEnemy(enemyForKnockback) {
+        this.hitCooldown = true
+        playHitSound()
+        this.switchSprite('hit')
+        this.loseHP()
+
+        const knockbackSpeed = 10
+        const playerCx = this.hitbox.position.x + this.hitbox.width / 2
+        const enemyCx = enemyForKnockback.hitbox.position.x + enemyForKnockback.hitbox.width / 2
+        this.velocity.x = playerCx < enemyCx ? -knockbackSpeed : knockbackSpeed
+        this.velocity.y = Math.min(this.velocity.y, -4)
+
+        this.contactDamageTimeoutId = setTimeout(() => {
+            this.contactDamageTimeoutId = null
+            this.hitCooldown = false
+            if (!this.dead && !this.action && !this.attacking) {
+                if (this.lastDirection === 'right') this.switchSprite('idleRight')
+                else this.switchSprite('idleLeft')
+            }
+        }, this.hitCooldownDuration)
     }
 
     checkDiamondHitCollision() {
