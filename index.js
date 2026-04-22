@@ -207,7 +207,10 @@ function animate() {
         })
     }
     if (enemyMatch) {
-        enemyMatch.forEach(x => x.draw(2))
+        enemyMatch.forEach(x => {
+            x.draw(2)
+            x.update()
+        })
     }
 
     player.draw(2);

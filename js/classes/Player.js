@@ -74,7 +74,7 @@ class Player extends Sprite {
             this.checkDiamondHitCollision()
         }
 
-        if (enemies?.length) {
+        if (enemies?.length || enemyKing?.length || enemyMatch?.length) {
             this.checkEnemyContactDamage()
         }
 
@@ -287,18 +287,23 @@ class Player extends Sprite {
     checkEnemyContactDamage() {
         if (this.dead || this.hitCooldown) return
 
-        for (let i = 0; i < enemies.length; i++) {
-            const enemy = enemies[i]
-            if (!enemy.loaded || !enemy.opacity || enemy.hitpoints <= 0) continue
+        const groups = [enemies, enemyKing, enemyMatch]
+        for (let g = 0; g < groups.length; g++) {
+            const group = groups[g]
+            if (!group?.length) continue
+            for (let i = 0; i < group.length; i++) {
+                const enemy = group[i]
+                if (!enemy.loaded || !enemy.opacity || enemy.hitpoints <= 0) continue
 
-            const e = enemy.hitbox
-            const p = this.hitbox
-            if (p.position.x + p.width >= e.position.x &&
-                p.position.x <= e.position.x + e.width &&
-                p.position.y + p.height >= e.position.y &&
-                p.position.y <= e.position.y + e.height) {
-                this.takeContactDamageFromEnemy(enemy)
-                return
+                const e = enemy.hitbox
+                const p = this.hitbox
+                if (p.position.x + p.width >= e.position.x &&
+                    p.position.x <= e.position.x + e.width &&
+                    p.position.y + p.height >= e.position.y &&
+                    p.position.y <= e.position.y + e.height) {
+                    this.takeContactDamageFromEnemy(enemy)
+                    return
+                }
             }
         }
     }

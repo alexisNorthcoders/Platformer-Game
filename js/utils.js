@@ -314,10 +314,11 @@ async function createAssets(level, options = {}) {
         levelWidth
     }
 }
-function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
+function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks) {
     player.collisionBlocks = collisionBlocks
     enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
+    enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
     ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
@@ -327,7 +328,7 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
         platforms.flatMap(platform => platform.collisionBlocks)
     );
 
-    applyCollisions(player, enemies, enemyKing, collisionBlocks);
+    applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks);
 
     if (player.contactDamageTimeoutId) {
         clearTimeout(player.contactDamageTimeoutId)
