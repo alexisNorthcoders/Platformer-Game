@@ -36,17 +36,22 @@ const life = new Sprite({
 
 const hearts = []
 
-for (let i = 0; i < 3; i++) {
-    hearts.push(new Sprite({
-        position: {
-            x: 22 + i * 22,
-            y: 20
-        },
-        frameRate: 8,
-        frameBuffer: 8,
-        imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
-    }));
+function resetHearts() {
+    hearts.length = 0
+    for (let i = 0; i < 3; i++) {
+        hearts.push(new Sprite({
+            position: {
+                x: 22 + i * 22,
+                y: 20
+            },
+            frameRate: 8,
+            frameBuffer: 8,
+            imageSrc: './Sprites/12-Live and Coins/Small Heart Idle (18x14).png'
+        }))
+    }
 }
+
+resetHearts()
 
 const diamond_1 = new Sprite({
     position: {

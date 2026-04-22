@@ -10,6 +10,7 @@ class Player extends Sprite {
         this.running = false
         this.hitCooldownDuration = 1000
         this.contactDamageTimeoutId = null
+        this.gameOver = false
         this.isShowingHello = false
         this.canJump = true
         this.attacking = false
@@ -55,6 +56,8 @@ class Player extends Sprite {
         if (this.isGrounded && this.running) playStepSound()
         if (!this.running || !this.isGrounded) stopStepSound()
 
+        if (this.gameOver) return
+
         // blue box 
         //c.fillStyle = 'rgba(0,0,255,0)'
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
@@ -74,6 +77,8 @@ class Player extends Sprite {
         if (enemies?.length) {
             this.checkEnemyContactDamage()
         }
+
+        if (this.gameOver) return
 
         this.applyGravity()
 
@@ -141,6 +146,8 @@ class Player extends Sprite {
     }
 
     handleInput(keys) {
+
+        if (this.gameOver) return
 
         if (!keys.a.pressed && !keys.d.pressed) this.running = false;
         if (!keys.space.pressed) this.canAttack = true;
@@ -302,20 +309,24 @@ class Player extends Sprite {
         this.switchSprite('hit')
         this.loseHP()
 
-        const knockbackSpeed = 10
-        const playerCx = this.hitbox.position.x + this.hitbox.width / 2
-        const enemyCx = enemyForKnockback.hitbox.position.x + enemyForKnockback.hitbox.width / 2
-        this.velocity.x = playerCx < enemyCx ? -knockbackSpeed : knockbackSpeed
-        this.velocity.y = Math.min(this.velocity.y, -4)
+        if (!this.dead) {
+            const knockbackSpeed = 10
+            const playerCx = this.hitbox.position.x + this.hitbox.width / 2
+            const enemyCx = enemyForKnockback.hitbox.position.x + enemyForKnockback.hitbox.width / 2
+            this.velocity.x = playerCx < enemyCx ? -knockbackSpeed : knockbackSpeed
+            this.velocity.y = Math.min(this.velocity.y, -4)
+        }
 
-        this.contactDamageTimeoutId = setTimeout(() => {
-            this.contactDamageTimeoutId = null
-            this.hitCooldown = false
-            if (!this.dead && !this.action && !this.attacking) {
-                if (this.lastDirection === 'right') this.switchSprite('idleRight')
-                else this.switchSprite('idleLeft')
-            }
-        }, this.hitCooldownDuration)
+        if (!this.dead) {
+            this.contactDamageTimeoutId = setTimeout(() => {
+                this.contactDamageTimeoutId = null
+                this.hitCooldown = false
+                if (!this.dead && !this.action && !this.attacking) {
+                    if (this.lastDirection === 'right') this.switchSprite('idleRight')
+                    else this.switchSprite('idleLeft')
+                }
+            }, this.hitCooldownDuration)
+        }
     }
 
     checkDiamondHitCollision() {
@@ -360,22 +371,28 @@ class Player extends Sprite {
 
     }
     loseHP() {
+        if (this.hitpoints <= 0) return
         this.hitpoints--
         hearts.pop()
         if (!this.hitpoints) {
             this.dead = true
+            this.gameOver = true
+            this.preventInput = true
+            this.velocity.x = 0
+            this.velocity.y = 0
+            this.running = false
+            if (this.contactDamageTimeoutId) {
+                clearTimeout(this.contactDamageTimeoutId)
+                this.contactDamageTimeoutId = null
+            }
+            this.hitCooldown = true
         }
     }
     checkForVerticalCollisions() {
 
         if (player.position.y > canvas.height) {
             this.loseHP()
-            if (this.dead) {
-                console.log('Game Over') // TODO gameover screen
-            }
-            else {
-                this.setPosition(levels[level].playerPosition)
-            }
+            this.setPosition(levels[level].playerPosition)
         }
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
