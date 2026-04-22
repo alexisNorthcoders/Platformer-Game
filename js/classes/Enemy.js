@@ -1,7 +1,8 @@
 class Enemy extends Sprite {
-    constructor({ position, collisionBlocks = [], imageSrc, frameRate, frameBuffer, animations, loop, spawnTrack }) {
+    constructor({ position, collisionBlocks = [], imageSrc, frameRate, frameBuffer, animations, loop, spawnTrack, enemyVariant = 'pig' }) {
         super({ position, imageSrc, frameRate, animations, frameBuffer,loop })
         this.spawnTrack = spawnTrack || null
+        this.enemyVariant = enemyVariant
         this.state = 'idle'
         this.velocity = {
             x: 0,
@@ -141,13 +142,27 @@ class Enemy extends Sprite {
     }
 
     updateHitbox() {
+        if (!this.loaded) {
+            this.hitbox = {
+                position: { x: this.position.x, y: this.position.y },
+                width: 0,
+                height: 0
+            }
+            return
+        }
+        const configs = {
+            pig: { ox: 23, oy: 30, w: 37, h: 28 },
+            king: { ox: 24, oy: 30, w: 38, h: 28 },
+            match: { ox: 6, oy: 8, w: 20, h: 12 }
+        }
+        const cfg = configs[this.enemyVariant] || configs.pig
         this.hitbox = {
             position: {
-                x: this.position.x + 23,
-                y: this.position.y + 30
+                x: this.position.x + cfg.ox,
+                y: this.position.y + cfg.oy
             },
-            width: 37,
-            height: 28
+            width: cfg.w,
+            height: cfg.h
         }
     }
 

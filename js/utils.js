@@ -166,6 +166,7 @@ function createEnemies(positions, levelNum) {
 function createEnemiesWithMatch(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] - 5 },
+        enemyVariant: 'match',
         spawnTrack: { levelId: levelNum, kind: 'match', spawnX: position[0], spawnY: position[1] },
         imageSrc: './Sprites/07-Pig With a Match/Match On (26x18).png',
         frameRate: 3,
@@ -197,6 +198,7 @@ function createEnemiesWithMatch(positions, levelNum) {
 function createEnemyKing(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
+        enemyVariant: 'king',
         spawnTrack: { levelId: levelNum, kind: 'king', spawnX: position[0], spawnY: position[1] },
         imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
         frameRate: 12,

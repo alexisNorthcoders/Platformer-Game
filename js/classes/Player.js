@@ -293,7 +293,7 @@ class Player extends Sprite {
             if (!group?.length) continue
             for (let i = 0; i < group.length; i++) {
                 const enemy = group[i]
-                if (!enemy.loaded || !enemy.opacity || enemy.hitpoints <= 0) continue
+                if (!enemy.loaded || enemy.hitpoints <= 0 || enemy.opacity < 1) continue
 
                 const e = enemy.hitbox
                 const p = this.hitbox
