@@ -285,7 +285,7 @@ class Player extends Sprite {
     }
 
     checkEnemyContactDamage() {
-        if (this.dead || this.hitCooldown) return
+        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown })) return
 
         const groups = [enemies, enemyKing, enemyMatch]
         for (let g = 0; g < groups.length; g++) {
@@ -297,10 +297,7 @@ class Player extends Sprite {
 
                 const e = enemy.hitbox
                 const p = this.hitbox
-                if (p.position.x + p.width >= e.position.x &&
-                    p.position.x <= e.position.x + e.width &&
-                    p.position.y + p.height >= e.position.y &&
-                    p.position.y <= e.position.y + e.height) {
+                if (ContactDamageHelpers.rectHitboxesOverlap(p, e)) {
                     this.takeContactDamageFromEnemy(enemy)
                     return
                 }
@@ -316,9 +313,11 @@ class Player extends Sprite {
 
         if (!this.dead) {
             const knockbackSpeed = 10
-            const playerCx = this.hitbox.position.x + this.hitbox.width / 2
-            const enemyCx = enemyForKnockback.hitbox.position.x + enemyForKnockback.hitbox.width / 2
-            this.velocity.x = playerCx < enemyCx ? -knockbackSpeed : knockbackSpeed
+            this.velocity.x = ContactDamageHelpers.contactKnockbackVelocityX(
+                this.hitbox,
+                enemyForKnockback.hitbox,
+                knockbackSpeed
+            )
             this.velocity.y = Math.min(this.velocity.y, -4)
         }
 
