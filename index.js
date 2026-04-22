@@ -93,7 +93,10 @@ const player = new Player({
                     opacity: 1,
                     onComplete: async () => {
                         level++
-                        if (level === Object.keys(levels).length + 1) level = 1
+                        if (level === Object.keys(levels).length + 1) {
+                            level = 1
+                            LevelProgressKeys.clearAll()
+                        }
                         await initLevel(level)
                         player.switchSprite('idleRight')
                         gsap.to(overlay, {
@@ -290,7 +293,11 @@ window.restartFromGameOver = async () => {
             player.contactDamageTimeoutId = null
         }
         resetHearts()
-        await initLevel(level)
+        player.velocity.x = 0
+        player.velocity.y = 0
+        numberSprites = createNumberSprites(diamondCount)
+        enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
+        await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
     } finally {

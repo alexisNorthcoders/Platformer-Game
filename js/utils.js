@@ -58,6 +58,39 @@ function createNumberSprites(number, position = { x: 59, y: 55 }, frameRate = 10
 
     return sprites;
 }
+
+const LevelProgressKeys = (function () {
+    const collectedDiamonds = new Set()
+    const defeatedEnemies = new Set()
+
+    function diamondKey(levelNum, x, y) {
+        return `d:${levelNum}:${x},${y}`
+    }
+
+    function enemyKey(levelNum, kind, x, y) {
+        return `e:${levelNum}:${kind}:${x},${y}`
+    }
+
+    return {
+        markDiamondCollected(levelNum, x, y) {
+            collectedDiamonds.add(diamondKey(levelNum, x, y))
+        },
+        markEnemyDefeated(levelNum, kind, x, y) {
+            defeatedEnemies.add(enemyKey(levelNum, kind, x, y))
+        },
+        isDiamondCollected(levelNum, x, y) {
+            return collectedDiamonds.has(diamondKey(levelNum, x, y))
+        },
+        isEnemyDefeated(levelNum, kind, x, y) {
+            return defeatedEnemies.has(enemyKey(levelNum, kind, x, y))
+        },
+        clearAll() {
+            collectedDiamonds.clear()
+            defeatedEnemies.clear()
+        }
+    }
+})()
+
 function createBoxes(positions) {
     return positions.map(position => new Box(
         {
@@ -78,9 +111,10 @@ function createBoxes(positions) {
             }
         }))
 }
-function createEnemies(positions) {
+function createEnemies(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
+        spawnTrack: { levelId: levelNum, kind: 'pig', spawnX: position[0], spawnY: position[1] },
         imageSrc: './Sprites/03-Pig/Idle (34x28).png',
         frameRate: 11,
         loop: true,
@@ -129,9 +163,10 @@ function createEnemies(positions) {
         }
     }))
 }
-function createEnemiesWithMatch(positions) {
+function createEnemiesWithMatch(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] - 5 },
+        spawnTrack: { levelId: levelNum, kind: 'match', spawnX: position[0], spawnY: position[1] },
         imageSrc: './Sprites/07-Pig With a Match/Match On (26x18).png',
         frameRate: 3,
         frameBuffer: 6,
@@ -159,9 +194,10 @@ function createEnemiesWithMatch(positions) {
         }
     }))
 }
-function createEnemyKing(positions) {
+function createEnemyKing(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
+        spawnTrack: { levelId: levelNum, kind: 'king', spawnX: position[0], spawnY: position[1] },
         imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
         frameRate: 12,
         loop: true,
@@ -204,9 +240,12 @@ function createBackground(level) {
         imageSrc: `./img/Level ${level}.png`
     })
 }
-function createDiamonds(positions) {
+function createDiamonds(positions, levelNum) {
     return positions.map(position => new Diamond({
         position: { x: position[0] - 10, y: position[1] + 10 },
+        levelId: levelNum,
+        spawnRawX: position[0],
+        spawnRawY: position[1],
         autoplay: false,
         loop: false,
         frameRate: 10,
@@ -241,8 +280,21 @@ function createCannon(positions) {
     }))
 }
 
-async function createAssets(level) {
+async function createAssets(level, options = {}) {
+    const preserve = options.preserveCollectedProgress === true
     const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, cannon, enemyMatch } = await loadAssets(level, 2)
+    const diamondPositions = preserve
+        ? diamonds.filter(([x, y]) => !LevelProgressKeys.isDiamondCollected(level, x, y))
+        : diamonds
+    const enemyPositions = preserve
+        ? enemy.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'pig', x, y))
+        : enemy
+    const enemyKingPositions = preserve
+        ? enemyKing.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'king', x, y))
+        : enemyKing
+    const enemyMatchPositions = preserve
+        ? enemyMatch.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'match', x, y))
+        : enemyMatch
     const platforms_2Collisiongs = platforms_2.parse2D()
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D()
@@ -251,14 +303,14 @@ async function createAssets(level) {
         boxes: createBoxes(boxes),
         platforms: createPlatforms(platforms),
         doors: createDoor(door),
-        enemies: createEnemies(enemy),
+        enemies: createEnemies(enemyPositions, level),
         cannon: createCannon(cannon),
-        enemyMatch: createEnemiesWithMatch(enemyMatch),
-        enemyKing: createEnemyKing(enemyKing),
+        enemyMatch: createEnemiesWithMatch(enemyMatchPositions, level),
+        enemyKing: createEnemyKing(enemyKingPositions, level),
         collisionBlocks,
         platformsBlocks,
         background: createBackground(level),
-        diamonds: createDiamonds(diamonds),
+        diamonds: createDiamonds(diamondPositions, level),
         levelWidth
     }
 }
@@ -267,8 +319,8 @@ function applyCollisions(player, enemies, enemyKing, collisionBlocks) {
     enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
 }
-async function initializeLevel(level, playerPosition, lastDirection) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level));
+async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
+    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),
@@ -291,17 +343,17 @@ async function initializeLevel(level, playerPosition, lastDirection) {
     mapWidth = levelWidth
 
     if (player.currentAnimation) player.currentAnimation.isActive = false;
-    if (level === 1) {
+    if (level === 1 && !options.skipLevelIntro) {
         setTimeout(() => {
             player.hello()
         }, 500);
     }
 }
-async function initLevel(levelNumber) {
+async function initLevel(levelNumber, options = {}) {
     const level = levels[levelNumber];
     if (!level) {
         console.error(`Level ${levelNumber} does not exist.`);
         return;
     }
-    await initializeLevel(levelNumber, level.playerPosition, level.lastDirection);
+    await initializeLevel(levelNumber, level.playerPosition, level.lastDirection, options);
 }
