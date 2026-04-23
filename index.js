@@ -4,8 +4,41 @@ const c = canvas.getContext('2d')
 canvas.width = 1024 // 64 * 16
 canvas.height = 576 // 64 * 9
 
-let collisionBlocks
-let background
+const SELECTED_LEVEL_STORAGE_KEY = 'platformerSelectedLevel'
+
+function readStoredSelectedLevel() {
+    try {
+        const raw = localStorage.getItem(SELECTED_LEVEL_STORAGE_KEY)
+        if (raw == null) return 1
+        const n = parseInt(raw, 10)
+        if (!Number.isFinite(n)) return 1
+        const max = Object.keys(levels).length
+        if (n < 1 || n > max) return 1
+        return n
+    } catch (_) {
+        return 1
+    }
+}
+
+let gameState = 'menu' // 'menu' | 'loading' | 'playing'
+let selectedLevel = readStoredSelectedLevel()
+
+const MENU = {
+    preview: { x: 207, y: 88, w: 610, h: 220 },
+    startBtn: { x: 287, y: 330, w: 450, h: 52 },
+    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+}
+
+let collisionBlocks = []
+let background = null
+let boxes = []
+let platforms = []
+let doors = []
+let enemies = []
+let enemyKing = []
+let enemyMatch = []
+let cannon = []
+let diamonds = []
 let debugCollisions = false
 let diamondCount = 0
 let mapWidth
@@ -98,7 +131,9 @@ const player = new Player({
                             LevelProgressKeys.clearAll()
                         }
                         await initLevel(level)
-                        player.switchSprite('idleRight')
+                        const dir = levels[level].lastDirection
+                        if (dir === 'left') player.switchSprite('idleLeft')
+                        else player.switchSprite('idleRight')
                         gsap.to(overlay, {
                             opacity: 0,
                             onComplete: () => {
@@ -114,7 +149,9 @@ const player = new Player({
     }
 })
 
-let level = 17
+player.preventInput = true
+
+let level = 1
 
 const keys = {
     w: {
@@ -140,15 +177,193 @@ let camera = {
     y: 0
 }
 
+const menuTitleSprite = new Sprite({
+    position: { x: 378, y: 28 },
+    imageSrc: './Sprites/Kings and Pigs.png',
+    frameRate: 1,
+    loop: true,
+    autoplay: false,
+})
+
+const menuButtonSprite = new Sprite({
+    position: { x: 0, y: 0 },
+    imageSrc: './Sprites/14-TileSets/platform.png',
+    frameRate: 1,
+    loop: true,
+    autoplay: false,
+})
+
+let menuPreviewSprite = null
+let menuStartDigitSprites = []
+let menuLevelSelectDigitSprites = []
+
+function drawMenuButtonBackground(rect) {
+    if (!menuButtonSprite.loaded) return
+    const img = menuButtonSprite.image
+    if (!img.complete || img.naturalWidth === 0) return
+    const tw = img.naturalWidth / menuButtonSprite.frameRate
+    const th = img.naturalHeight
+    c.imageSmoothingEnabled = false
+    c.drawImage(img, 0, 0, tw, th, rect.x, rect.y, rect.w, rect.h)
+}
+
+function drawMenuPreviewCover() {
+    const sp = menuPreviewSprite
+    if (!sp || !sp.loaded || !sp.image.complete || sp.image.naturalWidth === 0) {
+        c.fillStyle = '#1a1a2e'
+        c.fillRect(MENU.preview.x, MENU.preview.y, MENU.preview.w, MENU.preview.h)
+        return
+    }
+    const img = sp.image
+    const sw = img.naturalWidth
+    const sh = img.naturalHeight
+    const { x: dx, y: dy, w: dw, h: dh } = MENU.preview
+    const scale = Math.max(dw / sw, dh / sh)
+    const rw = sw * scale
+    const rh = sh * scale
+    const ox = dx + (dw - rw) / 2
+    const oy = dy + (dh - rh) / 2
+    c.imageSmoothingEnabled = false
+    c.drawImage(img, 0, 0, sw, sh, ox, oy, rw, rh)
+}
+
+function refreshMenuDigits() {
+    c.save()
+    c.font = 'bold 22px sans-serif'
+    const startLabel = 'Start Game – Level '
+    const startLabelW = c.measureText(startLabel).width
+    const levelLabel = 'Level: '
+    const levelLabelW = c.measureText(levelLabel).width
+    c.restore()
+    menuStartDigitSprites = createNumberSprites(selectedLevel, {
+        x: MENU.startBtn.x + 24 + startLabelW,
+        y: MENU.startBtn.y + 16,
+    }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10)
+    menuLevelSelectDigitSprites = createNumberSprites(selectedLevel, {
+        x: MENU.levelBtn.x + 24 + levelLabelW,
+        y: MENU.levelBtn.y + 16,
+    }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10)
+}
+
+function refreshMenuPreview() {
+    menuPreviewSprite = new Sprite({
+        position: { x: MENU.preview.x, y: MENU.preview.y },
+        imageSrc: `./img/Level ${selectedLevel}.png`,
+        frameRate: 1,
+        loop: true,
+        autoplay: false,
+    })
+    refreshMenuDigits()
+}
+
+function syncMenuSelectionUI() {
+    refreshMenuPreview()
+    try {
+        localStorage.setItem(SELECTED_LEVEL_STORAGE_KEY, String(selectedLevel))
+    } catch (_) { /* ignore quota / private mode */ }
+}
+
+function drawMenu() {
+    c.save()
+    c.imageSmoothingEnabled = false
+    c.clearRect(0, 0, canvas.width, canvas.height)
+    c.fillStyle = '#0d0d12'
+    c.fillRect(0, 0, canvas.width, canvas.height)
+
+    drawMenuPreviewCover()
+
+    menuTitleSprite.draw(2)
+
+    drawMenuButtonBackground(MENU.startBtn)
+    drawMenuButtonBackground(MENU.levelBtn)
+
+    c.fillStyle = '#f5f0e6'
+    c.font = 'bold 22px sans-serif'
+    c.textAlign = 'left'
+    c.textBaseline = 'middle'
+    const startCy = MENU.startBtn.y + MENU.startBtn.h / 2
+    const levelCy = MENU.levelBtn.y + MENU.levelBtn.h / 2
+    c.fillText('Start Game – Level ', MENU.startBtn.x + 24, startCy)
+    c.fillText('Level: ', MENU.levelBtn.x + 24, levelCy)
+
+    menuStartDigitSprites.forEach(s => s.draw(2))
+    menuLevelSelectDigitSprites.forEach(s => s.draw(2))
+    c.restore()
+}
+
+function pointInRect(px, py, rect) {
+    return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h
+}
+
+function canvasClickCoords(e) {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+    }
+}
+
+async function startGame(levelToStart) {
+    gameState = 'loading'
+    player.preventInput = true
+    overlay.opacity = 1
+    diamondCount = 0
+    numberSprites = createNumberSprites(0)
+    resetHearts()
+    EnemyTracker.resetSession()
+    enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
+    LevelProgressKeys.clearAll()
+    level = levelToStart
+    await initLevel(level)
+    const ld = levels[level].lastDirection
+    if (ld === 'left') player.switchSprite('idleLeft')
+    else player.switchSprite('idleRight')
+    gameState = 'playing'
+    gsap.to(overlay, {
+        opacity: 0,
+        onComplete: () => {
+            player.preventInput = false
+        },
+    })
+}
+
+canvas.addEventListener('click', (e) => {
+    if (gameState !== 'menu') return
+    const { x, y } = canvasClickCoords(e)
+    if (pointInRect(x, y, MENU.startBtn)) {
+        startGame(selectedLevel)
+        return
+    }
+    if (pointInRect(x, y, MENU.levelBtn)) {
+        const n = Object.keys(levels).length
+        selectedLevel = selectedLevel >= n ? 1 : selectedLevel + 1
+        syncMenuSelectionUI()
+    }
+})
+
 function animate() {
 
-    if (enemies.length) {
+    if (gameState === 'playing' && enemies.length) {
         enemies = enemies.filter(enemy => enemy.opacity)
     }
     c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
 
-    if (doorClosed && EnemyTracker.isLevelHalfCleared()) {
+    if (gameState === 'menu') {
+        drawMenu()
+        return
+    }
+
+    if (gameState === 'loading') {
+        c.clearRect(0, 0, canvas.width, canvas.height)
+        c.fillStyle = '#000000'
+        c.fillRect(0, 0, canvas.width, canvas.height)
+        return
+    }
+
+    if (doorClosed && doors.length && EnemyTracker.isLevelHalfCleared()) {
         doorClosed = false
         doors[0].play()
     }
@@ -308,6 +523,9 @@ window.restartFromGameOver = async () => {
     }
 }
 
-initLevel(level).then(() => animate())
+queueMicrotask(() => {
+    syncMenuSelectionUI()
+    animate()
+})
 
 

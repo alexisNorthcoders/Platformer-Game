@@ -4,6 +4,11 @@ const EnemyTracker = (function () {
     let initialEnemies = 0;
 
     return {
+        resetSession: () => {
+            enemyCount = 0;
+            levelEnemies = 0;
+            initialEnemies = 0;
+        },
         initializeLevel: (count) => {
             levelEnemies = count;
             initialEnemies = count;
