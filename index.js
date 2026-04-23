@@ -6,14 +6,19 @@ canvas.height = 576 // 64 * 9
 
 const SELECTED_LEVEL_STORAGE_KEY = 'platformerSelectedLevel'
 
+function levelsKeyCount() {
+    if (typeof levels === 'undefined' || levels == null) return 0
+    return Object.keys(levels).length
+}
+
 function readStoredSelectedLevel() {
     try {
+        const max = levelsKeyCount()
+        if (max < 1) return 1
         const raw = localStorage.getItem(SELECTED_LEVEL_STORAGE_KEY)
         if (raw == null) return 1
         const n = parseInt(raw, 10)
-        if (!Number.isFinite(n)) return 1
-        const max = Object.keys(levels).length
-        if (n < 1 || n > max) return 1
+        if (!Number.isFinite(n) || n < 1 || n > max) return 1
         return n
     } catch (_) {
         return 1
@@ -21,7 +26,7 @@ function readStoredSelectedLevel() {
 }
 
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
-let selectedLevel = readStoredSelectedLevel()
+let selectedLevel = 1
 
 const MENU = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
@@ -198,23 +203,37 @@ let menuStartDigitSprites = []
 let menuLevelSelectDigitSprites = []
 
 function drawMenuButtonBackground(rect) {
-    if (!menuButtonSprite.loaded) return
-    const img = menuButtonSprite.image
-    if (!img.complete || img.naturalWidth === 0) return
-    const tw = img.naturalWidth / menuButtonSprite.frameRate
-    const th = img.naturalHeight
-    c.imageSmoothingEnabled = false
-    c.drawImage(img, 0, 0, tw, th, rect.x, rect.y, rect.w, rect.h)
+    const img = menuButtonSprite?.image
+    const imageReady = Boolean(
+        img && img.complete && img.naturalWidth > 0
+        && (menuButtonSprite.loaded || img.naturalHeight > 0)
+    )
+    if (imageReady) {
+        const tw = img.naturalWidth / menuButtonSprite.frameRate
+        const th = img.naturalHeight
+        c.imageSmoothingEnabled = false
+        c.drawImage(img, 0, 0, tw, th, rect.x, rect.y, rect.w, rect.h)
+        return
+    }
+    c.fillStyle = '#2d3a4a'
+    c.strokeStyle = '#5a6b7d'
+    c.lineWidth = 2
+    c.fillRect(rect.x, rect.y, rect.w, rect.h)
+    c.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1)
 }
 
 function drawMenuPreviewCover() {
     const sp = menuPreviewSprite
-    if (!sp || !sp.loaded || !sp.image.complete || sp.image.naturalWidth === 0) {
+    const img = sp?.image
+    const imageReady = Boolean(
+        sp && img && img.complete && img.naturalWidth > 0
+        && (sp.loaded || img.naturalHeight > 0)
+    )
+    if (!imageReady) {
         c.fillStyle = '#1a1a2e'
         c.fillRect(MENU.preview.x, MENU.preview.y, MENU.preview.w, MENU.preview.h)
         return
     }
-    const img = sp.image
     const sw = img.naturalWidth
     const sh = img.naturalHeight
     const { x: dx, y: dy, w: dw, h: dh } = MENU.preview
@@ -257,6 +276,7 @@ function refreshMenuPreview() {
 }
 
 function syncMenuSelectionUI() {
+    if (levelsKeyCount() < 1) return
     refreshMenuPreview()
     try {
         localStorage.setItem(SELECTED_LEVEL_STORAGE_KEY, String(selectedLevel))
@@ -292,11 +312,17 @@ function drawMenu() {
 }
 
 function pointInRect(px, py, rect) {
+    const g = globalThis.__menuGeom
+    if (g?.pointInRect) return g.pointInRect(px, py, rect)
     return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h
 }
 
 function canvasClickCoords(e) {
     const rect = canvas.getBoundingClientRect()
+    const g = globalThis.__menuGeom
+    if (g?.canvasLogicalCoords) {
+        return g.canvasLogicalCoords(e.clientX, e.clientY, rect, canvas.width, canvas.height)
+    }
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
     return {
@@ -314,10 +340,28 @@ async function startGame(levelToStart) {
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
-    LevelProgressKeys.clearAll()
     level = levelToStart
-    await initLevel(level)
-    const ld = levels[level].lastDirection
+    const levelCfg = levels[level]
+    if (!levelCfg) {
+        console.error(`Level ${levelToStart} does not exist`)
+        gameState = 'menu'
+        overlay.opacity = 0
+        player.preventInput = true
+        syncMenuSelectionUI()
+        return
+    }
+    try {
+        await initLevel(level)
+    } catch (err) {
+        console.error('initLevel failed', err)
+        gameState = 'menu'
+        overlay.opacity = 0
+        player.preventInput = true
+        syncMenuSelectionUI()
+        return
+    }
+    LevelProgressKeys.clearAll()
+    const ld = levelCfg.lastDirection
     if (ld === 'left') player.switchSprite('idleLeft')
     else player.switchSprite('idleRight')
     gameState = 'playing'
@@ -333,11 +377,12 @@ canvas.addEventListener('click', (e) => {
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
     if (pointInRect(x, y, MENU.startBtn)) {
-        startGame(selectedLevel)
+        void startGame(selectedLevel)
         return
     }
     if (pointInRect(x, y, MENU.levelBtn)) {
-        const n = Object.keys(levels).length
+        const n = levelsKeyCount()
+        if (n < 1) return
         selectedLevel = selectedLevel >= n ? 1 : selectedLevel + 1
         syncMenuSelectionUI()
     }
@@ -524,6 +569,7 @@ window.restartFromGameOver = async () => {
 }
 
 queueMicrotask(() => {
+    selectedLevel = readStoredSelectedLevel()
     syncMenuSelectionUI()
     animate()
 })
