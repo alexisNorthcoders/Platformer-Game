@@ -16,6 +16,69 @@ class Enemy extends Sprite {
         this.collisionBlocks = collisionBlocks
 
         this.attackInterval = setInterval(() => this.attack(), 3000);
+
+        if (enemyVariant === 'pig') {
+            this.pigWalkSpeed = 1
+            this.aiMode = 'idle'
+            this.aiNextDecisionAt = Date.now() + 500 + Math.random() * 1500
+        }
+    }
+
+    pigAiDeferDecision(ms) {
+        this.aiNextDecisionAt = Date.now() + ms
+    }
+
+    pigPickNextBehavior() {
+        const r = Math.random()
+        if (r < 0.1) {
+            this.jump()
+            this.velocity.x = 0
+            this.aiMode = 'idle'
+            this.pigAiDeferDecision(700 + Math.random() * 900)
+            return
+        }
+        const r2 = Math.random()
+        if (r2 < 0.38) {
+            this.aiMode = 'idle'
+            this.velocity.x = 0
+            this.flip = false
+            this.switchSprite('idle')
+        } else if (r2 < 0.69) {
+            this.aiMode = 'walkLeft'
+            this.velocity.x = -this.pigWalkSpeed
+            this.flip = false
+            this.switchSprite('runLeft')
+        } else {
+            this.aiMode = 'walkRight'
+            this.velocity.x = this.pigWalkSpeed
+            this.flip = true
+            this.switchSprite('runLeft')
+        }
+        this.pigAiDeferDecision(500 + Math.random() * 1500)
+    }
+
+    pigTickAi() {
+        if (this.enemyVariant !== 'pig') return
+        if (this.playerHit || this.hitpoints <= 0 || this.attacking) {
+            this.velocity.x = 0
+            return
+        }
+        let grounded = Math.abs(this.velocity.y) < 0.15
+        if (Date.now() >= this.aiNextDecisionAt) {
+            if (grounded) this.pigPickNextBehavior()
+            else this.pigAiDeferDecision(200)
+        }
+        grounded = Math.abs(this.velocity.y) < 0.15
+        if (grounded && !this.attacking && !this.playerHit) {
+            if (Math.abs(this.velocity.x) > 0.01) {
+                this.switchSprite('runLeft')
+                this.flip = this.velocity.x > 0
+            } else {
+                this.aiMode = 'idle'
+                this.flip = false
+                this.switchSprite('idle')
+            }
+        }
     }
 
     move(runSpeed = -1) {
@@ -85,6 +148,7 @@ class Enemy extends Sprite {
         if (this.state === 'matchOn') return
         if (!this.attacking && this.hitpoints > 0 && !this.playerHit) {
             this.attacking = true;
+            if (this.enemyVariant === 'pig') this.velocity.x = 0
             this.switchSprite('attack');
 
             if (this.currentAnimation) {
@@ -120,6 +184,7 @@ class Enemy extends Sprite {
         // debug position
         /*  c.fillStyle = 'rgba(0,0,255,0.3)'
          c.fillRect(this.position.x,this.position.y,this.width,this.height)   */
+        this.pigTickAi()
         this.position.x += this.velocity.x
 
         this.updateHitbox()
@@ -178,13 +243,25 @@ class Enemy extends Sprite {
                 if (this.velocity.x < 0) {
                     const offset = this.hitbox.position.x - this.position.x
                     this.position.x = collisionBlock.position.x + collisionBlock.width - offset + 0.01
-                    if (!this.attacking) this.switchSprite('idle')
+                    if (this.enemyVariant === 'pig' && !this.attacking && !this.playerHit && this.hitpoints > 0) {
+                        this.velocity.x = this.pigWalkSpeed
+                        this.flip = true
+                        this.switchSprite('runLeft')
+                        this.aiMode = 'walkRight'
+                        this.pigAiDeferDecision(300 + Math.random() * 500)
+                    } else if (!this.attacking) this.switchSprite('idle')
                     break
                 }
                 if (this.velocity.x > 0) {
                     const offset = this.hitbox.position.x - this.position.x + this.hitbox.width
                     this.position.x = collisionBlock.position.x - offset - 0.01
-                    if (!this.attacking) this.switchSprite('idle')
+                    if (this.enemyVariant === 'pig' && !this.attacking && !this.playerHit && this.hitpoints > 0) {
+                        this.velocity.x = -this.pigWalkSpeed
+                        this.flip = false
+                        this.switchSprite('runLeft')
+                        this.aiMode = 'walkLeft'
+                        this.pigAiDeferDecision(300 + Math.random() * 500)
+                    } else if (!this.attacking) this.switchSprite('idle')
                     break
                 }
 
