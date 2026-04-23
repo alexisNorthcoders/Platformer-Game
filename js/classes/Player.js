@@ -47,6 +47,13 @@ class Player extends Sprite {
         helloDialogue.currentAnimation = {
             onComplete: () => {
                 helloDialogue.switchSprite('helloOut')
+                helloDialogue.currentAnimation = {
+                    ...helloDialogue.animations.helloOut,
+                    onComplete: () => {
+                        this.isShowingHello = false
+                        helloDialogue.currentFrame = 0
+                    }
+                }
             }
         }
     }
