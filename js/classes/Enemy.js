@@ -16,6 +16,77 @@ class Enemy extends Sprite {
         this.collisionBlocks = collisionBlocks
 
         this.attackInterval = setInterval(() => this.attack(), 3000);
+
+        if (enemyVariant === 'pig') {
+            this.pigWalkSpeed = 1
+            this.aiMode = 'idle'
+            this.aiNextDecisionAt = Date.now() + 500 + Math.random() * 1500
+            this.pigWallSteerUntil = 0
+        }
+    }
+
+    pigAiDeferDecision(ms) {
+        this.aiNextDecisionAt = Date.now() + ms
+    }
+
+    pigPickNextBehavior() {
+        const core = globalThis.pigWanderAiCore
+        if (!core) return
+        const plan = core.planBehavior(Math.random(), Math.random(), Math.random(), this.pigWalkSpeed)
+        if (plan.kind === 'jump') {
+            this.jump()
+            this.velocity.x = 0
+            this.aiMode = core.PIG_AI_STATES.IDLE
+            this.pigAiDeferDecision(plan.nextDelayMs)
+            return
+        }
+        this.aiMode = plan.aiMode
+        this.velocity.x = plan.velocityX
+        this.flip = plan.flip
+        this.switchSprite(plan.sprite)
+        this.pigAiDeferDecision(plan.nextDelayMs)
+    }
+
+    pigTickAi() {
+        const core = globalThis.pigWanderAiCore
+        if (!core || !core.isPigWanderEnemy(this)) return
+
+        if (this.playerHit || this.hitpoints <= 0) {
+            this.velocity.x = 0
+            return
+        }
+
+        const inAttack =
+            this.attacking ||
+            (this.animations &&
+                this.animations.attack &&
+                this.currentAnimation === this.animations.attack)
+
+        if (inAttack) {
+            this.velocity.x = 0
+            return
+        }
+
+        const now = Date.now()
+        let grounded = core.isGroundedVerticalVelocity(this.velocity.y)
+
+        if (now >= this.aiNextDecisionAt) {
+            if (!grounded) {
+                this.pigAiDeferDecision(200)
+            } else if (now < this.pigWallSteerUntil) {
+                this.pigAiDeferDecision(Math.max(50, this.pigWallSteerUntil - now + 20))
+            } else {
+                this.pigPickNextBehavior()
+            }
+        }
+
+        grounded = core.isGroundedVerticalVelocity(this.velocity.y)
+        if (!grounded) return
+
+        const sync = core.syncSpriteFromHorizontalVelocity(this.velocity.x, this.pigWalkSpeed)
+        this.switchSprite(sync.sprite)
+        this.flip = sync.flip
+        if (sync.aiMode) this.aiMode = sync.aiMode
     }
 
     move(runSpeed = -1) {
@@ -85,6 +156,7 @@ class Enemy extends Sprite {
         if (this.state === 'matchOn') return
         if (!this.attacking && this.hitpoints > 0 && !this.playerHit) {
             this.attacking = true;
+            if (this.enemyVariant === 'pig') this.velocity.x = 0
             this.switchSprite('attack');
 
             if (this.currentAnimation) {
@@ -120,6 +192,7 @@ class Enemy extends Sprite {
         // debug position
         /*  c.fillStyle = 'rgba(0,0,255,0.3)'
          c.fillRect(this.position.x,this.position.y,this.width,this.height)   */
+        this.pigTickAi()
         this.position.x += this.velocity.x
 
         this.updateHitbox()
@@ -178,13 +251,31 @@ class Enemy extends Sprite {
                 if (this.velocity.x < 0) {
                     const offset = this.hitbox.position.x - this.position.x
                     this.position.x = collisionBlock.position.x + collisionBlock.width - offset + 0.01
-                    if (!this.attacking) this.switchSprite('idle')
+                    const core = globalThis.pigWanderAiCore
+                    if (core && core.isPigWanderEnemy(this) && !this.attacking && !this.playerHit && this.hitpoints > 0) {
+                        const r = core.responseAfterLeftWallCollision(this.pigWalkSpeed)
+                        this.velocity.x = r.velocityX
+                        this.flip = r.flip
+                        this.switchSprite(r.sprite)
+                        this.aiMode = r.aiMode
+                        this.pigWallSteerUntil = core.wallSteerUntilFromNow(Date.now(), Math.random())
+                        this.aiNextDecisionAt = Math.max(this.aiNextDecisionAt, this.pigWallSteerUntil + 20)
+                    } else if (!this.attacking) this.switchSprite('idle')
                     break
                 }
                 if (this.velocity.x > 0) {
                     const offset = this.hitbox.position.x - this.position.x + this.hitbox.width
                     this.position.x = collisionBlock.position.x - offset - 0.01
-                    if (!this.attacking) this.switchSprite('idle')
+                    const core = globalThis.pigWanderAiCore
+                    if (core && core.isPigWanderEnemy(this) && !this.attacking && !this.playerHit && this.hitpoints > 0) {
+                        const r = core.responseAfterRightWallCollision(this.pigWalkSpeed)
+                        this.velocity.x = r.velocityX
+                        this.flip = r.flip
+                        this.switchSprite(r.sprite)
+                        this.aiMode = r.aiMode
+                        this.pigWallSteerUntil = core.wallSteerUntilFromNow(Date.now(), Math.random())
+                        this.aiNextDecisionAt = Math.max(this.aiNextDecisionAt, this.pigWallSteerUntil + 20)
+                    } else if (!this.attacking) this.switchSprite('idle')
                     break
                 }
 
@@ -223,7 +314,7 @@ class Enemy extends Sprite {
         }
     }
     applyGravity() {
-        if (this.velocity.y > 0 && this.hitpoints !== 0 && !this.playerHit) {
+        if (this.velocity.y > 0 && this.hitpoints !== 0 && !this.playerHit && !this.attacking) {
             this.switchSprite('fall');
         }
         this.velocity.y += this.gravity;
