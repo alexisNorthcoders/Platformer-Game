@@ -549,7 +549,8 @@ window.restartFromGameOver = async () => {
         player.dead = false
         player.hitpoints = 3
         player.preventInput = false
-        player.hitCooldown = false
+        // Old level is still active until createAssets() resolves; stay invulnerable.
+        player.hitCooldown = true
         player.isShowingHello = false
         if (player.contactDamageTimeoutId) {
             clearTimeout(player.contactDamageTimeoutId)
