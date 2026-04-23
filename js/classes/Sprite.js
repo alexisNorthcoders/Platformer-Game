@@ -59,6 +59,13 @@ class Sprite {
 
     draw(scale = 1) {
         if (!this.loaded || this.opacity <= 0) return
+        // After switchSprite(), this.image may point at a different sheet than the one
+        // that fired the constructor onload. Wait for the active image and size the
+        // crop from it so enemies (fall/jump/attack, etc.) render on a cold cache load.
+        if (!this.image.complete || this.image.naturalWidth === 0) return
+
+        this.width = this.image.naturalWidth / this.frameRate
+        this.height = this.image.naturalHeight
 
         const cropbox = {
             position: {
