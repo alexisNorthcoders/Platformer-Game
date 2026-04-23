@@ -306,6 +306,8 @@ class Player extends Sprite {
     }
 
     takeContactDamageFromEnemy(enemyForKnockback) {
+        this.action = false
+        this.attacking = false
         this.hitCooldown = true
         playHitSound()
         this.switchSprite('hit')
@@ -325,6 +327,9 @@ class Player extends Sprite {
             this.contactDamageTimeoutId = setTimeout(() => {
                 this.contactDamageTimeoutId = null
                 this.hitCooldown = false
+                if (!this.dead) {
+                    this.velocity.x = 0
+                }
                 if (!this.dead && !this.action && !this.attacking) {
                     if (this.lastDirection === 'right') this.switchSprite('idleRight')
                     else this.switchSprite('idleLeft')
