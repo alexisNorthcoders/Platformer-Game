@@ -243,15 +243,22 @@ class Player extends Sprite {
 
     checkEnemyHitCollision() {
         if (this.attacking) {
+            const attackableEnemies = [
+                ...(Array.isArray(enemies) ? enemies : []),
+                ...(Array.isArray(enemyKing) ? enemyKing : []),
+            ]
+            const attackOverlapsEnemy = (attackBox, enemy) =>
+                Boolean(
+                    enemy &&
+                    enemy.hitbox &&
+                    typeof enemy.hit === 'function' &&
+                    ContactDamageHelpers.rectHitboxesOverlap(attackBox, enemy.hitbox)
+                )
+
             if (this.lastDirection === 'right') {
-                enemies.forEach((enemy) => {
-                    if (this.attackHitboxRight.position.x + this.attackHitboxRight.width >= enemy.hitbox.position.x &&
-                        this.attackHitboxRight.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                        this.attackHitboxRight.position.y + this.attackHitboxRight.height >= enemy.hitbox.position.y &&
-                        this.attackHitboxRight.position.y <= enemy.hitbox.position.y + enemy.hitbox.height) {
-
+                attackableEnemies.forEach((enemy) => {
+                    if (attackOverlapsEnemy(this.attackHitboxRight, enemy)) {
                         enemy.hit()
-
                     }
                 })
                 boxes.forEach((box) => {
@@ -267,12 +274,8 @@ class Player extends Sprite {
                 })
             }
             else {
-                enemies.forEach((enemy) => {
-                    if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= enemy.hitbox.position.x &&
-                        this.attackHitboxLeft.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                        this.attackHitboxLeft.position.y + this.attackHitboxLeft.height >= enemy.hitbox.position.y &&
-                        this.attackHitboxLeft.position.y <= enemy.hitbox.position.y + enemy.hitbox.height) {
-
+                attackableEnemies.forEach((enemy) => {
+                    if (attackOverlapsEnemy(this.attackHitboxLeft, enemy)) {
                         enemy.hit()
                     }
                 })
