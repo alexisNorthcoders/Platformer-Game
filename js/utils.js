@@ -204,6 +204,7 @@ function createEnemyKing(positions, levelNum) {
         frameRate: 12,
         loop: true,
         autoplay: true,
+        // hit / dead / attack / jump / fall: consumed by Enemy base (same hooks as pigs).
         animations: {
             idle: {
                 frameRate: 12,

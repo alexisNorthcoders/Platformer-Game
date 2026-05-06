@@ -243,12 +243,17 @@ class Player extends Sprite {
 
     checkEnemyHitCollision() {
         if (this.attacking) {
-            const attackableEnemies = [...enemies, ...enemyKing]
+            const attackableEnemies = [
+                ...(Array.isArray(enemies) ? enemies : []),
+                ...(Array.isArray(enemyKing) ? enemyKing : []),
+            ]
             const attackOverlapsEnemy = (attackBox, enemy) =>
-                attackBox.position.x + attackBox.width >= enemy.hitbox.position.x &&
-                attackBox.position.x <= enemy.hitbox.position.x + enemy.hitbox.width &&
-                attackBox.position.y + attackBox.height >= enemy.hitbox.position.y &&
-                attackBox.position.y <= enemy.hitbox.position.y + enemy.hitbox.height
+                Boolean(
+                    enemy &&
+                    enemy.hitbox &&
+                    typeof enemy.hit === 'function' &&
+                    ContactDamageHelpers.rectHitboxesOverlap(attackBox, enemy.hitbox)
+                )
 
             if (this.lastDirection === 'right') {
                 attackableEnemies.forEach((enemy) => {
