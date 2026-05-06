@@ -243,10 +243,10 @@ class Player extends Sprite {
 
     checkEnemyHitCollision() {
         if (this.attacking) {
-            const attackableEnemies = [
-                ...(Array.isArray(enemies) ? enemies : []),
-                ...(Array.isArray(enemyKing) ? enemyKing : []),
-            ]
+            const attackableEnemies = collectAttackableEnemiesForPlayerAttack(
+                enemies,
+                enemyKing
+            )
             const attackOverlapsEnemy = (attackBox, enemy) =>
                 Boolean(
                     enemy &&
