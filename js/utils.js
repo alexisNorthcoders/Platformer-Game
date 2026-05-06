@@ -216,7 +216,35 @@ function createEnemyKing(positions, levelNum) {
                 frameBuffer: 6,
                 loop: true,
                 imageSrc: './Sprites/02-King Pig/Run (38x28).png',
-            }
+            },
+            hit: {
+                frameRate: 2,
+                frameBuffer: 12,
+                loop: false,
+                imageSrc: './Sprites/02-King Pig/Hit (38x28).png',
+            },
+            dead: {
+                frameRate: 4,
+                frameBuffer: 12,
+                loop: false,
+                imageSrc: './Sprites/02-King Pig/Dead (38x28).png',
+            },
+            attack: {
+                frameRate: 5,
+                frameBuffer: 12,
+                loop: false,
+                imageSrc: './Sprites/02-King Pig/Attack (38x28).png',
+            },
+            jump: {
+                frameRate: 1,
+                loop: false,
+                imageSrc: './Sprites/02-King Pig/Jump (38x28).png',
+            },
+            fall: {
+                frameRate: 1,
+                loop: false,
+                imageSrc: './Sprites/02-King Pig/Fall (38x28).png',
+            },
         }
     }))
 }
