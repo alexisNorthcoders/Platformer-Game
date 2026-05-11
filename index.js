@@ -72,13 +72,6 @@ const player = new Player({
             loop: true,
             imageSrc: './img/king/IdleRight.png',
         },
-        hit: {
-            frameRate: 2,
-            frameBuffer: 8,
-            loop: true,
-            imageSrc: './img/king/Hit (78x58).png',
-
-        },
         jump: {
             frameRate: 1,
             frameBuffer: 2,

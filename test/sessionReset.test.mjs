@@ -27,6 +27,7 @@ test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
         canAttack: false,
         running: true,
         hitCooldown: true,
+        hurtTint: 'rgba(255, 0, 0, 0.5)',
         canJump: false,
         dead: true,
         gameOver: true,
@@ -44,6 +45,7 @@ test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
     assert.equal(player.canAttack, true)
     assert.equal(player.running, false)
     assert.equal(player.hitCooldown, false)
+    assert.equal(player.hurtTint, null)
     assert.equal(player.canJump, true)
     assert.equal(player.dead, false)
     assert.equal(player.gameOver, false)

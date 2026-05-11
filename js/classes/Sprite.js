@@ -106,6 +106,26 @@ class Sprite {
             )
         }
 
+        if (this.hurtTint) {
+            c.globalCompositeOperation = 'source-atop'
+            c.fillStyle = this.hurtTint
+            if (this.flip) {
+                c.fillRect(
+                    -this.position.x - this.width * scale + 30,
+                    this.position.y,
+                    this.width * scale,
+                    this.height * scale
+                )
+            } else {
+                c.fillRect(
+                    this.position.x,
+                    this.position.y,
+                    this.width * scale,
+                    this.height * scale
+                )
+            }
+        }
+
         c.restore()
         this.updateFrames()
     }

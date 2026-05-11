@@ -20,6 +20,7 @@ export function resetPlayerForNewLevelRun(player) {
     player.canAttack = true
     player.running = false
     player.hitCooldown = false
+    player.hurtTint = null
     player.canJump = true
     player.dead = false
     player.gameOver = false

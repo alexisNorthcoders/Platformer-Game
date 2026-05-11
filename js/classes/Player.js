@@ -10,6 +10,7 @@ class Player extends Sprite {
         this.running = false
         this.hitCooldownDuration = 1000
         this.contactDamageTimeoutId = null
+        this.hurtTint = null
         this.gameOver = false
         this.isShowingHello = false
         this.canJump = true
@@ -194,15 +195,7 @@ class Player extends Sprite {
     switchSprite(name) {
 
         if (this.image === this.animations[name].image) return
-        if (name === 'hit') {
-            this.currentFrame = 0
-            this.image = this.animations[name].image
-            this.frameRate = this.animations[name].frameRate
-            this.frameBuffer = this.animations[name].frameBuffer
-            this.loop = this.animations[name].loop
-            this.currentAnimation = this.animations[name]
-        }
-        else if (!this.hitCooldown) {
+        if (!this.hitCooldown) {
 
             this.currentFrame = 0
             this.image = this.animations[name].image
@@ -309,7 +302,7 @@ class Player extends Sprite {
         this.attacking = false
         this.hitCooldown = true
         playHitSound()
-        this.switchSprite('hit')
+        this.hurtTint = 'rgba(255, 120, 145, 0.55)'
         this.loseHP()
 
         if (!this.dead) {
@@ -326,6 +319,7 @@ class Player extends Sprite {
             this.contactDamageTimeoutId = setTimeout(() => {
                 this.contactDamageTimeoutId = null
                 this.hitCooldown = false
+                this.hurtTint = null
                 if (!this.dead) {
                     this.velocity.x = 0
                 }
@@ -385,6 +379,7 @@ class Player extends Sprite {
         if (!this.hitpoints) {
             this.dead = true
             this.gameOver = true
+            this.hurtTint = null
             this.preventInput = true
             this.velocity.x = 0
             this.velocity.y = 0
