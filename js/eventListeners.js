@@ -1,4 +1,11 @@
 window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        if (typeof handleEscapeMenu === 'function' && handleEscapeMenu()) {
+            event.preventDefault()
+            return
+        }
+    }
+
     if (player.gameOver && (event.key === 'r' || event.key === 'R')) {
         event.preventDefault()
         if (window.restartFromGameOver) window.restartFromGameOver()

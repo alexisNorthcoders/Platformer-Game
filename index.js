@@ -27,6 +27,8 @@ function readStoredSelectedLevel() {
 
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
+/** True when the menu was opened with Escape during gameplay (so Escape can resume). */
+let pauseMenuFromPlaying = false
 
 const MENU = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
@@ -332,11 +334,20 @@ function canvasClickCoords(e) {
 }
 
 async function startGame(levelToStart) {
+    pauseMenuFromPlaying = false
     gameState = 'loading'
     player.preventInput = true
     overlay.opacity = 1
     diamondCount = 0
     numberSprites = createNumberSprites(0)
+    player.gameOver = false
+    player.dead = false
+    player.hitpoints = 3
+    player.isShowingHello = false
+    if (player.contactDamageTimeoutId) {
+        clearTimeout(player.contactDamageTimeoutId)
+        player.contactDamageTimeoutId = null
+    }
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
@@ -567,6 +578,37 @@ window.restartFromGameOver = async () => {
     } finally {
         player._restarting = false
     }
+}
+
+function clearMovementKeys() {
+    keys.w.pressed = false
+    keys.a.pressed = false
+    keys.d.pressed = false
+    keys.space.pressed = false
+}
+
+// Escape opens/closes the in-game level menu (returns true if handled).
+function handleEscapeMenu() {
+    if (gameState === 'loading') return false
+
+    if (gameState === 'playing') {
+        gameState = 'menu'
+        selectedLevel = level
+        syncMenuSelectionUI()
+        clearMovementKeys()
+        player.preventInput = true
+        pauseMenuFromPlaying = true
+        return true
+    }
+
+    if (gameState === 'menu' && pauseMenuFromPlaying) {
+        gameState = 'playing'
+        player.preventInput = false
+        pauseMenuFromPlaying = false
+        return true
+    }
+
+    return false
 }
 
 queueMicrotask(() => {
