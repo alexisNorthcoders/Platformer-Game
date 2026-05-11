@@ -25,6 +25,7 @@ function readStoredSelectedLevel() {
     }
 }
 
+/** High-level flow. Death uses `player.gameOver` while this stays `'playing'`. */
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
 /** True when the menu was opened with Escape during gameplay (so Escape can resume). */
@@ -334,20 +335,19 @@ function canvasClickCoords(e) {
 }
 
 async function startGame(levelToStart) {
+    const flow = globalThis.__gameFlow
+    if (!flow?.clearHeldInputKeys || !flow?.resetPlayerForNewLevelRun) {
+        console.error('gameFlow-bootstrap.mjs must load before index.js')
+        return
+    }
     pauseMenuFromPlaying = false
     gameState = 'loading'
     player.preventInput = true
     overlay.opacity = 1
     diamondCount = 0
     numberSprites = createNumberSprites(0)
-    player.gameOver = false
-    player.dead = false
-    player.hitpoints = 3
-    player.isShowingHello = false
-    if (player.contactDamageTimeoutId) {
-        clearTimeout(player.contactDamageTimeoutId)
-        player.contactDamageTimeoutId = null
-    }
+    flow.clearHeldInputKeys(keys)
+    flow.resetPlayerForNewLevelRun(player)
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
@@ -552,10 +552,14 @@ window.restartFromGameOver = async () => {
     if (!player.gameOver || player._restarting) return
     player._restarting = true
     try {
-        keys.w.pressed = false
-        keys.a.pressed = false
-        keys.d.pressed = false
-        keys.space.pressed = false
+        if (globalThis.__gameFlow?.clearHeldInputKeys) {
+            globalThis.__gameFlow.clearHeldInputKeys(keys)
+        } else {
+            keys.w.pressed = false
+            keys.a.pressed = false
+            keys.d.pressed = false
+            keys.space.pressed = false
+        }
         player.gameOver = false
         player.dead = false
         player.hitpoints = 3
@@ -580,35 +584,30 @@ window.restartFromGameOver = async () => {
     }
 }
 
-function clearMovementKeys() {
-    keys.w.pressed = false
-    keys.a.pressed = false
-    keys.d.pressed = false
-    keys.space.pressed = false
-}
-
 // Escape opens/closes the in-game level menu (returns true if handled).
 function handleEscapeMenu() {
-    if (gameState === 'loading') return false
-
-    if (gameState === 'playing') {
-        gameState = 'menu'
+    const flow = globalThis.__gameFlow
+    if (!flow?.reduceEscapeKey) return false
+    const result = flow.reduceEscapeKey({
+        gameState,
+        pauseMenuFromPlaying,
+        playerGameOver: player.gameOver,
+        currentLevel: level,
+    })
+    if (!result.handled) return false
+    if (result.clearKeys) flow.clearHeldInputKeys(keys)
+    if (result.gameState !== undefined) gameState = result.gameState
+    if (result.pauseMenuFromPlaying !== undefined) pauseMenuFromPlaying = result.pauseMenuFromPlaying
+    if (result.selectedLevel !== undefined) {
+        selectedLevel = result.selectedLevel
+        syncMenuSelectionUI()
+    }
+    if (result.playerPreventInput !== undefined) player.preventInput = result.playerPreventInput
+    if (result.resyncMenuSelectionToLevel) {
         selectedLevel = level
         syncMenuSelectionUI()
-        clearMovementKeys()
-        player.preventInput = true
-        pauseMenuFromPlaying = true
-        return true
     }
-
-    if (gameState === 'menu' && pauseMenuFromPlaying) {
-        gameState = 'playing'
-        player.preventInput = false
-        pauseMenuFromPlaying = false
-        return true
-    }
-
-    return false
+    return true
 }
 
 queueMicrotask(() => {
