@@ -243,24 +243,18 @@ class Player extends Sprite {
 
     checkEnemyHitCollision() {
         if (this.attacking) {
-            const attackableEnemies = [
-                ...(Array.isArray(enemies) ? enemies : []),
-                ...(Array.isArray(enemyKing) ? enemyKing : []),
-            ]
-            const attackOverlapsEnemy = (attackBox, enemy) =>
-                Boolean(
-                    enemy &&
-                    enemy.hitbox &&
-                    typeof enemy.hit === 'function' &&
-                    ContactDamageHelpers.rectHitboxesOverlap(attackBox, enemy.hitbox)
-                )
+            const hitEnemies = ContactDamageHelpers.findEnemiesHitByPlayerHammer({
+                lastDirection: this.lastDirection,
+                attackHitboxRight: this.attackHitboxRight,
+                attackHitboxLeft: this.attackHitboxLeft,
+                enemies,
+                enemyKing,
+            })
+            hitEnemies.forEach((enemy) => {
+                enemy.hit()
+            })
 
             if (this.lastDirection === 'right') {
-                attackableEnemies.forEach((enemy) => {
-                    if (attackOverlapsEnemy(this.attackHitboxRight, enemy)) {
-                        enemy.hit()
-                    }
-                })
                 boxes.forEach((box) => {
                     if (box.isBreaking) return
                     if (this.attackHitboxRight.position.x + this.attackHitboxRight.width >= box.hitbox.position.x &&
@@ -274,11 +268,6 @@ class Player extends Sprite {
                 })
             }
             else {
-                attackableEnemies.forEach((enemy) => {
-                    if (attackOverlapsEnemy(this.attackHitboxLeft, enemy)) {
-                        enemy.hit()
-                    }
-                })
                 boxes.forEach((box) => {
                     if (box.isBreaking) return
                     if (this.attackHitboxLeft.position.x + this.attackHitboxLeft.width >= box.hitbox.position.x &&
