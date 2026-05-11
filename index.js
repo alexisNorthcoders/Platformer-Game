@@ -25,8 +25,11 @@ function readStoredSelectedLevel() {
     }
 }
 
+/** High-level flow. Death uses `player.gameOver` while this stays `'playing'`. */
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
+/** True when the menu was opened with Escape during gameplay (so Escape can resume). */
+let pauseMenuFromPlaying = false
 
 const MENU = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
@@ -332,11 +335,19 @@ function canvasClickCoords(e) {
 }
 
 async function startGame(levelToStart) {
+    const flow = globalThis.__gameFlow
+    if (!flow?.clearHeldInputKeys || !flow?.resetPlayerForNewLevelRun) {
+        console.error('gameFlow-bootstrap.mjs must load before index.js')
+        return
+    }
+    pauseMenuFromPlaying = false
     gameState = 'loading'
     player.preventInput = true
     overlay.opacity = 1
     diamondCount = 0
     numberSprites = createNumberSprites(0)
+    flow.clearHeldInputKeys(keys)
+    flow.resetPlayerForNewLevelRun(player)
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
@@ -541,10 +552,14 @@ window.restartFromGameOver = async () => {
     if (!player.gameOver || player._restarting) return
     player._restarting = true
     try {
-        keys.w.pressed = false
-        keys.a.pressed = false
-        keys.d.pressed = false
-        keys.space.pressed = false
+        if (globalThis.__gameFlow?.clearHeldInputKeys) {
+            globalThis.__gameFlow.clearHeldInputKeys(keys)
+        } else {
+            keys.w.pressed = false
+            keys.a.pressed = false
+            keys.d.pressed = false
+            keys.space.pressed = false
+        }
         player.gameOver = false
         player.dead = false
         player.hitpoints = 3
@@ -567,6 +582,32 @@ window.restartFromGameOver = async () => {
     } finally {
         player._restarting = false
     }
+}
+
+// Escape opens/closes the in-game level menu (returns true if handled).
+function handleEscapeMenu() {
+    const flow = globalThis.__gameFlow
+    if (!flow?.reduceEscapeKey) return false
+    const result = flow.reduceEscapeKey({
+        gameState,
+        pauseMenuFromPlaying,
+        playerGameOver: player.gameOver,
+        currentLevel: level,
+    })
+    if (!result.handled) return false
+    if (result.clearKeys) flow.clearHeldInputKeys(keys)
+    if (result.gameState !== undefined) gameState = result.gameState
+    if (result.pauseMenuFromPlaying !== undefined) pauseMenuFromPlaying = result.pauseMenuFromPlaying
+    if (result.selectedLevel !== undefined) {
+        selectedLevel = result.selectedLevel
+        syncMenuSelectionUI()
+    }
+    if (result.playerPreventInput !== undefined) player.preventInput = result.playerPreventInput
+    if (result.resyncMenuSelectionToLevel) {
+        selectedLevel = level
+        syncMenuSelectionUI()
+    }
+    return true
 }
 
 queueMicrotask(() => {
