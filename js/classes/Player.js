@@ -193,17 +193,16 @@ class Player extends Sprite {
     }
 
     switchSprite(name) {
-
-        if (this.image === this.animations[name].image) return
+        const anim = this.animations[name]
         if (!this.hitCooldown) {
-
+            if (this.currentAnimation === anim) return
             this.currentFrame = 0
-            this.image = this.animations[name].image
-            this.frameRate = this.animations[name].frameRate
-            this.frameBuffer = this.animations[name].frameBuffer
-            this.loop = this.animations[name].loop
-            this.currentAnimation = this.animations[name]
-            this.flip = this.animations[name].flip || false
+            this.image = anim.image
+            this.frameRate = anim.frameRate
+            this.frameBuffer = anim.frameBuffer
+            this.loop = anim.loop
+            this.currentAnimation = anim
+            this.flip = anim.flip || false
         }
     }
 
@@ -302,7 +301,7 @@ class Player extends Sprite {
         this.attacking = false
         this.hitCooldown = true
         playHitSound()
-        this.hurtTint = 'rgba(255, 120, 145, 0.55)'
+        playerContactHurtTint.applyPlayerContactHurtTint(this)
         this.loseHP()
 
         if (!this.dead) {
@@ -319,7 +318,7 @@ class Player extends Sprite {
             this.contactDamageTimeoutId = setTimeout(() => {
                 this.contactDamageTimeoutId = null
                 this.hitCooldown = false
-                this.hurtTint = null
+                playerContactHurtTint.clearPlayerHurtTint(this)
                 if (!this.dead) {
                     this.velocity.x = 0
                 }
@@ -379,7 +378,7 @@ class Player extends Sprite {
         if (!this.hitpoints) {
             this.dead = true
             this.gameOver = true
-            this.hurtTint = null
+            playerContactHurtTint.clearPlayerHurtTint(this)
             this.preventInput = true
             this.velocity.x = 0
             this.velocity.y = 0

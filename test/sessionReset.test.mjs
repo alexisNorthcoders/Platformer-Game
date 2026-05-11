@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { PLAYER_CONTACT_HURT_TINT } from '../js/playerContactHurtTint.mjs'
 import { clearHeldInputKeys, resetPlayerForNewLevelRun } from '../js/sessionReset.mjs'
 
 test('clearHeldInputKeys clears every .pressed entry on the keys bag', () => {
@@ -27,7 +28,7 @@ test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
         canAttack: false,
         running: true,
         hitCooldown: true,
-        hurtTint: 'rgba(255, 0, 0, 0.5)',
+        hurtTint: PLAYER_CONTACT_HURT_TINT,
         canJump: false,
         dead: true,
         gameOver: true,
