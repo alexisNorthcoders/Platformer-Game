@@ -2,6 +2,8 @@
  * Central place for clearing per-run / per-level player state so level changes
  * cannot inherit stale movement, combat timers, or death flags.
  */
+import { clearPlayerHurtTint } from './playerContactHurtTint.mjs'
+
 export function clearHeldInputKeys(keys) {
     if (!keys || typeof keys !== 'object') return
     for (const id of Object.keys(keys)) {
@@ -20,6 +22,7 @@ export function resetPlayerForNewLevelRun(player) {
     player.canAttack = true
     player.running = false
     player.hitCooldown = false
+    clearPlayerHurtTint(player)
     player.canJump = true
     player.dead = false
     player.gameOver = false

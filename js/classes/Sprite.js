@@ -87,7 +87,7 @@ class Sprite {
                 cropbox.position.y,
                 cropbox.width,
                 cropbox.height,
-                -this.position.x - this.width * scale + 30,
+                -this.position.x - this.width * scale,
                 this.position.y,
                 this.width * scale,
                 this.height * scale
@@ -104,6 +104,28 @@ class Sprite {
                 this.width * scale,
                 this.height * scale
             )
+        }
+
+        if (this.hurtTint) {
+            c.save()
+            c.globalCompositeOperation = 'source-atop'
+            c.fillStyle = this.hurtTint
+            if (this.flip) {
+                c.fillRect(
+                    -this.position.x - this.width * scale,
+                    this.position.y,
+                    this.width * scale,
+                    this.height * scale
+                )
+            } else {
+                c.fillRect(
+                    this.position.x,
+                    this.position.y,
+                    this.width * scale,
+                    this.height * scale
+                )
+            }
+            c.restore()
         }
 
         c.restore()
