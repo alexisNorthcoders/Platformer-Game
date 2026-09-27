@@ -38,7 +38,11 @@ export const TITLE_SCENE = {
     /** Cannon balls land this far left of the muzzle. */
     shotDistance: { min: 260, max: 520 },
     shotPeak: 36,
-    /** Longest step advanceTitleScene() takes, so a hidden tab doesn't jump. */
+    /**
+     * Longest frame gap advanceTitleScene() steps across. A longer gap means the
+     * Title Screen wasn't showing (hidden tab, playing, Pause Menu), so the scene
+     * resumes where it was rather than jumping.
+     */
     maxStepMs: 100,
 }
 
@@ -314,13 +318,13 @@ export function stepTitleScene(scene, dtMs) {
 
 /**
  * Advances the scene to the frame time `now` (ms, e.g. performance.now()).
- * Steps are capped at maxStepMs; the first call after pauseTitleScene() only
- * records the time.
+ * The first call after pauseTitleScene(), or after a gap longer than maxStepMs,
+ * only records the time: the scene pauses whenever it isn't drawn, even if the
+ * caller never calls pauseTitleScene().
  */
 export function advanceTitleScene(scene, now) {
-    if (scene.lastNow != null) {
-        stepTitleScene(scene, Math.min(TITLE_SCENE.maxStepMs, Math.max(0, now - scene.lastNow)))
-    }
+    const dt = scene.lastNow == null ? null : now - scene.lastNow
+    if (dt != null && dt >= 0 && dt <= TITLE_SCENE.maxStepMs) stepTitleScene(scene, dt)
     scene.lastNow = now
 }
 

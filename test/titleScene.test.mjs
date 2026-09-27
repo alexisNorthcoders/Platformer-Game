@@ -181,18 +181,28 @@ test('draw list: every sprite is a known sheet frame, below the Level Preview an
     })
 })
 
-test('advanceTitleScene: real-time steps are clamped, and pausing forgets the last frame', () => {
+test('advanceTitleScene: steps frame gaps, and resumes without jumping after a pause or long gap', () => {
     const scene = createTitleScene({ rng: seeded(4) })
     advanceTitleScene(scene, 1000)
     assert.equal(scene.time, 0)
     advanceTitleScene(scene, 1016)
     assert.equal(scene.time, 16)
-    // A long gap (tab hidden, or playing a level) advances at most maxStepMs.
+    advanceTitleScene(scene, 1016 + TITLE_SCENE.maxStepMs)
+    assert.equal(scene.time, 16 + TITLE_SCENE.maxStepMs)
+    // A long gap (tab hidden, or playing a level with no pauseTitleScene() call)
+    // doesn't advance the scene; the next frame steps normally again.
     advanceTitleScene(scene, 60_000)
     assert.equal(scene.time, 16 + TITLE_SCENE.maxStepMs)
+    advanceTitleScene(scene, 60_016)
+    assert.equal(scene.time, 32 + TITLE_SCENE.maxStepMs)
+    // Clock going backwards doesn't step either.
+    advanceTitleScene(scene, 50_000)
+    assert.equal(scene.time, 32 + TITLE_SCENE.maxStepMs)
     pauseTitleScene(scene)
-    advanceTitleScene(scene, 120_000)
-    assert.equal(scene.time, 16 + TITLE_SCENE.maxStepMs)
+    advanceTitleScene(scene, 50_050)
+    assert.equal(scene.time, 32 + TITLE_SCENE.maxStepMs)
+    advanceTitleScene(scene, 50_066)
+    assert.equal(scene.time, 48 + TITLE_SCENE.maxStepMs)
 })
 
 test('floor tiles: whole Terrain tiles at 2× spanning the canvas width', () => {
