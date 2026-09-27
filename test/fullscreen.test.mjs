@@ -28,6 +28,12 @@ test('isFullscreenAvailable: webkit-prefixed API counts', () => {
     assert.equal(isFullscreenAvailable(fakeDocument({ prefix: 'webkit' }), true), true)
 })
 
+test('isFullscreenAvailable: prefixed methods without an enabled flag count', () => {
+    const doc = fakeDocument({ prefix: 'webkit' })
+    delete doc.webkitFullscreenEnabled
+    assert.equal(isFullscreenAvailable(doc, true), true)
+})
+
 test('isFullscreenAvailable: hidden on desktop', () => {
     assert.equal(isFullscreenAvailable(fakeDocument(), false), false)
 })

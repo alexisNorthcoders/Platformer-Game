@@ -5,7 +5,16 @@
  * with the canvas; mobile-bootstrap.mjs refits both on `fullscreenchange`.
  */
 export function isFullscreenAvailable(doc, isTouch) {
-    return Boolean(isTouch && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled))
+    if (!isTouch) return false
+    const enabled = doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled
+    // An explicit flag wins (iPhone Safari reports false); older prefixed
+    // browsers expose only the methods, so fall back to those.
+    if (enabled !== undefined) return Boolean(enabled)
+    const el = doc.documentElement
+    return Boolean(
+        (el?.requestFullscreen || el?.webkitRequestFullscreen) &&
+        (doc.exitFullscreen || doc.webkitExitFullscreen)
+    )
 }
 
 export function isFullscreen(doc) {

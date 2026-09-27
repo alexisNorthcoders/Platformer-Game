@@ -413,6 +413,9 @@ async function startGame(levelToStart) {
     })
 }
 
+// The only input route for the menu buttons, on touch too: taps synthesise a
+// click (mobile-bootstrap.mjs never cancels touchstart), and tap-to-restart
+// below only acts on game over.
 canvas.addEventListener('click', (e) => {
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
