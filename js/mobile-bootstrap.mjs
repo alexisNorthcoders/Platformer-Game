@@ -19,12 +19,14 @@ window.visualViewport?.addEventListener('resize', fitCanvasToViewport)
 // Stop the page behaving like a web page under touch. CSS touch-action /
 // overscroll-behavior cover most browsers; iOS Safari ignores user-scalable=no
 // and needs its gesture events and touchmove cancelled.
-const cancel = (e) => e.preventDefault()
-document.addEventListener('contextmenu', cancel)
-document.addEventListener('dblclick', cancel)
-document.addEventListener('selectstart', cancel)
-document.addEventListener('gesturestart', cancel)
-document.addEventListener('gesturechange', cancel)
-document.addEventListener('touchmove', cancel, { passive: false })
+//
+// Manual check (#40): on a phone, the whole canvas is visible with no scroll;
+// pinch, double-tap, long-press and pull-down do nothing; rotating rescales;
+// Start / Level taps register; sound plays after the first tap.
+const BROWSER_DEFAULTS_TO_SUPPRESS = ['contextmenu', 'selectstart', 'gesturestart', 'gesturechange', 'touchmove']
+const suppressBrowserDefault = (e) => e.preventDefault()
+for (const type of BROWSER_DEFAULTS_TO_SUPPRESS) {
+    document.addEventListener(type, suppressBrowserDefault, { passive: false })
+}
 
 if (typeof audioContext !== 'undefined') unlockAudioOnFirstGesture(window, audioContext)
