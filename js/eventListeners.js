@@ -1,3 +1,18 @@
+// doorEntry and levelTimer are globals set by their *-bootstrap.mjs modules,
+// loaded before this script in index.html.
+function canPlayerEnterDoor() {
+    return doorEntry.canEnterDoor({ hitbox: player.hitbox, doors, doorClosed })
+}
+
+function enterDoor() {
+    player.velocity.x = 0
+    player.velocity.y = 0
+    player.preventInput = true
+    levelTransitioning = true
+    levelTimer.stop(performance.now())
+    player.switchSprite('enterDoor')
+}
+
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
         if (typeof handleEscapeMenu === 'function' && handleEscapeMenu()) {
@@ -17,25 +32,9 @@ window.addEventListener('keydown', (event) => {
 
     switch (event.key) {
         case 'ArrowUp':
-
-            for (let i = 0; i < doors.length; i++) {
-                const door = doors[i]
-                if (player.hitbox.position.x + player.hitbox.width <= door.position.x + 2 * door.width &&
-                    player.hitbox.position.x >= door.position.x &&
-                    player.hitbox.position.y + player.hitbox.height >= door.position.y &&
-                    player.hitbox.position.y <= door.position.y + 2 * door.height
-                ) {
-                    if (doorClosed) return
-                    player.velocity.x = 0
-                    player.velocity.y = 0
-                    player.preventInput = true
-                    levelTransitioning = true
-                    levelTimer.stop(performance.now())
-                    player.switchSprite('enterDoor')
-
-                    return
-                }
-
+            if (canPlayerEnterDoor()) {
+                enterDoor()
+                return
             }
             keys.w.pressed = true;
             break
