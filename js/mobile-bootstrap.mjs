@@ -1,4 +1,4 @@
-import { fitCanvasSize } from './canvasFit.mjs'
+import { controllerReservedHeight, fitCanvasSize } from './canvasFit.mjs'
 import { unlockAudioOnFirstGesture } from './audioUnlock.mjs'
 
 // Loaded after index.js (canvas sized to native 1024×576) and audio.js
@@ -6,16 +6,11 @@ import { unlockAudioOnFirstGesture } from './audioUnlock.mjs'
 const canvas = document.querySelector('canvas')
 const touchController = document.getElementById('touch-controller')
 
-// In touch portrait the controller panel sits below the canvas (index.html CSS);
-// keep its minimum height free so the game fits above it.
-function controllerReservedHeight() {
-    if (!touchController) return 0
-    const style = getComputedStyle(touchController)
-    return style.display === 'none' ? 0 : parseFloat(style.minHeight) || 0
-}
-
 function fitCanvasToViewport() {
-    const availableHeight = window.innerHeight - controllerReservedHeight()
+    // Touch portrait: the controller sits below the game, so keep its height free.
+    // Touch landscape: it overlays the game, which gets the full height.
+    const reserved = touchController ? controllerReservedHeight(getComputedStyle(touchController)) : 0
+    const availableHeight = window.innerHeight - reserved
     const { width, height } = fitCanvasSize(window.innerWidth, availableHeight, canvas.width, canvas.height)
     canvas.style.width = `${width}px`
     canvas.style.height = `${height}px`

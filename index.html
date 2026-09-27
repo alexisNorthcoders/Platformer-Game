@@ -39,7 +39,8 @@
     }
 
     /* Touch controller (#42). All of its look lives here so it can be reskinned
-       (e.g. pixel art) by changing these rules. Hidden unless touch + portrait. */
+       (e.g. pixel art) by changing these rules. Hidden unless touch: split below
+       the game in portrait, overlaid on it in landscape (#43). */
     #touch-controller {
       --tc-button-size: min(84px, 19vw);
       --tc-gap: min(16px, 3vw);
@@ -105,6 +106,30 @@
       #touch-controller {
         display: flex;
         flex: 1;
+      }
+    }
+
+    /* Landscape: the game keeps the full height and the controller floats over
+       its bottom corners. Only the zones take touches; the gap between them
+       (and the top, where the HUD is drawn) passes through to the canvas. */
+    @media (pointer: coarse) and (orientation: landscape) {
+      #touch-controller {
+        --tc-button-size: min(72px, 18vh);
+
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 0;
+        align-items: flex-end;
+        padding: var(--tc-gap) max(calc(var(--tc-gap) * 1.5), env(safe-area-inset-right)) calc(var(--tc-gap) + env(safe-area-inset-bottom)) max(calc(var(--tc-gap) * 1.5), env(safe-area-inset-left));
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      #touch-controller [data-zone] {
+        pointer-events: auto;
       }
     }
   </style>
