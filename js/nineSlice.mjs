@@ -49,17 +49,32 @@ export function nineSlice(frame, dest, scale, { tileEdges = false } = {}) {
             }
             // Repeat along the edge's length: across for top/bottom, down for left/right.
             const across = r !== 1
-            const tile = (across ? sw : sh) * scale
-            const length = across ? dw : dh
-            for (let off = 0; off < length; off += tile) {
-                const run = Math.min(tile, length - off)
-                pieces.push(across
-                    ? { sx, sy, sw: run / scale, sh, dx: dx + off, dy, dw: run, dh }
-                    : { sx, sy, sw, sh: run / scale, dx, dy: dy + off, dw, dh: run })
+            const colTiles = across ? tileRun(sx, sw, dx, dw, scale) : [[sx, sw, dx, dw]]
+            const rowTiles = across ? [[sy, sh, dy, dh]] : tileRun(sy, sh, dy, dh, scale)
+            for (const [tsy, tsh, tdy, tdh] of rowTiles) {
+                for (const [tsx, tsw, tdx, tdw] of colTiles) {
+                    pieces.push({ sx: tsx, sy: tsy, sw: tsw, sh: tsh, dx: tdx, dy: tdy, dw: tdw, dh: tdh })
+                }
             }
         }
     }
     return pieces
+}
+
+/**
+ * One axis of a tiled edge: copies of the source span [start, start + size)
+ * at natural size along [dest, dest + length), as
+ * [source start, source size, dest start, dest size]. Every copy starts at
+ * the span's start; the last one keeps only the part that fits, so no copy
+ * ever reads past the end of the span.
+ */
+function tileRun(start, size, dest, length, scale) {
+    const tiles = []
+    for (let off = 0; off < length; off += size * scale) {
+        const run = Math.min(size * scale, length - off)
+        tiles.push([start, Math.min(size, run / scale), dest + off, run])
+    }
+    return tiles
 }
 
 /** Smallest destination a frame can be drawn into at `scale`: its corners, with no middle. */

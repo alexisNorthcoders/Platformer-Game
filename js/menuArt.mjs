@@ -59,11 +59,24 @@ export function pixelFont(size) {
 /**
  * Resolves once the pixel font can be drawn (true), or after `timeoutMs`
  * without it (false), so a missing font never stops the game from starting.
+ *
+ * The matching @font-face entries are loaded explicitly, since some browsers
+ * only fetch a face once text uses it, and then `fontFaceSet.ready` is awaited
+ * so the first canvas draw already has the face.
  */
 export function waitForPixelFont(fontFaceSet, { timeoutMs = 3000, setTimer = setTimeout } = {}) {
     if (!fontFaceSet?.load) return Promise.resolve(false)
-    const loaded = fontFaceSet.load(pixelFont(16)).then(
-        faces => faces.length > 0,
+    const declared = typeof fontFaceSet[Symbol.iterator] === 'function'
+        ? [...fontFaceSet].filter(face => face.family?.replace(/["']/g, '') === PIXEL_FONT_FAMILY)
+        : []
+    const loaded = Promise.all([
+        fontFaceSet.load(pixelFont(16)),
+        ...declared.map(face => face.load()),
+    ]).then(
+        async ([matched, ...faces]) => {
+            await fontFaceSet.ready
+            return matched.length > 0 || faces.length > 0
+        },
         () => false,
     )
     const timedOut = new Promise(resolve => setTimer(() => resolve(false), timeoutMs))

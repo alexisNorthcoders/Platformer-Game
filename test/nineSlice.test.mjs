@@ -73,3 +73,30 @@ test('nineSlice tiled: edges repeat at natural size, the last copy cropped', () 
     const area = pieces.reduce((sum, p) => sum + p.dw * p.dh, 0)
     assert.equal(area, dest.w * dest.h)
 })
+
+test('nineSlice tiled: right and bottom edges crop their last tile within the source edge', () => {
+    // Middle 47×23 at scale 2: not a multiple of the 20×10 edge tile on either axis.
+    const dest = { x: 5, y: 7, w: 8 + 47 + 12, h: 4 + 23 + 6 }
+    const pieces = nineSlice(FRAME, dest, 2, { tileEdges: true })
+    const right = pieces.filter(p => p.dx === 5 + 8 + 47 && p.dy >= 11 && p.dy < 34)
+    assert.deepEqual(right, [
+        { sx: 114, sy: 52, sw: 6, sh: 5, dx: 60, dy: 11, dw: 12, dh: 10 },
+        { sx: 114, sy: 52, sw: 6, sh: 5, dx: 60, dy: 21, dw: 12, dh: 10 },
+        { sx: 114, sy: 52, sw: 6, sh: 1.5, dx: 60, dy: 31, dw: 12, dh: 3 },
+    ])
+    const bottom = pieces.filter(p => p.dy === 7 + 4 + 23 && p.dx >= 13 && p.dx < 60)
+    assert.deepEqual(bottom, [
+        { sx: 104, sy: 57, sw: 10, sh: 3, dx: 13, dy: 34, dw: 20, dh: 6 },
+        { sx: 104, sy: 57, sw: 10, sh: 3, dx: 33, dy: 34, dw: 20, dh: 6 },
+        { sx: 104, sy: 57, sw: 3.5, sh: 3, dx: 53, dy: 34, dw: 7, dh: 6 },
+    ])
+    // Every piece reads only from inside the frame; all but the middle draw at exactly 2×.
+    for (const p of pieces) {
+        assert.ok(p.sx >= FRAME.x && p.sx + p.sw <= FRAME.x + FRAME.w)
+        assert.ok(p.sy >= FRAME.y && p.sy + p.sh <= FRAME.y + FRAME.h)
+        if (p.dx === 13 && p.dy === 11) continue
+        assert.deepEqual([p.dw, p.dh], [p.sw * 2, p.sh * 2])
+    }
+    const area = pieces.reduce((sum, p) => sum + p.dw * p.dh, 0)
+    assert.equal(area, dest.w * dest.h)
+})

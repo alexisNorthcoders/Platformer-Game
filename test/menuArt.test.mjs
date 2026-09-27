@@ -82,6 +82,19 @@ test('waitForPixelFont: true once the font has loaded', async () => {
     assert.deepEqual(requested, ['16px "Press Start 2P"'])
 })
 
+test('waitForPixelFont: loads the declared face explicitly and waits for the set to be ready', async () => {
+    const calls = []
+    const face = { family: '"Press Start 2P"', load: async () => { calls.push('face.load'); return face } }
+    const other = { family: 'Other', load: async () => { calls.push('other.load') } }
+    const fonts = {
+        *[Symbol.iterator]() { yield face; yield other },
+        load: async () => { calls.push('set.load'); return [] },
+        get ready() { calls.push('ready'); return Promise.resolve() },
+    }
+    assert.equal(await waitForPixelFont(fonts, { setTimer: noTimer }), true)
+    assert.deepEqual(calls, ['set.load', 'face.load', 'ready'])
+})
+
 test('waitForPixelFont: false when no face matched or loading failed', async () => {
     assert.equal(await waitForPixelFont({ load: async () => [] }, { setTimer: noTimer }), false)
     assert.equal(await waitForPixelFont({ load: async () => { throw new Error('404') } }, { setTimer: noTimer }), false)
