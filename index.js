@@ -33,28 +33,10 @@ let pauseMenuFromPlaying = false
 /** True from entering the door until the next level's fade-in completes. */
 let levelTransitioning = false
 
-// The Title Screen and Pause Menu each own their layout, so one can change
-// without moving the other (#61).
-// Title Screen (#62): framed Level Preview on the left (16:9, like the level
-// images), level selector and PLAY on the right. The logo sits above both at
-// y 28–56; nothing overlaps at 1024×576, and CSS scaling keeps the proportions.
-const TITLE_SCREEN = {
-    preview: { x: 64, y: 96, w: 512, h: 288 },
-    previewBorder: 6,
-    prevBtn: { x: 632, y: 170, w: 52, h: 52 },
-    nextBtn: { x: 896, y: 170, w: 52, h: 52 },
-    playBtn: { x: 680, y: 262, w: 220, h: 60 },
-}
-
-const PAUSE_MENU = {
-    preview: { x: 207, y: 88, w: 610, h: 220 },
-    startBtn: { x: 287, y: 330, w: 450, h: 52 },
-    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
-    // Touch devices with the Fullscreen API only (#46). Top right: the
-    // landscape touch controller (pause button included) overlays the bottom
-    // of the canvas, so a button under Level would sit beneath it.
-    fullscreenBtn: { x: 794, y: 20, w: 210, h: 52 },
-}
+// Layouts live in menuLayout.mjs (menuGeometry-bootstrap.mjs, loaded before
+// this script).
+const { TITLE_SCREEN, PAUSE_MENU } = globalThis.__menuLayout
+const menuArt = globalThis.__menuArt
 
 let collisionBlocks = []
 let background = null
@@ -208,36 +190,125 @@ const menuTitleSprite = new Sprite({
     autoplay: false,
 })
 
-const menuButtonSprite = new Sprite({
-    position: { x: 0, y: 0 },
-    imageSrc: './Sprites/14-TileSets/platform.png',
-    frameRate: 1,
-    loop: true,
-    autoplay: false,
+// Menu art (#63): plank buttons and brick frames 9-sliced from the tileset at
+// the game's 2× pixel scale, and menu text in the pixel font.
+const MENU_SCALE = menuArt.MENU_ART_SCALE
+const MENU_TEXT = '#f5f0e6'
+const PLANK_TEXT = menuArt.PANEL_FILL
+
+function loadMenuImage(src) {
+    const img = new Image()
+    img.src = src
+    return img
+}
+
+function menuImageReady(img) {
+    return Boolean(img && img.complete && img.naturalWidth > 0)
+}
+
+const plankSheet = loadMenuImage('./Sprites/14-TileSets/platform.png')
+const terrainSheet = loadMenuImage('./Sprites/14-TileSets/Terrain (32x32).png')
+
+/** The plank button (menuArt.PLANK_SOURCE) as { idle, lit } canvases, once platform.png loads. */
+let plankImages = null
+plankSheet.addEventListener('load', () => {
+    plankImages = { idle: buildPlankImage(false), lit: buildPlankImage(true) }
 })
 
-let menuPreviewSprite = null
-let pauseMenuDigitSprites = []
+function buildPlankImage(lit) {
+    const { y, h, columns } = menuArt.PLANK_SOURCE
+    const out = document.createElement('canvas')
+    out.width = menuArt.PLANK_FRAME.w
+    out.height = h
+    const g = out.getContext('2d')
+    let dx = 0
+    for (const col of columns) {
+        g.drawImage(plankSheet, col.x, y, col.w, h, dx, 0, col.w, h)
+        dx += col.w
+    }
+    if (lit) {
+        // Lighten only the plank's own pixels (hover / pressed highlight).
+        g.globalCompositeOperation = 'source-atop'
+        g.fillStyle = 'rgba(255, 244, 214, 0.4)'
+        g.fillRect(0, 0, out.width, out.height)
+    }
+    return out
+}
 
-function drawMenuButtonBackground(rect) {
-    const img = menuButtonSprite?.image
-    const imageReady = Boolean(
-        img && img.complete && img.naturalWidth > 0
-        && (menuButtonSprite.loaded || img.naturalHeight > 0)
-    )
-    if (imageReady) {
-        const tw = img.naturalWidth / menuButtonSprite.frameRate
-        const th = img.naturalHeight
-        c.imageSmoothingEnabled = false
-        c.drawImage(img, 0, 0, tw, th, rect.x, rect.y, rect.w, rect.h)
+function drawNineSlice(image, frame, rect, options) {
+    c.imageSmoothingEnabled = false
+    for (const p of menuArt.nineSlice(frame, rect, MENU_SCALE, options)) {
+        c.drawImage(image, p.sx, p.sy, p.sw, p.sh, p.dx, p.dy, p.dw, p.dh)
+    }
+}
+
+/** The brick-framed panel from the Terrain tiles, filling `rect`. */
+function drawBrickPanel(rect) {
+    if (menuImageReady(terrainSheet)) {
+        drawNineSlice(terrainSheet, menuArt.BRICK_FRAME, rect, { tileEdges: true })
         return
     }
-    c.fillStyle = '#2d3a4a'
-    c.strokeStyle = '#5a6b7d'
-    c.lineWidth = 2
+    c.fillStyle = menuArt.PANEL_FILL
     c.fillRect(rect.x, rect.y, rect.w, rect.h)
-    c.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1)
 }
+
+/** Menu button under the mouse, and the one held down by a pointer or key. */
+let menuHover = null
+let menuPressed = null
+/** True after Title Screen keys, until the mouse moves: PLAY (Enter) shows as selected. */
+let menuKeyboardFocus = false
+
+function menuButtonState(target) {
+    if (menuPressed === target) return 'pressed'
+    if (menuHover === target) return 'hover'
+    if (menuKeyboardFocus && !pauseMenuFromPlaying && target === 'play') return 'hover'
+    return 'idle'
+}
+
+/**
+ * A plank button filling `rect`: lit on hover, lit and pushed down one art
+ * pixel while pressed. Returns the rect it was drawn in, for its label.
+ */
+function drawPlankButton(rect, state = 'idle') {
+    const r = state === 'pressed' ? { ...rect, y: rect.y + MENU_SCALE } : rect
+    if (plankImages) {
+        drawNineSlice(state === 'idle' ? plankImages.idle : plankImages.lit, menuArt.PLANK_FRAME, r)
+    } else {
+        c.fillStyle = menuArt.PLANK_FILL
+        c.fillRect(r.x, r.y, r.w, r.h - menuArt.PLANK_FOOT_ROWS * MENU_SCALE)
+    }
+    return r
+}
+
+/** Pixel-font text centred on (x, y), snapped to whole pixels. */
+function drawMenuText(text, x, y, size, color = MENU_TEXT) {
+    c.font = menuArt.pixelFont(size)
+    c.fillStyle = color
+    c.textAlign = 'center'
+    c.textBaseline = 'middle'
+    c.fillText(text, Math.round(x), Math.round(y))
+}
+
+function drawPlankButtonWithLabel(rect, target, label, size = 16) {
+    const face = menuArt.plankFaceCentre(drawPlankButton(rect, menuButtonState(target)))
+    drawMenuText(label, face.x, face.y, size, PLANK_TEXT)
+}
+
+/** A pixel ◀ (dir -1) or ▶ (dir 1) on the face of the plank button `target`. */
+function drawPlankArrowButton(rect, target, dir) {
+    const face = menuArt.plankFaceCentre(drawPlankButton(rect, menuButtonState(target)))
+    const s = MENU_SCALE
+    const steps = 6
+    const left = Math.round(face.x - (steps * s) / 2)
+    c.fillStyle = PLANK_TEXT
+    for (let i = 0; i < steps; i++) {
+        // Columns grow towards the arrow's back, one art pixel per step.
+        const h = (2 * (dir < 0 ? i : steps - 1 - i) + 1) * s
+        c.fillRect(left + i * s, Math.round(face.y - h / 2), s, h)
+    }
+}
+
+let menuPreviewSprite = null
 
 function levelPreviewImage() {
     const sp = menuPreviewSprite
@@ -249,74 +320,22 @@ function levelPreviewImage() {
     return imageReady ? img : null
 }
 
-function drawMenuPreviewCover(rect) {
-    const img = levelPreviewImage()
-    if (!img) {
-        c.fillStyle = '#1a1a2e'
-        c.fillRect(rect.x, rect.y, rect.w, rect.h)
-        return
-    }
-    const sw = img.naturalWidth
-    const sh = img.naturalHeight
-    const { x: dx, y: dy, w: dw, h: dh } = rect
-    const scale = Math.max(dw / sw, dh / sh)
-    const rw = sw * scale
-    const rh = sh * scale
-    const ox = dx + (dw - rw) / 2
-    const oy = dy + (dh - rh) / 2
-    c.imageSmoothingEnabled = false
-    c.drawImage(img, 0, 0, sw, sh, ox, oy, rw, rh)
-}
-
 /**
- * Level Preview for the Title Screen: a centred crop of the level image drawn
- * exactly into `rect`, clipped as well, inside a frame around it.
+ * Level Preview: a centred crop of the level image drawn exactly into `rect`,
+ * inside the stone border of the brick frame.
  */
-function drawFramedLevelPreview(rect, border) {
-    c.fillStyle = '#5a6b7d'
-    c.fillRect(rect.x - border, rect.y - border, rect.w + border * 2, rect.h + border * 2)
-    c.fillStyle = '#1a1a2e'
+function drawFramedLevelPreview(rect) {
+    drawBrickPanel(menuArt.frameAround(rect, MENU_SCALE))
+    c.fillStyle = menuArt.PANEL_FILL
     c.fillRect(rect.x, rect.y, rect.w, rect.h)
     const img = levelPreviewImage()
     if (!img) return
     const crop = globalThis.__menuGeom.coverSourceRect(img.naturalWidth, img.naturalHeight, rect.w, rect.h)
-    c.save()
-    c.beginPath()
-    c.rect(rect.x, rect.y, rect.w, rect.h)
-    c.clip()
     c.imageSmoothingEnabled = false
     c.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
-    c.restore()
-}
-
-/** Selected-level digits after the Start and Level labels of `layout`. */
-function createMenuDigitSprites(layout) {
-    c.save()
-    c.font = 'bold 22px sans-serif'
-    const startLabel = 'Start Game – Level '
-    const startLabelW = c.measureText(startLabel).width
-    const levelLabel = 'Level: '
-    const levelLabelW = c.measureText(levelLabel).width
-    c.restore()
-    return [
-        ...createNumberSprites(selectedLevel, {
-            x: layout.startBtn.x + 24 + startLabelW,
-            y: layout.startBtn.y + 16,
-        }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10),
-        ...createNumberSprites(selectedLevel, {
-            x: layout.levelBtn.x + 24 + levelLabelW,
-            y: layout.levelBtn.y + 16,
-        }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10),
-    ]
-}
-
-function refreshMenuDigits() {
-    pauseMenuDigitSprites = createMenuDigitSprites(PAUSE_MENU)
 }
 
 function refreshMenuPreview() {
-    // Drawn into each screen's own preview rect (drawFramedLevelPreview on the
-    // Title Screen, drawMenuPreviewCover on the Pause Menu).
     menuPreviewSprite = new Sprite({
         position: { x: 0, y: 0 },
         imageSrc: `./img/Level ${selectedLevel}.png`,
@@ -324,7 +343,6 @@ function refreshMenuPreview() {
         loop: true,
         autoplay: false,
     })
-    refreshMenuDigits()
 }
 
 function syncMenuSelectionUI() {
@@ -335,84 +353,42 @@ function syncMenuSelectionUI() {
     } catch (_) { /* ignore quota / private mode */ }
 }
 
-/** Backdrop, Level Preview, title and Start/Level buttons of `layout`. */
-function drawMenuBase(layout, digitSprites) {
+function drawMenuBackdrop() {
     c.imageSmoothingEnabled = false
     c.clearRect(0, 0, canvas.width, canvas.height)
     c.fillStyle = '#0d0d12'
     c.fillRect(0, 0, canvas.width, canvas.height)
-
-    drawMenuPreviewCover(layout.preview)
-
-    menuTitleSprite.draw(2)
-
-    drawMenuButtonBackground(layout.startBtn)
-    drawMenuButtonBackground(layout.levelBtn)
-
-    c.fillStyle = '#f5f0e6'
-    c.font = 'bold 22px sans-serif'
-    c.textAlign = 'left'
-    c.textBaseline = 'middle'
-    const startCy = layout.startBtn.y + layout.startBtn.h / 2
-    const levelCy = layout.levelBtn.y + layout.levelBtn.h / 2
-    c.fillText('Start Game – Level ', layout.startBtn.x + 24, startCy)
-    c.fillText('Level: ', layout.levelBtn.x + 24, levelCy)
-
-    digitSprites.forEach(s => s.draw(2))
-}
-
-/** A ◀ (dir -1) or ▶ (dir 1) triangle centred in `rect`. */
-function drawArrow(rect, dir) {
-    const cx = rect.x + rect.w / 2
-    const cy = rect.y + rect.h / 2
-    const half = rect.h * 0.22
-    c.beginPath()
-    c.moveTo(cx + dir * half, cy)
-    c.lineTo(cx - dir * half, cy - half)
-    c.lineTo(cx - dir * half, cy + half)
-    c.closePath()
-    c.fill()
 }
 
 function drawTitleScreen() {
     const layout = TITLE_SCREEN
     c.save()
-    c.imageSmoothingEnabled = false
-    c.clearRect(0, 0, canvas.width, canvas.height)
-    c.fillStyle = '#0d0d12'
-    c.fillRect(0, 0, canvas.width, canvas.height)
-
-    drawFramedLevelPreview(layout.preview, layout.previewBorder)
+    drawMenuBackdrop()
+    drawFramedLevelPreview(layout.preview)
+    drawBrickPanel(layout.panel)
     menuTitleSprite.draw(2)
 
-    drawMenuButtonBackground(layout.prevBtn)
-    drawMenuButtonBackground(layout.nextBtn)
-    drawMenuButtonBackground(layout.playBtn)
-
-    c.fillStyle = '#f5f0e6'
-    drawArrow(layout.prevBtn, -1)
-    drawArrow(layout.nextBtn, 1)
-
-    c.textAlign = 'center'
-    c.textBaseline = 'middle'
-    c.font = 'bold 28px sans-serif'
+    drawMenuText('LEVEL', layout.levelCaption.x, layout.levelCaption.y, 16)
+    drawPlankArrowButton(layout.prevBtn, 'prev', -1)
+    drawPlankArrowButton(layout.nextBtn, 'next', 1)
     const selectorCx = (layout.prevBtn.x + layout.prevBtn.w + layout.nextBtn.x) / 2
-    const selectorCy = layout.prevBtn.y + layout.prevBtn.h / 2
-    c.fillText(`LEVEL ${String(selectedLevel).padStart(2, '0')}`, selectorCx, selectorCy)
-    const play = layout.playBtn
-    c.fillText('PLAY', play.x + play.w / 2, play.y + play.h / 2)
+    const selectorCy = menuArt.plankFaceCentre(layout.prevBtn).y
+    drawMenuText(String(selectedLevel).padStart(2, '0'), selectorCx, selectorCy, 32)
+    drawPlankButtonWithLabel(layout.playBtn, 'play', 'PLAY', 24)
     c.restore()
 }
 
 function drawPauseMenu() {
+    const layout = PAUSE_MENU
     c.save()
-    drawMenuBase(PAUSE_MENU, pauseMenuDigitSprites)
+    drawMenuBackdrop()
+    drawFramedLevelPreview(layout.preview)
+    menuTitleSprite.draw(2)
+    drawPlankButtonWithLabel(layout.startBtn, 'start', `START GAME - LEVEL ${selectedLevel}`)
+    drawPlankButtonWithLabel(layout.levelBtn, 'level', `LEVEL: ${selectedLevel}`)
     if (fullscreenAvailable) {
-        const r = PAUSE_MENU.fullscreenBtn
-        drawMenuButtonBackground(r)
-        c.fillStyle = '#f5f0e6'
-        const label = globalThis.__fullscreen?.isFullscreen(document) ? 'Exit Fullscreen' : 'Fullscreen'
-        c.fillText(label, r.x + 24, r.y + r.h / 2)
+        const label = globalThis.__fullscreen?.isFullscreen(document) ? 'EXIT FULLSCREEN' : 'FULLSCREEN'
+        drawPlankButtonWithLabel(layout.fullscreenBtn, 'fullscreen', label)
     }
     c.restore()
 }
@@ -478,6 +454,9 @@ async function startGame(levelToStart) {
     }
     pauseMenuFromPlaying = false
     gameState = 'loading'
+    // Leaving the menu: no highlight is left behind for the next time it opens.
+    menuHover = null
+    menuPressed = null
     player.preventInput = true
     overlay.opacity = 1
     diamondCount = 0
@@ -556,9 +535,31 @@ window.addEventListener('keydown', (e) => {
     const target = globalThis.__menuGeom.titleScreenKeyTarget(e.key)
     if (!target) return
     e.preventDefault()
+    menuPressed = target
+    menuKeyboardFocus = true
     // Holding Enter/Space must not start the level twice; holding ←/→ scrolls.
     if (target === 'play' && e.repeat) return
     handleTitleScreenTarget(target)
+})
+
+// Button highlights (#63): lit under the mouse, pressed while a pointer or
+// key holds it. Purely visual; the click and keydown handlers above act.
+function menuHitTarget(e) {
+    if (gameState !== 'menu') return null
+    const { x, y } = canvasClickCoords(e)
+    return pauseMenuFromPlaying ? pauseMenuHitTarget(x, y) : titleScreenHitTarget(x, y)
+}
+
+canvas.addEventListener('pointermove', (e) => {
+    menuHover = e.pointerType === 'mouse' ? menuHitTarget(e) : null
+    menuKeyboardFocus = false
+})
+canvas.addEventListener('pointerleave', () => { menuHover = null })
+canvas.addEventListener('pointerdown', (e) => { menuPressed = menuHitTarget(e) })
+window.addEventListener('pointerup', () => { menuPressed = null })
+window.addEventListener('pointercancel', () => { menuPressed = null })
+window.addEventListener('keyup', (e) => {
+    if (globalThis.__menuGeom.titleScreenKeyTarget(e.key) === menuPressed) menuPressed = null
 })
 
 if (isTouch) {
@@ -810,9 +811,12 @@ function handleEscapeMenu() {
     return true
 }
 
-queueMicrotask(() => {
+queueMicrotask(async () => {
     selectedLevel = readStoredSelectedLevel()
     syncMenuSelectionUI()
+    // Menu text is drawn in the pixel font, so wait for it rather than show
+    // the fallback font on the first frames (#63).
+    await menuArt.waitForPixelFont(document.fonts)
     animate()
 })
 
