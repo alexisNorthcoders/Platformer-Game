@@ -154,10 +154,13 @@ class Sprite {
             }
         }
 
-        if (this.currentAnimation?.onComplete) {
-            if (this.currentFrame === this.frameRate - 1 && !this.currentAnimation.isActive) {
-                this.currentAnimation.onComplete()
-                this.currentAnimation.isActive = true
+        const animation = this.currentAnimation
+        if (animation?.onComplete) {
+            if (this.currentFrame === this.frameRate - 1 && !animation.isActive) {
+                // Mark before calling: onComplete may start a follow-up animation,
+                // which must keep its own flag clear so its onComplete can fire.
+                animation.isActive = true
+                animation.onComplete()
             }
         }
     }

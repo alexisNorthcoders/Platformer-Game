@@ -160,6 +160,8 @@ class Enemy extends Sprite {
             this.switchSprite('attack');
 
             if (this.currentAnimation) {
+                // The attack animation is shared and reused, so clear its finished flag.
+                this.currentAnimation.isActive = false
                 this.currentAnimation.onComplete = () => {
                     this.attacking = false;
                     this.switchSprite('idle');
