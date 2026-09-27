@@ -79,57 +79,56 @@ class Sprite {
         c.save()
         c.globalAlpha = this.opacity;
 
-        if (this.flip) {
-            c.scale(-1, 1)
-            c.drawImage(
-                this.image,
-                cropbox.position.x,
-                cropbox.position.y,
-                cropbox.width,
-                cropbox.height,
-                -this.position.x - this.width * scale,
-                this.position.y,
-                this.width * scale,
-                this.height * scale
-            )
-        } else {
-            c.drawImage(
-                this.image,
-                cropbox.position.x,
-                cropbox.position.y,
-                cropbox.width,
-                cropbox.height,
-                this.position.x,
-                this.position.y,
-                this.width * scale,
-                this.height * scale
-            )
-        }
+        // Tint off-screen: on the main canvas source-atop would tint every opaque
+        // pixel under the frame (background, tiles), not just the character.
+        const source = this.hurtTint
+            ? this.tintedFrame(cropbox)
+            : { image: this.image, x: cropbox.position.x, y: cropbox.position.y }
 
-        if (this.hurtTint) {
-            c.save()
-            c.globalCompositeOperation = 'source-atop'
-            c.fillStyle = this.hurtTint
-            if (this.flip) {
-                c.fillRect(
-                    -this.position.x - this.width * scale,
-                    this.position.y,
-                    this.width * scale,
-                    this.height * scale
-                )
-            } else {
-                c.fillRect(
-                    this.position.x,
-                    this.position.y,
-                    this.width * scale,
-                    this.height * scale
-                )
-            }
-            c.restore()
-        }
+        if (this.flip) c.scale(-1, 1)
+        c.drawImage(
+            source.image,
+            source.x,
+            source.y,
+            cropbox.width,
+            cropbox.height,
+            this.flip ? -this.position.x - this.width * scale : this.position.x,
+            this.position.y,
+            this.width * scale,
+            this.height * scale
+        )
 
         c.restore()
         this.updateFrames()
+    }
+    tintedFrame(cropbox) {
+        if (!Sprite.tintCanvas) Sprite.tintCanvas = document.createElement('canvas')
+        const canvas = Sprite.tintCanvas
+        // Canvas sizes are integers; round up so fractional frame widths still fit.
+        const width = Math.ceil(cropbox.width)
+        const height = Math.ceil(cropbox.height)
+        if (canvas.width !== width) canvas.width = width
+        if (canvas.height !== height) canvas.height = height
+
+        const tintCtx = canvas.getContext('2d')
+        tintCtx.clearRect(0, 0, cropbox.width, cropbox.height)
+        tintCtx.drawImage(
+            this.image,
+            cropbox.position.x,
+            cropbox.position.y,
+            cropbox.width,
+            cropbox.height,
+            0,
+            0,
+            cropbox.width,
+            cropbox.height
+        )
+        tintCtx.globalCompositeOperation = 'source-atop'
+        tintCtx.fillStyle = this.hurtTint
+        tintCtx.fillRect(0, 0, cropbox.width, cropbox.height)
+        tintCtx.globalCompositeOperation = 'source-over'
+
+        return { image: canvas, x: 0, y: 0 }
     }
     playOnce() {
         this.runOnce = true
