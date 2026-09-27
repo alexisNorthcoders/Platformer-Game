@@ -10,10 +10,16 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
+function readClass(name) {
+    return readFileSync(fileURLToPath(new URL(`../js/classes/${name}.js`, import.meta.url)), 'utf8')
+}
+
 function loadSprite() {
-    const spritePath = fileURLToPath(new URL('../js/classes/Sprite.js', import.meta.url))
-    const src = readFileSync(spritePath, 'utf8')
-    return new Function(`${src}\nreturn Sprite`)()
+    return new Function(`${readClass('Sprite')}\nreturn Sprite`)()
+}
+
+function loadEnemy() {
+    return new Function(`${readClass('Sprite')}\n${readClass('Enemy')}\nreturn Enemy`)()
 }
 
 function makeSprite(Sprite) {
@@ -75,4 +81,27 @@ test('a shared animation replayed after reset fires onComplete each time', () =>
     }
 
     assert.equal(completions, 2)
+})
+
+test('a pig attacks several times in a row and returns to idle after each', () => {
+    const Enemy = loadEnemy()
+    const pig = Object.create(Enemy.prototype)
+    Object.assign(pig, {
+        enemyVariant: 'pig', hitpoints: 2, playerHit: false, attacking: false,
+        velocity: { x: 0, y: 0 }, autoplay: true, runOnce: false, elapsedFrames: 0,
+        currentFrame: 0,
+    })
+    pig.animations = {
+        idle: { image: {}, frameRate: 11, frameBuffer: 1, loop: true },
+        attack: { image: {}, frameRate: 5, frameBuffer: 1, loop: false },
+    }
+    pig.switchSprite('idle')
+
+    for (let swing = 1; swing <= 3; swing++) {
+        pig.attack()
+        assert.equal(pig.currentAnimation, pig.animations.attack, `swing ${swing} starts`)
+        tick(pig, 20)
+        assert.equal(pig.attacking, false, `swing ${swing} finishes`)
+        assert.equal(pig.currentAnimation, pig.animations.idle, `swing ${swing} back to idle`)
+    }
 })
