@@ -51,6 +51,11 @@ window.addEventListener('keydown', (event) => {
             // hit
             keys.space.pressed = true;
             break;
+        case 's':
+        case 'S':
+            // drop a Bomb
+            keys.s.pressed = true
+            break
         case '+':
             // hit
             debugCollisions = true;
@@ -82,6 +87,10 @@ window.addEventListener('keyup', (event) => {
         case ' ':
             // hit
             keys.space.pressed = false
+            break
+        case 's':
+        case 'S':
+            keys.s.pressed = false
             break
     }
 })

@@ -177,6 +177,9 @@ const keys = {
     },
     space: {
         pressed: false
+    },
+    s: {
+        pressed: false
     }
 
 }
@@ -403,13 +406,13 @@ function titleSceneFloorImage() {
     return titleSceneFloor
 }
 
-function drawTitleScene() {
-    titleSceneLib.advanceTitleScene(titleScene, performance.now())
-    c.imageSmoothingEnabled = false
-    const floor = titleSceneFloorImage()
-    if (floor) c.drawImage(floor, 0, titleSceneLib.TITLE_SCENE.floorY)
-    for (const d of titleSceneLib.titleSceneDrawList(titleScene)) {
-        const img = titleSceneImages.get(d.src)
+/**
+ * Draws a draw list (the Title Scene's, the Bombs') whose images are in
+ * `images` by src, skipping any not loaded yet. Flipped entries are mirrored.
+ */
+function drawSpriteList(list, images) {
+    for (const d of list) {
+        const img = images.get(d.src)
         if (!menuImageReady(img)) continue
         if (!d.flip) {
             c.drawImage(img, d.sx, d.sy, d.sw, d.sh, d.dx, d.dy, d.dw, d.dh)
@@ -420,6 +423,34 @@ function drawTitleScene() {
         c.drawImage(img, d.sx, d.sy, d.sw, d.sh, -d.dx - d.dw, d.dy, d.dw, d.dh)
         c.restore()
     }
+}
+
+function drawTitleScene() {
+    titleSceneLib.advanceTitleScene(titleScene, performance.now())
+    c.imageSmoothingEnabled = false
+    const floor = titleSceneFloorImage()
+    if (floor) c.drawImage(floor, 0, titleSceneLib.TITLE_SCENE.floorY)
+    drawSpriteList(titleSceneLib.titleSceneDrawList(titleScene), titleSceneImages)
+}
+
+// Bombs (#73): the King drops one with S (Player.handleInput → dropBomb).
+// Stepped only while playing, so a live Bomb freezes behind the Pause Menu.
+const bombLib = globalThis.__bomb
+const bombs = bombLib.createBombState()
+const bombImages = new Map(
+    Object.values(bombLib.BOMB_SHEETS).map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
+)
+
+/** Drops a Bomb with its base on `feet` (world px), unless one is already live. */
+function dropBomb(feet) {
+    bombLib.tryDropBomb(bombs, feet)
+}
+
+/** Steps and draws the Bombs; call inside the camera transform. */
+function updateAndDrawBombs() {
+    // The explosion events carry the blast rect; nothing is hurt yet (#74).
+    bombLib.advanceBombs(bombs, performance.now())
+    drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
 }
 
 function drawTitleScreen() {
@@ -706,6 +737,8 @@ function animate() {
     window.requestAnimationFrame(animate)
 
     if (gameState === 'menu') {
+        // Bombs freeze behind the Pause Menu and carry on after Resume.
+        bombLib.pauseBombs(bombs)
         if (pauseMenuFromPlaying) {
             titleSceneLib.pauseTitleScene(titleScene)
             drawPauseMenu()
@@ -716,6 +749,7 @@ function animate() {
     titleSceneLib.pauseTitleScene(titleScene)
 
     if (gameState === 'loading') {
+        bombLib.pauseBombs(bombs)
         c.clearRect(0, 0, canvas.width, canvas.height)
         c.fillStyle = '#000000'
         c.fillRect(0, 0, canvas.width, canvas.height)
@@ -788,6 +822,7 @@ function animate() {
     }
 
     player.draw(2);
+    updateAndDrawBombs()
     if (diamonds) {
         diamonds.forEach(diamond => {
             if (diamond.loaded) {
