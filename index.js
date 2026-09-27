@@ -360,10 +360,53 @@ function drawMenuBackdrop() {
     c.fillRect(0, 0, canvas.width, canvas.height)
 }
 
+// Title Scene (#64): Pigs on a strip of castle floor below the Title Screen's
+// Level Preview and panel. Only stepped and drawn here, so it stops once play starts and isn't
+// behind the Pause Menu. Silent, and it takes no input.
+const titleSceneLib = globalThis.__titleScene
+const titleScene = titleSceneLib.createTitleScene()
+const titleSceneImages = new Map(
+    Object.values(titleSceneLib.SHEETS).map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
+)
+
+/** The floor strip, built once from the Terrain tiles. */
+let titleSceneFloor = null
+function titleSceneFloorImage() {
+    if (titleSceneFloor || !menuImageReady(terrainSheet)) return titleSceneFloor
+    const tiles = titleSceneLib.titleSceneFloorTiles()
+    titleSceneFloor = document.createElement('canvas')
+    titleSceneFloor.width = canvas.width
+    titleSceneFloor.height = tiles[0].dh
+    const g = titleSceneFloor.getContext('2d')
+    g.imageSmoothingEnabled = false
+    for (const p of tiles) g.drawImage(terrainSheet, p.sx, p.sy, p.sw, p.sh, p.dx, p.dy, p.dw, p.dh)
+    return titleSceneFloor
+}
+
+function drawTitleScene() {
+    titleSceneLib.advanceTitleScene(titleScene, performance.now())
+    c.imageSmoothingEnabled = false
+    const floor = titleSceneFloorImage()
+    if (floor) c.drawImage(floor, 0, titleSceneLib.TITLE_SCENE.floorY)
+    for (const d of titleSceneLib.titleSceneDrawList(titleScene)) {
+        const img = titleSceneImages.get(d.src)
+        if (!menuImageReady(img)) continue
+        if (!d.flip) {
+            c.drawImage(img, d.sx, d.sy, d.sw, d.sh, d.dx, d.dy, d.dw, d.dh)
+            continue
+        }
+        c.save()
+        c.scale(-1, 1)
+        c.drawImage(img, d.sx, d.sy, d.sw, d.sh, -d.dx - d.dw, d.dy, d.dw, d.dh)
+        c.restore()
+    }
+}
+
 function drawTitleScreen() {
     const layout = TITLE_SCREEN
     c.save()
     drawMenuBackdrop()
+    drawTitleScene()
     drawFramedLevelPreview(layout.preview)
     drawBrickPanel(layout.panel)
     menuTitleSprite.draw(2)
@@ -579,10 +622,14 @@ function animate() {
     window.requestAnimationFrame(animate)
 
     if (gameState === 'menu') {
-        if (pauseMenuFromPlaying) drawPauseMenu()
-        else drawTitleScreen()
+        if (pauseMenuFromPlaying) {
+            titleSceneLib.pauseTitleScene(titleScene)
+            drawPauseMenu()
+        } else drawTitleScreen()
         return
     }
+    // Off the Title Screen: the Title Scene resumes where it was, not jumps ahead.
+    titleSceneLib.pauseTitleScene(titleScene)
 
     if (gameState === 'loading') {
         c.clearRect(0, 0, canvas.width, canvas.height)
