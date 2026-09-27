@@ -17,8 +17,9 @@ const BUTTONS = [
     ['Title Screen ◀', TITLE_SCREEN.prevBtn],
     ['Title Screen ▶', TITLE_SCREEN.nextBtn],
     ['Title Screen PLAY', TITLE_SCREEN.playBtn],
-    ['Pause Menu Start', PAUSE_MENU.startBtn],
-    ['Pause Menu Level', PAUSE_MENU.levelBtn],
+    ['Pause Menu Resume', PAUSE_MENU.resumeBtn],
+    ['Pause Menu Restart Level', PAUSE_MENU.restartBtn],
+    ['Pause Menu Quit to Title', PAUSE_MENU.quitBtn],
     ['Pause Menu Fullscreen', PAUSE_MENU.fullscreenBtn],
 ]
 
@@ -50,7 +51,7 @@ for (const [name, rect] of BUTTONS) {
 
 test('brick panel and Level Preview frames fit the brick corners', () => {
     const min = minNineSliceSize(BRICK_FRAME, MENU_ART_SCALE)
-    for (const rect of [TITLE_SCREEN.panel, frameAround(TITLE_SCREEN.preview), frameAround(PAUSE_MENU.preview)]) {
+    for (const rect of [TITLE_SCREEN.panel, frameAround(TITLE_SCREEN.preview), PAUSE_MENU.panel]) {
         assert.ok(rect.w >= min.w && rect.h >= min.h)
         const pieces = nineSlice(BRICK_FRAME, rect, MENU_ART_SCALE, { tileEdges: true })
         for (const p of pieces) {
