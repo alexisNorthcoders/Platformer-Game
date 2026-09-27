@@ -29,6 +29,8 @@ window.addEventListener('keydown', (event) => {
                     player.velocity.x = 0
                     player.velocity.y = 0
                     player.preventInput = true
+                    levelTransitioning = true
+                    levelTimer.stop(performance.now())
                     player.switchSprite('enterDoor')
 
                     return

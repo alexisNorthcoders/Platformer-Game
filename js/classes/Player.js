@@ -379,6 +379,7 @@ class Player extends Sprite {
             this.dead = true
             this.gameOver = true
             playerContactHurtTint.clearPlayerHurtTint(this)
+            levelTimer.stop(performance.now())
             this.preventInput = true
             this.velocity.x = 0
             this.velocity.y = 0

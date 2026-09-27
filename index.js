@@ -30,6 +30,8 @@ let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
 /** True when the menu was opened with Escape during gameplay (so Escape can resume). */
 let pauseMenuFromPlaying = false
+/** True from entering the door until the next level's fade-in completes. */
+let levelTransitioning = false
 
 const MENU = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
@@ -131,6 +133,7 @@ const player = new Player({
                             level = 1
                             LevelProgressKeys.clearAll()
                         }
+                        levelTimer.reset()
                         await initLevel(level)
                         const dir = levels[level].lastDirection
                         if (dir === 'left') player.switchSprite('idleLeft')
@@ -140,6 +143,8 @@ const player = new Player({
                             onComplete: () => {
                                 player.hello()
                                 player.preventInput = false
+                                levelTransitioning = false
+                                startLevelTimer()
                             }
                         })
                     }
@@ -341,6 +346,7 @@ async function startGame(levelToStart) {
     numberSprites = createNumberSprites(0)
     flow.clearHeldInputKeys(keys)
     flow.resetPlayerForNewLevelRun(player)
+    levelTimer.reset()
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
@@ -373,6 +379,7 @@ async function startGame(levelToStart) {
         opacity: 0,
         onComplete: () => {
             player.preventInput = false
+            startLevelTimer()
         },
     })
 }
@@ -519,6 +526,7 @@ function animate() {
     enemyNumberSprite.forEach(sprite => {
         sprite.draw(2);
     });
+    drawLevelTimer()
 
 
     // Overlay effect
@@ -539,6 +547,27 @@ function animate() {
         c.fillText('Press R to restart', canvas.width / 2, canvas.height / 2)
         c.restore()
     }
+}
+
+// Starts from 0; if Escape opened the menu mid-transition, start paused.
+function startLevelTimer() {
+    const now = performance.now()
+    levelTimer.start(now)
+    if (gameState !== 'playing') levelTimer.pause(now)
+}
+
+function drawLevelTimer() {
+    c.save()
+    c.font = 'bold 26px monospace'
+    c.textAlign = 'center'
+    c.textBaseline = 'top'
+    c.lineWidth = 4
+    c.strokeStyle = '#000000'
+    c.fillStyle = '#f5f0e6'
+    const text = formatLevelTime(levelTimer.elapsed(performance.now()))
+    c.strokeText(text, canvas.width / 2, 16)
+    c.fillText(text, canvas.width / 2, 16)
+    c.restore()
 }
 
 window.restartFromGameOver = async () => {
@@ -570,6 +599,7 @@ window.restartFromGameOver = async () => {
         numberSprites = createNumberSprites(diamondCount)
         enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
         await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
+        startLevelTimer()
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
     } finally {
@@ -585,11 +615,16 @@ function handleEscapeMenu() {
         gameState,
         pauseMenuFromPlaying,
         playerGameOver: player.gameOver,
+        levelTransitioning,
         currentLevel: level,
     })
     if (!result.handled) return false
     if (result.clearKeys) flow.clearHeldInputKeys(keys)
-    if (result.gameState !== undefined) gameState = result.gameState
+    if (result.gameState !== undefined) {
+        if (result.gameState === 'menu') levelTimer.pause(performance.now())
+        else if (result.gameState === 'playing') levelTimer.resume(performance.now())
+        gameState = result.gameState
+    }
     if (result.pauseMenuFromPlaying !== undefined) pauseMenuFromPlaying = result.pauseMenuFromPlaying
     if (result.selectedLevel !== undefined) {
         selectedLevel = result.selectedLevel

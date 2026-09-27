@@ -64,3 +64,15 @@ test('Escape on title menu (not from pause) is ignored', () => {
     assert.equal(r.handled, false)
     assert.equal(r.reason, 'noOverlay')
 })
+
+test('Escape during a level transition (door → next level) is ignored', () => {
+    const r = reduceEscapeKey({
+        gameState: 'playing',
+        pauseMenuFromPlaying: false,
+        playerGameOver: false,
+        levelTransitioning: true,
+        currentLevel: 2,
+    })
+    assert.equal(r.handled, false)
+    assert.equal(r.reason, 'levelTransition')
+})
