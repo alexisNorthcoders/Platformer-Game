@@ -45,19 +45,21 @@
       --tc-button-size: min(84px, 19vw);
       --tc-gap: min(16px, 3vw);
       /* Tall enough for the staggered A/B pair plus padding and the home bar;
-         mobile-bootstrap.mjs reserves this height when fitting the canvas. */
+         in the portrait split mobile-bootstrap.mjs reserves this height when
+         fitting the canvas (the landscape overlay reserves none). */
       --tc-panel-min-height: calc(var(--tc-button-size) * 1.6 + var(--tc-gap) * 2 + env(safe-area-inset-bottom));
       --tc-fill: rgba(245, 240, 230, 0.18);
       --tc-fill-pressed: rgba(245, 240, 230, 0.45);
       --tc-border: 2px solid rgba(245, 240, 230, 0.55);
       --tc-glyph-color: #f5f0e6;
       --tc-glyph-size: calc(var(--tc-button-size) * 0.4);
+      --tc-side-pad: calc(var(--tc-gap) * 1.5);
 
       display: none;
       box-sizing: border-box;
       width: 100%;
       min-height: var(--tc-panel-min-height);
-      padding: var(--tc-gap) calc(var(--tc-gap) * 1.5) calc(var(--tc-gap) + env(safe-area-inset-bottom));
+      padding: var(--tc-gap) var(--tc-side-pad) calc(var(--tc-gap) + env(safe-area-inset-bottom));
       align-items: center;
       justify-content: space-between;
       touch-action: none;
@@ -123,7 +125,7 @@
         bottom: 0;
         min-height: 0;
         align-items: flex-end;
-        padding: var(--tc-gap) max(calc(var(--tc-gap) * 1.5), env(safe-area-inset-right)) calc(var(--tc-gap) + env(safe-area-inset-bottom)) max(calc(var(--tc-gap) * 1.5), env(safe-area-inset-left));
+        padding: var(--tc-gap) max(var(--tc-side-pad), env(safe-area-inset-right)) calc(var(--tc-gap) + env(safe-area-inset-bottom)) max(var(--tc-side-pad), env(safe-area-inset-left));
         opacity: 0.6;
         pointer-events: none;
       }

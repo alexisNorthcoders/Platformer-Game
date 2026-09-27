@@ -19,6 +19,6 @@ export function fitCanvasSize(viewportWidth, viewportHeight, nativeWidth, native
  * over the game and reserves nothing; hidden (desktop) reserves nothing.
  */
 export function controllerReservedHeight({ display, position, minHeight }) {
-    if (display === 'none' || position === 'fixed' || position === 'absolute') return 0
+    if (display === 'none' || position === 'fixed') return 0
     return parseFloat(minHeight) || 0
 }
