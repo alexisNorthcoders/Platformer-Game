@@ -15,7 +15,7 @@ The overlay opened during play (Escape or the touch pause button), drawn over th
 _Avoid_: Escape menu, in-game menu
 
 **Level Preview**:
-A framed thumbnail on the Title Screen showing the currently selected level's map.
+A framed thumbnail on the Title Screen (and the Pause Menu) showing the currently selected level's map.
 
 **Title Scene**:
 The ambient animation behind the Title Screen: Pigs running and throwing bombs. Purely decorative; it never affects game state.

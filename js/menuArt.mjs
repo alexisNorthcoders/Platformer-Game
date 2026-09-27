@@ -1,6 +1,6 @@
 /**
  * Menu art from the Kings and Pigs pack and the menu pixel font (#63).
- * Drawn by index.js through globalThis.__menuArt (menuArt-bootstrap.mjs).
+ * Drawn by index.js through globalThis.__menuArt (menuGeometry-bootstrap.mjs).
  */
 
 /** Every menu piece is drawn at the game's 2× pixel scale. */
@@ -43,11 +43,11 @@ export const BRICK_FRAME = { x: 32, y: 32, w: 96, h: 96, left: 32, top: 32, righ
 /** Source px of BRICK_FRAME's pale stone border; the Level Preview covers the rest. */
 export const BRICK_BORDER = 10
 
-/** Source px from BRICK_FRAME's outside to its dark middle, where panel content sits. */
-export const BRICK_INSET = 25
-
-/** The dark wall inside BRICK_FRAME. */
+/** The dark wall inside BRICK_FRAME, also used for text and arrows on the planks. */
 export const PANEL_FILL = '#3f3851'
+
+/** The plank face, drawn in its place until platform.png has loaded. */
+export const PLANK_FILL = '#dc9d88'
 
 export const PIXEL_FONT_FAMILY = 'Press Start 2P'
 

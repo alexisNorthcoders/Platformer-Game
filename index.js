@@ -194,7 +194,7 @@ const menuTitleSprite = new Sprite({
 // the game's 2× pixel scale, and menu text in the pixel font.
 const MENU_SCALE = menuArt.MENU_ART_SCALE
 const MENU_TEXT = '#f5f0e6'
-const PLANK_TEXT = '#3f3851'
+const PLANK_TEXT = menuArt.PANEL_FILL
 
 function loadMenuImage(src) {
     const img = new Image()
@@ -255,10 +255,13 @@ function drawBrickPanel(rect) {
 /** Menu button under the mouse, and the one held down by a pointer or key. */
 let menuHover = null
 let menuPressed = null
+/** True after Title Screen keys, until the mouse moves: PLAY (Enter) shows as selected. */
+let menuKeyboardFocus = false
 
 function menuButtonState(target) {
     if (menuPressed === target) return 'pressed'
     if (menuHover === target) return 'hover'
+    if (menuKeyboardFocus && !pauseMenuFromPlaying && target === 'play') return 'hover'
     return 'idle'
 }
 
@@ -271,7 +274,7 @@ function drawPlankButton(rect, state = 'idle') {
     if (plankImages) {
         drawNineSlice(state === 'idle' ? plankImages.idle : plankImages.lit, menuArt.PLANK_FRAME, r)
     } else {
-        c.fillStyle = '#dc9d88'
+        c.fillStyle = menuArt.PLANK_FILL
         c.fillRect(r.x, r.y, r.w, r.h - menuArt.PLANK_FOOT_ROWS * MENU_SCALE)
     }
     return r
@@ -451,6 +454,9 @@ async function startGame(levelToStart) {
     }
     pauseMenuFromPlaying = false
     gameState = 'loading'
+    // Leaving the menu: no highlight is left behind for the next time it opens.
+    menuHover = null
+    menuPressed = null
     player.preventInput = true
     overlay.opacity = 1
     diamondCount = 0
@@ -530,6 +536,7 @@ window.addEventListener('keydown', (e) => {
     if (!target) return
     e.preventDefault()
     menuPressed = target
+    menuKeyboardFocus = true
     // Holding Enter/Space must not start the level twice; holding ←/→ scrolls.
     if (target === 'play' && e.repeat) return
     handleTitleScreenTarget(target)
@@ -545,6 +552,7 @@ function menuHitTarget(e) {
 
 canvas.addEventListener('pointermove', (e) => {
     menuHover = e.pointerType === 'mouse' ? menuHitTarget(e) : null
+    menuKeyboardFocus = false
 })
 canvas.addEventListener('pointerleave', () => { menuHover = null })
 canvas.addEventListener('pointerdown', (e) => { menuPressed = menuHitTarget(e) })

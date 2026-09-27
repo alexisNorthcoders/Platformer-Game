@@ -4,7 +4,7 @@
  * change without moving the other (#61).
  *
  * Buttons are plank 9-slices at 2× (#63), so each must be at least the plank's
- * corners (70×28) and have even sides; menuLayout.test.mjs checks this.
+ * corners (70×28) and have even sides; menuArt.test.mjs checks this.
  */
 
 // Title Screen (#62, #63): Level Preview in its stone frame on the left, the

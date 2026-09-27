@@ -36,6 +36,9 @@ for (const [name, rect] of BUTTONS) {
     test(`${name}: plank corners and edges draw at whole-pixel 2× scale`, () => {
         const min = minNineSliceSize(PLANK_FRAME, MENU_ART_SCALE)
         assert.ok(rect.w >= min.w && rect.h >= min.h, `${rect.w}×${rect.h} is under ${min.w}×${min.h}`)
+        // Even sides keep the stretched middle a whole number of art pixels.
+        assert.equal(rect.w % MENU_ART_SCALE, 0)
+        assert.equal(rect.h % MENU_ART_SCALE, 0)
         for (const p of nineSlice(PLANK_FRAME, rect, MENU_ART_SCALE)) {
             for (const v of [p.dx, p.dy, p.dw, p.dh]) assert.ok(Number.isInteger(v), `${name}: ${v}`)
             // Anything that is not the middle column / row keeps its natural size.
