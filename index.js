@@ -35,10 +35,15 @@ let levelTransitioning = false
 
 // The Title Screen and Pause Menu each own their layout, so one can change
 // without moving the other (#61).
+// Title Screen (#62): framed Level Preview on the left (16:9, like the level
+// images), level selector and PLAY on the right. The logo sits above both at
+// y 28–56; nothing overlaps at 1024×576, and CSS scaling keeps the proportions.
 const TITLE_SCREEN = {
-    preview: { x: 207, y: 88, w: 610, h: 220 },
-    startBtn: { x: 287, y: 330, w: 450, h: 52 },
-    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+    preview: { x: 64, y: 96, w: 512, h: 288 },
+    previewBorder: 6,
+    prevBtn: { x: 632, y: 170, w: 52, h: 52 },
+    nextBtn: { x: 896, y: 170, w: 52, h: 52 },
+    playBtn: { x: 680, y: 262, w: 220, h: 60 },
 }
 
 const PAUSE_MENU = {
@@ -212,7 +217,6 @@ const menuButtonSprite = new Sprite({
 })
 
 let menuPreviewSprite = null
-let titleScreenDigitSprites = []
 let pauseMenuDigitSprites = []
 
 function drawMenuButtonBackground(rect) {
@@ -235,14 +239,19 @@ function drawMenuButtonBackground(rect) {
     c.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1)
 }
 
-function drawMenuPreviewCover(rect) {
+function levelPreviewImage() {
     const sp = menuPreviewSprite
     const img = sp?.image
     const imageReady = Boolean(
         sp && img && img.complete && img.naturalWidth > 0
         && (sp.loaded || img.naturalHeight > 0)
     )
-    if (!imageReady) {
+    return imageReady ? img : null
+}
+
+function drawMenuPreviewCover(rect) {
+    const img = levelPreviewImage()
+    if (!img) {
         c.fillStyle = '#1a1a2e'
         c.fillRect(rect.x, rect.y, rect.w, rect.h)
         return
@@ -257,6 +266,27 @@ function drawMenuPreviewCover(rect) {
     const oy = dy + (dh - rh) / 2
     c.imageSmoothingEnabled = false
     c.drawImage(img, 0, 0, sw, sh, ox, oy, rw, rh)
+}
+
+/**
+ * Level Preview for the Title Screen: a centred crop of the level image drawn
+ * exactly into `rect`, clipped as well, inside a frame around it.
+ */
+function drawFramedLevelPreview(rect, border) {
+    c.fillStyle = '#5a6b7d'
+    c.fillRect(rect.x - border, rect.y - border, rect.w + border * 2, rect.h + border * 2)
+    c.fillStyle = '#1a1a2e'
+    c.fillRect(rect.x, rect.y, rect.w, rect.h)
+    const img = levelPreviewImage()
+    if (!img) return
+    const crop = globalThis.__menuGeom.coverSourceRect(img.naturalWidth, img.naturalHeight, rect.w, rect.h)
+    c.save()
+    c.beginPath()
+    c.rect(rect.x, rect.y, rect.w, rect.h)
+    c.clip()
+    c.imageSmoothingEnabled = false
+    c.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
+    c.restore()
 }
 
 /** Selected-level digits after the Start and Level labels of `layout`. */
@@ -281,12 +311,12 @@ function createMenuDigitSprites(layout) {
 }
 
 function refreshMenuDigits() {
-    titleScreenDigitSprites = createMenuDigitSprites(TITLE_SCREEN)
     pauseMenuDigitSprites = createMenuDigitSprites(PAUSE_MENU)
 }
 
 function refreshMenuPreview() {
-    // Drawn with drawMenuPreviewCover into each screen's own preview rect.
+    // Drawn into each screen's own preview rect (drawFramedLevelPreview on the
+    // Title Screen, drawMenuPreviewCover on the Pause Menu).
     menuPreviewSprite = new Sprite({
         position: { x: 0, y: 0 },
         imageSrc: `./img/Level ${selectedLevel}.png`,
@@ -331,9 +361,46 @@ function drawMenuBase(layout, digitSprites) {
     digitSprites.forEach(s => s.draw(2))
 }
 
+/** A ◀ (dir -1) or ▶ (dir 1) triangle centred in `rect`. */
+function drawArrow(rect, dir) {
+    const cx = rect.x + rect.w / 2
+    const cy = rect.y + rect.h / 2
+    const half = rect.h * 0.22
+    c.beginPath()
+    c.moveTo(cx + dir * half, cy)
+    c.lineTo(cx - dir * half, cy - half)
+    c.lineTo(cx - dir * half, cy + half)
+    c.closePath()
+    c.fill()
+}
+
 function drawTitleScreen() {
+    const layout = TITLE_SCREEN
     c.save()
-    drawMenuBase(TITLE_SCREEN, titleScreenDigitSprites)
+    c.imageSmoothingEnabled = false
+    c.clearRect(0, 0, canvas.width, canvas.height)
+    c.fillStyle = '#0d0d12'
+    c.fillRect(0, 0, canvas.width, canvas.height)
+
+    drawFramedLevelPreview(layout.preview, layout.previewBorder)
+    menuTitleSprite.draw(2)
+
+    drawMenuButtonBackground(layout.prevBtn)
+    drawMenuButtonBackground(layout.nextBtn)
+    drawMenuButtonBackground(layout.playBtn)
+
+    c.fillStyle = '#f5f0e6'
+    drawArrow(layout.prevBtn, -1)
+    drawArrow(layout.nextBtn, 1)
+
+    c.textAlign = 'center'
+    c.textBaseline = 'middle'
+    c.font = 'bold 28px sans-serif'
+    const selectorCx = (layout.prevBtn.x + layout.prevBtn.w + layout.nextBtn.x) / 2
+    const selectorCy = layout.prevBtn.y + layout.prevBtn.h / 2
+    c.fillText(`LEVEL ${String(selectedLevel).padStart(2, '0')}`, selectorCx, selectorCy)
+    const play = layout.playBtn
+    c.fillText('PLAY', play.x + play.w / 2, play.y + play.h / 2)
     c.restore()
 }
 
@@ -356,11 +423,21 @@ const isTouch = gameOverRestart.isTouchDevice()
 const fullscreenAvailable = Boolean(globalThis.__fullscreen?.isFullscreenAvailable(document, isTouch))
 
 function titleScreenHitTarget(x, y) {
-    const g = globalThis.__menuGeom
-    if (g?.titleScreenHitTarget) return g.titleScreenHitTarget(x, y, TITLE_SCREEN)
-    if (pointInRect(x, y, TITLE_SCREEN.startBtn)) return 'start'
-    if (pointInRect(x, y, TITLE_SCREEN.levelBtn)) return 'level'
-    return null
+    return globalThis.__menuGeom.titleScreenHitTarget(x, y, TITLE_SCREEN)
+}
+
+/** 'prev' | 'next' step the selected level (wrapping); 'play' starts it. */
+function handleTitleScreenTarget(target) {
+    if (target === 'play') {
+        void startGame(selectedLevel)
+        return
+    }
+    if (target === 'prev' || target === 'next') {
+        const n = levelsKeyCount()
+        if (n < 1) return
+        selectedLevel = globalThis.__menuGeom.stepLevel(selectedLevel, target === 'next' ? 1 : -1, n)
+        syncMenuSelectionUI()
+    }
 }
 
 function pauseMenuHitTarget(x, y) {
@@ -451,7 +528,11 @@ async function startGame(levelToStart) {
 canvas.addEventListener('click', (e) => {
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
-    const target = pauseMenuFromPlaying ? pauseMenuHitTarget(x, y) : titleScreenHitTarget(x, y)
+    if (!pauseMenuFromPlaying) {
+        handleTitleScreenTarget(titleScreenHitTarget(x, y))
+        return
+    }
+    const target = pauseMenuHitTarget(x, y)
     if (target === 'start') {
         void startGame(selectedLevel)
         return
@@ -465,6 +546,19 @@ canvas.addEventListener('click', (e) => {
     }
     // A click counts as the user activation requestFullscreen needs.
     if (target === 'fullscreen') globalThis.__fullscreen?.toggleFullscreen(document)
+})
+
+// Title Screen keyboard: ←/→ change the level, Enter/Space play. Player input
+// is off (preventInput) while on the Title Screen, so eventListeners.js
+// ignores these keys there.
+window.addEventListener('keydown', (e) => {
+    if (gameState !== 'menu' || pauseMenuFromPlaying) return
+    const target = globalThis.__menuGeom.titleScreenKeyTarget(e.key)
+    if (!target) return
+    e.preventDefault()
+    // Holding Enter/Space must not start the level twice; holding ←/→ scrolls.
+    if (target === 'play' && e.repeat) return
+    handleTitleScreenTarget(target)
 })
 
 if (isTouch) {
