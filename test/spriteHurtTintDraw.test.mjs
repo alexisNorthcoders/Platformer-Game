@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { PLAYER_CONTACT_HURT_TINT } from '../js/playerContactHurtTint.mjs'
 
 function createCanvas2dLikeMock() {
     const defaults = () => ({
@@ -100,7 +101,7 @@ test('Sprite.draw tints the frame off-screen and draws no tint rectangle on the 
     const mockC = createCanvas2dLikeMock()
     const doc = createDocumentMock()
     const Sprite = loadSpriteWithCanvas(mockC, doc)
-    const tint = 'rgba(255, 120, 145, 0.55)'
+    const tint = PLAYER_CONTACT_HURT_TINT
     const s = makeSprite(Sprite, {
         naturalWidth: 320,
         naturalHeight: 64,
@@ -196,4 +197,24 @@ test('Sprite.draw without hurt tint draws the image straight to the main canvas'
     assert.equal(doc.canvases.length, 0)
     assert.deepEqual(mockC.fillRectCalls, [])
     assert.deepEqual(mockC.drawImageCalls, [[s.image, 40, 0, 40, 64, 10, 20, 80, 128]])
+})
+
+test('Sprite.draw draws normally while activeHurtTint() is off (flash off phase)', () => {
+    const mockC = createCanvas2dLikeMock()
+    const doc = createDocumentMock()
+    const Sprite = loadSpriteWithCanvas(mockC, doc)
+    const s = makeSprite(Sprite, {
+        naturalWidth: 320,
+        naturalHeight: 64,
+        frameRate: 8,
+        position: { x: 10, y: 20 },
+        hurtTint: PLAYER_CONTACT_HURT_TINT,
+        flip: false,
+    })
+    s.activeHurtTint = () => null
+
+    Sprite.prototype.draw.call(s, 2)
+
+    assert.equal(doc.canvases.length, 0)
+    assert.deepEqual(mockC.drawImageCalls, [[s.image, 0, 0, 40, 64, 10, 20, 80, 128]])
 })

@@ -81,8 +81,9 @@ class Sprite {
 
         // Tint off-screen: on the main canvas source-atop would tint every opaque
         // pixel under the frame (background, tiles), not just the character.
-        const source = this.hurtTint
-            ? this.tintedFrame(cropbox)
+        const tint = this.activeHurtTint()
+        const source = tint
+            ? this.tintedFrame(cropbox, tint)
             : { image: this.image, x: cropbox.position.x, y: cropbox.position.y }
 
         if (this.flip) c.scale(-1, 1)
@@ -101,7 +102,10 @@ class Sprite {
         c.restore()
         this.updateFrames()
     }
-    tintedFrame(cropbox) {
+    activeHurtTint() {
+        return this.hurtTint
+    }
+    tintedFrame(cropbox, tint) {
         if (!Sprite.tintCanvas) Sprite.tintCanvas = document.createElement('canvas')
         const canvas = Sprite.tintCanvas
         // Canvas sizes are integers; round up so fractional frame widths still fit.
@@ -124,7 +128,7 @@ class Sprite {
             cropbox.height
         )
         tintCtx.globalCompositeOperation = 'source-atop'
-        tintCtx.fillStyle = this.hurtTint
+        tintCtx.fillStyle = tint
         tintCtx.fillRect(0, 0, cropbox.width, cropbox.height)
         tintCtx.globalCompositeOperation = 'source-over'
 

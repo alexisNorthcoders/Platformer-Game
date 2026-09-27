@@ -366,7 +366,7 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
         player.contactDamageTimeoutId = null
     }
     player.hitCooldown = false
-    player.hurtTint = null
+    playerContactHurtTint.clearPlayerHurtTint(player)
 
     player.setPosition(playerPosition)
     player.lastDirection = lastDirection
