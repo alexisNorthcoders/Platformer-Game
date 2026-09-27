@@ -1,3 +1,5 @@
+// doorEntry and levelTimer are globals set by their *-bootstrap.mjs modules,
+// loaded before this script in index.html.
 function canPlayerEnterDoor() {
     return doorEntry.canEnterDoor({ hitbox: player.hitbox, doors, doorClosed })
 }
