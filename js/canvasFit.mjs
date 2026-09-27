@@ -11,3 +11,14 @@ export function fitCanvasSize(viewportWidth, viewportHeight, nativeWidth, native
         height: Math.floor(nativeHeight * scale),
     }
 }
+
+/**
+ * Viewport height the touch controller takes away from the canvas, given its
+ * computed style. In the portrait split it sits in the page flow below the game
+ * and reserves its min-height; in the landscape overlay it is position:fixed
+ * over the game and reserves nothing; hidden (desktop) reserves nothing.
+ */
+export function controllerReservedHeight({ display, position, minHeight }) {
+    if (display === 'none' || position === 'fixed') return 0
+    return parseFloat(minHeight) || 0
+}
