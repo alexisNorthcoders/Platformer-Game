@@ -34,10 +34,93 @@
 
     canvas {
       display: block;
+      flex: none;
       image-rendering: pixelated;
+    }
+
+    /* Touch controller (#42). All of its look lives here so it can be reskinned
+       (e.g. pixel art) by changing these rules. Hidden unless touch + portrait. */
+    #touch-controller {
+      --tc-panel-min-height: 180px;
+      --tc-button-size: min(84px, 19vw);
+      --tc-gap: min(16px, 3vw);
+      --tc-fill: rgba(245, 240, 230, 0.18);
+      --tc-fill-pressed: rgba(245, 240, 230, 0.45);
+      --tc-border: 2px solid rgba(245, 240, 230, 0.55);
+      --tc-glyph-color: #f5f0e6;
+      --tc-glyph-size: calc(var(--tc-button-size) * 0.4);
+
+      display: none;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: var(--tc-panel-min-height);
+      padding: var(--tc-gap) calc(var(--tc-gap) * 1.5) calc(var(--tc-gap) + env(safe-area-inset-bottom));
+      align-items: center;
+      justify-content: space-between;
+      touch-action: none;
+    }
+
+    #touch-controller [data-zone] {
+      display: flex;
+      gap: var(--tc-gap);
+      touch-action: none;
+    }
+
+    #touch-controller .tc-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--tc-button-size);
+      height: var(--tc-button-size);
+      border-radius: 50%;
+      border: var(--tc-border);
+      background: var(--tc-fill);
+      color: var(--tc-glyph-color);
+      font: bold var(--tc-glyph-size) sans-serif;
+      pointer-events: none;
+    }
+
+    #touch-controller .tc-button.is-held {
+      background: var(--tc-fill-pressed);
+    }
+
+    #touch-controller .tc-actions {
+      display: flex;
+      gap: var(--tc-gap);
+    }
+
+    /* Attack sits lower-left of Jump, like a gamepad's A/B pair. */
+    #touch-controller .tc-actions [data-zone="attack"] {
+      margin-top: calc(var(--tc-button-size) * 0.6);
+    }
+
+    @media (pointer: coarse) and (orientation: portrait) {
+      body {
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      #touch-controller {
+        display: flex;
+        flex: 1;
+      }
     }
   </style>
   <canvas></canvas>
+  <div id="touch-controller" aria-hidden="true">
+    <div data-zone="move">
+      <div class="tc-button" data-held="left">◀</div>
+      <div class="tc-button" data-held="right">▶</div>
+    </div>
+    <div class="tc-actions">
+      <div data-zone="attack">
+        <div class="tc-button" data-held="attack">A</div>
+      </div>
+      <div data-zone="jump">
+        <div class="tc-button" data-held="jump">B</div>
+      </div>
+    </div>
+  </div>
   <script defer type="module" src="js/contactDamage-bootstrap.mjs"></script>
   <script type="module" src="js/playerContactHurtTint-bootstrap.mjs"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.1/gsap.min.js" integrity="sha512-Mf/xUqfWvDIr+1B6zfnIDIiG7XHzyP/guXUWgV6PgaQoIFeXkJQR5XWh9fqAiCiRCpemabt3naV4jhDWVnuYDQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -69,6 +152,7 @@
   <script type="module" src="js/gameOverRestart-bootstrap.mjs"></script>
   <script defer src="index.js"></script>
   <script defer src="config/ui.js"></script>
+  <script type="module" src="js/touchControls-bootstrap.mjs"></script>
   <script type="module" src="js/mobile-bootstrap.mjs"></script>
 </body>
 

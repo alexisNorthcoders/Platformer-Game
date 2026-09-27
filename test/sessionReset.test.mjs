@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { PLAYER_CONTACT_HURT_TINT } from '../js/playerContactHurtTint.mjs'
-import { clearHeldInputKeys, resetPlayerForNewLevelRun } from '../js/sessionReset.mjs'
+import { clearHeldInputKeys, onHeldInputKeysCleared, resetPlayerForNewLevelRun } from '../js/sessionReset.mjs'
 
 test('clearHeldInputKeys clears every .pressed entry on the keys bag', () => {
     const keys = {
@@ -17,6 +17,18 @@ test('clearHeldInputKeys clears every .pressed entry on the keys bag', () => {
     assert.equal(keys.d.pressed, false)
     assert.equal(keys.space.pressed, false)
     assert.equal(keys.future.pressed, false)
+})
+
+test('clearHeldInputKeys also runs every registered listener (e.g. touch controller reset)', () => {
+    const calls = []
+    const offA = onHeldInputKeysCleared(() => calls.push('a'))
+    const offB = onHeldInputKeysCleared(() => calls.push('b'))
+    clearHeldInputKeys({ w: { pressed: true } })
+    assert.deepEqual(calls, ['a', 'b'])
+    offA()
+    offB()
+    clearHeldInputKeys({})
+    assert.deepEqual(calls, ['a', 'b'], 'unsubscribed listeners are not called')
 })
 
 test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
