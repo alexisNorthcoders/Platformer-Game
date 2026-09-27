@@ -45,10 +45,12 @@
       --tc-button-size: min(84px, 19vw);
       --tc-gap: min(16px, 3vw);
       --tc-enter-size: calc(var(--tc-button-size) * 0.8);
+      --tc-pause-size: calc(var(--tc-button-size) * 0.55);
       /* Room above the A/B pair for the Enter button (#44), which pops up
-         there without shifting the other controls. */
+         there without shifting the other controls. In portrait the pause
+         button (#45) sits in the same strip, centred. */
       --tc-enter-room: calc(var(--tc-enter-size) + var(--tc-gap));
-      /* Tall enough for the staggered A/B pair, the Enter button above it,
+      /* Tall enough for the staggered A/B pair, the Enter / pause strip above it,
          padding and the home bar; in the portrait split mobile-bootstrap.mjs
          reserves this height when fitting the canvas (the landscape overlay
          reserves none). */
@@ -118,6 +120,14 @@
       height: 55%;
     }
 
+    /* Pause (#45): a small button centred between the move and action
+       clusters (above them in portrait). */
+    #touch-controller .tc-button.tc-pause {
+      width: var(--tc-pause-size);
+      height: var(--tc-pause-size);
+      --tc-glyph-size: calc(var(--tc-pause-size) * 0.4);
+    }
+
     /* Attack sits lower-left of Jump, like a gamepad's A/B pair. */
     #touch-controller .tc-actions [data-zone="attack"] {
       margin-top: calc(var(--tc-button-size) * 0.6);
@@ -130,8 +140,19 @@
       }
 
       #touch-controller {
+        /* Anchors the pause button below. */
+        position: relative;
         display: flex;
         flex: 1;
+      }
+
+      /* Out of the row so narrow phones keep room for both clusters; it sits
+         in the strip reserved above them for Enter. */
+      #touch-controller [data-action="pause"] {
+        position: absolute;
+        top: var(--tc-gap);
+        left: 50%;
+        transform: translateX(-50%);
       }
     }
 
@@ -165,6 +186,9 @@
     <div data-zone="move">
       <div class="tc-button" data-held="left">◀</div>
       <div class="tc-button" data-held="right">▶</div>
+    </div>
+    <div data-action="pause">
+      <div class="tc-button tc-pause">❚❚</div>
     </div>
     <div class="tc-actions">
       <div data-action="enter" hidden>

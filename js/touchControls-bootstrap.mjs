@@ -18,6 +18,11 @@ import { onHeldInputKeysCleared } from './sessionReset.mjs'
 // an open door (and input isn't blocked), in both layouts. Tapping it enters
 // through the same canPlayerEnterDoor/enterDoor as keyboard ↑ (globals from
 // eventListeners.js). B only ever jumps, even at a door.
+//
+// Pause (#45): the small centred ❚❚ button runs index.js's
+// handleEscapeMenu, exactly what Esc does: during play it opens the pause menu,
+// while paused it resumes, and during loading or game over it does nothing.
+// Pausing and resuming clear held keys, which resets touch state below.
 const controller = document.getElementById('touch-controller')
 const controls = createTouchControls()
 let held = controls.held()
@@ -62,6 +67,13 @@ const enterButton = controller.querySelector('[data-action="enter"]')
 enterButton.addEventListener('pointerdown', (event) => {
     event.preventDefault()
     if (canPlayerEnterDoor()) enterDoor()
+})
+
+const pauseButton = controller.querySelector('[data-action="pause"]')
+
+pauseButton.addEventListener('pointerdown', (event) => {
+    event.preventDefault()
+    handleEscapeMenu()
 })
 
 // Door overlap changes as the player moves, so re-check every frame. The check
