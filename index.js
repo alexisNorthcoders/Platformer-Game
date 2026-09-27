@@ -399,6 +399,16 @@ canvas.addEventListener('click', (e) => {
     }
 })
 
+// gameOverRestart is a global set by gameOverRestart-bootstrap.mjs, loaded
+// before this script in index.html.
+const isTouch = gameOverRestart.isTouchDevice()
+if (isTouch) {
+    gameOverRestart.bindTapToRestart(canvas, {
+        isGameOver: () => player.gameOver,
+        restart: () => window.restartFromGameOver(),
+    })
+}
+
 function animate() {
 
     if (gameState === 'playing' && enemies.length) {
@@ -544,7 +554,7 @@ function animate() {
         c.font = 'bold 28px sans-serif'
         c.textAlign = 'center'
         c.textBaseline = 'middle'
-        c.fillText('Press R to restart', canvas.width / 2, canvas.height / 2)
+        c.fillText(gameOverRestart.gameOverPrompt(isTouch), canvas.width / 2, canvas.height / 2)
         c.restore()
     }
 }
