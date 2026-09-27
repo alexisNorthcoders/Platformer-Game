@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { canvasLogicalCoords, menuHitTarget, pointInRect } from '../js/menuGeometry.mjs'
+import { canvasLogicalCoords, pauseMenuHitTarget, pointInRect, titleScreenHitTarget } from '../js/menuGeometry.mjs'
 
 const MENU_START = { x: 287, y: 330, w: 450, h: 52 }
 
@@ -36,31 +36,57 @@ test('canvasLogicalCoords: center of half-sized CSS canvas', () => {
     assert.deepEqual(p, { x: 512, y: 288 })
 })
 
-const MENU = {
+const TITLE_SCREEN = {
+    startBtn: { x: 287, y: 330, w: 450, h: 52 },
+    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+}
+
+const PAUSE_MENU = {
     startBtn: { x: 287, y: 330, w: 450, h: 52 },
     levelBtn: { x: 287, y: 392, w: 450, h: 52 },
     fullscreenBtn: { x: 794, y: 20, w: 210, h: 52 },
 }
 
-test('menuHitTarget: Start and Level hit their buttons', () => {
-    assert.equal(menuHitTarget(300, 350, MENU), 'start')
-    assert.equal(menuHitTarget(300, 410, MENU), 'level')
+test('titleScreenHitTarget: Start and Level hit their buttons', () => {
+    assert.equal(titleScreenHitTarget(300, 350, TITLE_SCREEN), 'start')
+    assert.equal(titleScreenHitTarget(300, 410, TITLE_SCREEN), 'level')
 })
 
-test('menuHitTarget: misses return null', () => {
-    assert.equal(menuHitTarget(10, 10, MENU), null)
-    assert.equal(menuHitTarget(300, 388, MENU), null)
+test('titleScreenHitTarget: misses return null', () => {
+    assert.equal(titleScreenHitTarget(10, 10, TITLE_SCREEN), null)
+    assert.equal(titleScreenHitTarget(300, 388, TITLE_SCREEN), null)
 })
 
-test('menuHitTarget: Fullscreen only hits while shown', () => {
-    assert.equal(menuHitTarget(900, 40, MENU, { showFullscreen: true }), 'fullscreen')
-    assert.equal(menuHitTarget(900, 40, MENU, { showFullscreen: false }), null)
-    assert.equal(menuHitTarget(900, 40, MENU), null)
+test('titleScreenHitTarget: never reports Fullscreen, even where the Pause Menu has it', () => {
+    assert.equal(titleScreenHitTarget(900, 40, PAUSE_MENU), null)
 })
 
-test('menuHitTarget: Fullscreen edges are inclusive, like the other buttons', () => {
-    const r = MENU.fullscreenBtn
-    assert.equal(menuHitTarget(r.x, r.y, MENU, { showFullscreen: true }), 'fullscreen')
-    assert.equal(menuHitTarget(r.x + r.w, r.y + r.h, MENU, { showFullscreen: true }), 'fullscreen')
-    assert.equal(menuHitTarget(r.x + r.w / 2, r.y + r.h + 0.5, MENU, { showFullscreen: true }), null)
+test('titleScreenHitTarget: uses its own layout, not the Pause Menu one', () => {
+    const moved = { startBtn: { x: 0, y: 0, w: 100, h: 50 }, levelBtn: { x: 0, y: 60, w: 100, h: 50 } }
+    assert.equal(titleScreenHitTarget(50, 25, moved), 'start')
+    assert.equal(titleScreenHitTarget(50, 85, moved), 'level')
+    assert.equal(titleScreenHitTarget(300, 350, moved), null)
+})
+
+test('pauseMenuHitTarget: Start and Level hit their buttons', () => {
+    assert.equal(pauseMenuHitTarget(300, 350, PAUSE_MENU), 'start')
+    assert.equal(pauseMenuHitTarget(300, 410, PAUSE_MENU), 'level')
+})
+
+test('pauseMenuHitTarget: misses return null', () => {
+    assert.equal(pauseMenuHitTarget(10, 10, PAUSE_MENU), null)
+    assert.equal(pauseMenuHitTarget(300, 388, PAUSE_MENU), null)
+})
+
+test('pauseMenuHitTarget: Fullscreen only hits while shown', () => {
+    assert.equal(pauseMenuHitTarget(900, 40, PAUSE_MENU, { showFullscreen: true }), 'fullscreen')
+    assert.equal(pauseMenuHitTarget(900, 40, PAUSE_MENU, { showFullscreen: false }), null)
+    assert.equal(pauseMenuHitTarget(900, 40, PAUSE_MENU), null)
+})
+
+test('pauseMenuHitTarget: Fullscreen edges are inclusive, like the other buttons', () => {
+    const r = PAUSE_MENU.fullscreenBtn
+    assert.equal(pauseMenuHitTarget(r.x, r.y, PAUSE_MENU, { showFullscreen: true }), 'fullscreen')
+    assert.equal(pauseMenuHitTarget(r.x + r.w, r.y + r.h, PAUSE_MENU, { showFullscreen: true }), 'fullscreen')
+    assert.equal(pauseMenuHitTarget(r.x + r.w / 2, r.y + r.h + 0.5, PAUSE_MENU, { showFullscreen: true }), null)
 })
