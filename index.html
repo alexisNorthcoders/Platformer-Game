@@ -102,14 +102,10 @@
 
     /* Enter (#44): only shown while the player can go through a door, just
        above Jump. */
-    #touch-controller [data-zone="enter"] {
+    #touch-controller [data-action="enter"] {
       position: absolute;
       right: calc((var(--tc-button-size) - var(--tc-enter-size)) / 2);
       bottom: calc(100% + var(--tc-gap));
-    }
-
-    #touch-controller [data-zone="enter"][hidden] {
-      display: none;
     }
 
     #touch-controller .tc-button.tc-enter {
@@ -158,7 +154,8 @@
         pointer-events: none;
       }
 
-      #touch-controller [data-zone] {
+      #touch-controller [data-zone],
+      #touch-controller [data-action] {
         pointer-events: auto;
       }
     }
@@ -170,8 +167,9 @@
       <div class="tc-button" data-held="right">▶</div>
     </div>
     <div class="tc-actions">
-      <div data-zone="enter" hidden>
+      <div data-action="enter" hidden>
         <div class="tc-button tc-enter">
+          <!-- Door glyph -->
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M3 15V2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h2v1H1v-1zm2 0h6V3H5z" />
             <circle cx="9.5" cy="9" r="1" />

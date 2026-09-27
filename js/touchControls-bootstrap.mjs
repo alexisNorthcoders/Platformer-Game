@@ -36,7 +36,7 @@ function zoneX(el, event) {
     return rect.width ? (event.clientX - rect.left) / rect.width : 0
 }
 
-for (const el of controller.querySelectorAll('[data-zone]:not([data-zone="enter"])')) {
+for (const el of controller.querySelectorAll('[data-zone]')) {
     const zone = el.dataset.zone
     el.addEventListener('pointerdown', (event) => {
         event.preventDefault()
@@ -57,7 +57,7 @@ for (const el of controller.querySelectorAll('[data-zone]:not([data-zone="enter"
     }
 }
 
-const enterButton = controller.querySelector('[data-zone="enter"]')
+const enterButton = controller.querySelector('[data-action="enter"]')
 
 enterButton.addEventListener('pointerdown', (event) => {
     event.preventDefault()
