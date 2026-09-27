@@ -28,10 +28,16 @@ function readStoredSelectedLevel() {
 /** High-level flow. Death uses `player.gameOver` while this stays `'playing'`. */
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
-/** True when the menu was opened with Escape during gameplay (so Escape can resume). */
+/** True while the Pause Menu is open (opened with Escape or the pause button during play). */
 let pauseMenuFromPlaying = false
 /** True from entering the door until the next level's fade-in completes. */
 let levelTransitioning = false
+/** Diamond and Pig counts on entering the current level, for Restart Level. */
+let levelEntryCounts = { diamonds: 0, pigs: 0 }
+
+function recordLevelEntry() {
+    levelEntryCounts = { diamonds: diamondCount, pigs: EnemyTracker.getEnemyCount() }
+}
 
 // Layouts live in menuLayout.mjs (menuGeometry-bootstrap.mjs, loaded before
 // this script).
@@ -134,6 +140,7 @@ const player = new Player({
                         }
                         levelTimer.reset()
                         await initLevel(level)
+                        recordLevelEntry()
                         const dir = levels[level].lastDirection
                         if (dir === 'left') player.switchSprite('idleLeft')
                         else player.switchSprite('idleRight')
@@ -255,14 +262,27 @@ function drawBrickPanel(rect) {
 /** Menu button under the mouse, and the one held down by a pointer or key. */
 let menuHover = null
 let menuPressed = null
-/** True after Title Screen keys, until the mouse moves: PLAY (Enter) shows as selected. */
+/**
+ * True after menu keys, until the mouse moves: the button Enter would choose
+ * shows as selected (PLAY on the Title Screen, pauseMenuFocus on the Pause Menu).
+ */
 let menuKeyboardFocus = false
+/** The Pause Menu button ↑/↓ have moved to; Resume each time it opens. */
+let pauseMenuFocus = 'resume'
 
 function menuButtonState(target) {
     if (menuPressed === target) return 'pressed'
     if (menuHover === target) return 'hover'
-    if (menuKeyboardFocus && !pauseMenuFromPlaying && target === 'play') return 'hover'
+    const focused = pauseMenuFromPlaying ? pauseMenuFocus : 'play'
+    if (menuKeyboardFocus && target === focused) return 'hover'
     return 'idle'
+}
+
+/** Leaving a menu: no highlight is left behind for the next time one opens. */
+function clearMenuHighlights() {
+    menuHover = null
+    menuPressed = null
+    menuKeyboardFocus = false
 }
 
 /**
@@ -421,14 +441,32 @@ function drawTitleScreen() {
     c.restore()
 }
 
+/**
+ * The last level frame drawn before the Pause Menu opened. Nothing is stepped
+ * while paused, so the Pause Menu draws this copy (dimmed) as the frozen level.
+ */
+const pauseSnapshot = document.createElement('canvas')
+pauseSnapshot.width = canvas.width
+pauseSnapshot.height = canvas.height
+
+function capturePauseSnapshot() {
+    const g = pauseSnapshot.getContext('2d')
+    g.clearRect(0, 0, pauseSnapshot.width, pauseSnapshot.height)
+    g.drawImage(canvas, 0, 0)
+}
+
 function drawPauseMenu() {
     const layout = PAUSE_MENU
     c.save()
     drawMenuBackdrop()
-    drawFramedLevelPreview(layout.preview)
-    menuTitleSprite.draw(2)
-    drawPlankButtonWithLabel(layout.startBtn, 'start', `START GAME - LEVEL ${selectedLevel}`)
-    drawPlankButtonWithLabel(layout.levelBtn, 'level', `LEVEL: ${selectedLevel}`)
+    c.drawImage(pauseSnapshot, 0, 0)
+    c.fillStyle = 'rgba(0, 0, 0, 0.6)'
+    c.fillRect(0, 0, canvas.width, canvas.height)
+    drawBrickPanel(layout.panel)
+    drawMenuText('PAUSED', layout.caption.x, layout.caption.y, 24)
+    drawPlankButtonWithLabel(layout.resumeBtn, 'resume', 'RESUME')
+    drawPlankButtonWithLabel(layout.restartBtn, 'restart', 'RESTART LEVEL')
+    drawPlankButtonWithLabel(layout.quitBtn, 'quit', 'QUIT TO TITLE')
     if (fullscreenAvailable) {
         const label = globalThis.__fullscreen?.isFullscreen(document) ? 'EXIT FULLSCREEN' : 'FULLSCREEN'
         drawPlankButtonWithLabel(layout.fullscreenBtn, 'fullscreen', label)
@@ -460,19 +498,26 @@ function handleTitleScreenTarget(target) {
 }
 
 function pauseMenuHitTarget(x, y) {
-    const opts = { showFullscreen: fullscreenAvailable }
-    const g = globalThis.__menuGeom
-    if (g?.pauseMenuHitTarget) return g.pauseMenuHitTarget(x, y, PAUSE_MENU, opts)
-    if (pointInRect(x, y, PAUSE_MENU.startBtn)) return 'start'
-    if (pointInRect(x, y, PAUSE_MENU.levelBtn)) return 'level'
-    if (opts.showFullscreen && pointInRect(x, y, PAUSE_MENU.fullscreenBtn)) return 'fullscreen'
-    return null
+    return globalThis.__menuGeom.pauseMenuHitTarget(x, y, PAUSE_MENU, { showFullscreen: fullscreenAvailable })
 }
 
-function pointInRect(px, py, rect) {
-    const g = globalThis.__menuGeom
-    if (g?.pointInRect) return g.pointInRect(px, py, rect)
-    return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h
+/**
+ * Act on a Pause Menu button: Resume, Restart Level and Quit to Title go
+ * through reducePauseMenuChoice; Fullscreen changes no game state. Called from
+ * a click or keydown, which count as the user activation requestFullscreen needs.
+ */
+function handlePauseMenuTarget(target) {
+    if (target === 'fullscreen') {
+        globalThis.__fullscreen?.toggleFullscreen(document)
+        return
+    }
+    const flow = globalThis.__gameFlow
+    applyGameFlowResult(flow.reducePauseMenuChoice({
+        choice: target,
+        gameState,
+        pauseMenuFromPlaying,
+        currentLevel: level,
+    }))
 }
 
 function canvasClickCoords(e) {
@@ -497,19 +542,9 @@ async function startGame(levelToStart) {
     }
     pauseMenuFromPlaying = false
     gameState = 'loading'
-    // Leaving the menu: no highlight is left behind for the next time it opens.
-    menuHover = null
-    menuPressed = null
-    player.preventInput = true
+    clearMenuHighlights()
+    resetSession()
     overlay.opacity = 1
-    diamondCount = 0
-    numberSprites = createNumberSprites(0)
-    flow.clearHeldInputKeys(keys)
-    flow.resetPlayerForNewLevelRun(player)
-    levelTimer.reset()
-    resetHearts()
-    EnemyTracker.resetSession()
-    enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
     level = levelToStart
     const levelCfg = levels[level]
     if (!levelCfg) {
@@ -530,7 +565,7 @@ async function startGame(levelToStart) {
         syncMenuSelectionUI()
         return
     }
-    LevelProgressKeys.clearAll()
+    recordLevelEntry()
     const ld = levelCfg.lastDirection
     if (ld === 'left') player.switchSprite('idleLeft')
     else player.switchSprite('idleRight')
@@ -538,10 +573,46 @@ async function startGame(levelToStart) {
     gsap.to(overlay, {
         opacity: 0,
         onComplete: () => {
-            player.preventInput = false
+            // Paused during the fade-in: input comes back on Resume instead.
+            if (gameState === 'playing') player.preventInput = false
             startLevelTimer()
         },
     })
+}
+
+/**
+ * Stop a fade still running from the last start: it would otherwise finish
+ * later and hand input back to the player.
+ */
+function cancelOverlayFade() {
+    gsap.killTweensOf(overlay)
+    overlay.opacity = 0
+}
+
+/** The step sound loops until stopped; nothing stops it once play stops. */
+function stopPlayerSounds() {
+    if (typeof stopStepSound === 'function') stopStepSound()
+}
+
+/**
+ * A clean session, as before the first level: hearts, diamonds, the Pig
+ * count, the level timer and which diamonds / Pigs are gone. Used when a game
+ * starts and on Quit to Title.
+ */
+function resetSession() {
+    const flow = globalThis.__gameFlow
+    cancelOverlayFade()
+    stopPlayerSounds()
+    player.preventInput = true
+    diamondCount = 0
+    numberSprites = createNumberSprites(0)
+    flow.clearHeldInputKeys(keys)
+    flow.resetPlayerForNewLevelRun(player)
+    levelTimer.reset()
+    resetHearts()
+    EnemyTracker.resetSession()
+    enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
+    LevelProgressKeys.clearAll()
 }
 
 // The only input route for the menu buttons, on touch too: taps synthesise a
@@ -555,26 +626,18 @@ canvas.addEventListener('click', (e) => {
         return
     }
     const target = pauseMenuHitTarget(x, y)
-    if (target === 'start') {
-        void startGame(selectedLevel)
-        return
-    }
-    if (target === 'level') {
-        const n = levelsKeyCount()
-        if (n < 1) return
-        selectedLevel = selectedLevel >= n ? 1 : selectedLevel + 1
-        syncMenuSelectionUI()
-        return
-    }
-    // A click counts as the user activation requestFullscreen needs.
-    if (target === 'fullscreen') globalThis.__fullscreen?.toggleFullscreen(document)
+    if (target) handlePauseMenuTarget(target)
 })
 
 // Title Screen keyboard: ←/→ change the level, Enter/Space play. Player input
 // is off (preventInput) while on the Title Screen, so eventListeners.js
 // ignores these keys there.
 window.addEventListener('keydown', (e) => {
-    if (gameState !== 'menu' || pauseMenuFromPlaying) return
+    if (gameState !== 'menu') return
+    if (pauseMenuFromPlaying) {
+        handlePauseMenuKey(e)
+        return
+    }
     const target = globalThis.__menuGeom.titleScreenKeyTarget(e.key)
     if (!target) return
     e.preventDefault()
@@ -584,6 +647,26 @@ window.addEventListener('keydown', (e) => {
     if (target === 'play' && e.repeat) return
     handleTitleScreenTarget(target)
 })
+
+// Pause Menu keyboard (#65): ↑/↓ move the focus, Enter/Space choose it.
+// Escape still closes it (eventListeners.js → handleEscapeMenu).
+function handlePauseMenuKey(e) {
+    const g = globalThis.__menuGeom
+    const action = g.pauseMenuKeyAction(e.key)
+    if (!action) return
+    e.preventDefault()
+    menuKeyboardFocus = true
+    if (action === 'choose') {
+        // Holding Enter/Space must not choose twice (e.g. Restart Level, then
+        // again once the level is back and paused).
+        if (e.repeat) return
+        menuPressed = pauseMenuFocus
+        handlePauseMenuTarget(pauseMenuFocus)
+        return
+    }
+    const items = g.pauseMenuItems({ showFullscreen: fullscreenAvailable })
+    pauseMenuFocus = g.stepMenuFocus(items, pauseMenuFocus, action === 'down' ? 1 : -1)
+}
 
 // Button highlights (#63): lit under the mouse, pressed while a pointer or
 // key holds it. Purely visual; the click and keydown handlers above act.
@@ -602,7 +685,8 @@ canvas.addEventListener('pointerdown', (e) => { menuPressed = menuHitTarget(e) }
 window.addEventListener('pointerup', () => { menuPressed = null })
 window.addEventListener('pointercancel', () => { menuPressed = null })
 window.addEventListener('keyup', (e) => {
-    if (globalThis.__menuGeom.titleScreenKeyTarget(e.key) === menuPressed) menuPressed = null
+    const g = globalThis.__menuGeom
+    if (g.titleScreenKeyTarget(e.key) === menuPressed || g.pauseMenuKeyAction(e.key) === 'choose') menuPressed = null
 })
 
 if (isTouch) {
@@ -789,22 +873,20 @@ function drawLevelTimer() {
     c.restore()
 }
 
-window.restartFromGameOver = async () => {
-    if (!player.gameOver || player._restarting) return
+/**
+ * Rebuild the current level with the King back at its start and full hearts
+ * (game over restart, and Restart Level on the Pause Menu). Diamonds taken and
+ * Pigs beaten stay gone unless `beforeLoad` forgets them. `beforeLoad` runs
+ * first, before the HUD counts are redrawn and the level loads.
+ */
+async function restartCurrentLevel(beforeLoad) {
     player._restarting = true
     try {
-        if (globalThis.__gameFlow?.clearHeldInputKeys) {
-            globalThis.__gameFlow.clearHeldInputKeys(keys)
-        } else {
-            keys.w.pressed = false
-            keys.a.pressed = false
-            keys.d.pressed = false
-            keys.space.pressed = false
-        }
+        beforeLoad?.()
+        globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
         player.dead = false
         player.hitpoints = 3
-        player.preventInput = false
         // Old level is still active until createAssets() resolves; stay invulnerable.
         player.hitCooldown = true
         player.isShowingHello = false
@@ -818,7 +900,6 @@ window.restartFromGameOver = async () => {
         numberSprites = createNumberSprites(diamondCount)
         enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
         await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
-        startLevelTimer()
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
     } finally {
@@ -826,35 +907,79 @@ window.restartFromGameOver = async () => {
     }
 }
 
-// Escape (and the touch pause button, #45) opens/closes the in-game level
-// menu (returns true if handled).
+window.restartFromGameOver = async () => {
+    if (!player.gameOver || player._restarting) return
+    await restartCurrentLevel(() => { player.preventInput = false })
+    startLevelTimer()
+}
+
+/**
+ * Restart Level (#65): the level as it was on entering it, with its diamonds
+ * and Pigs back and the counts rolled back. The black loading screen shows
+ * until it is rebuilt; if that fails, back to the Title Screen.
+ */
+async function restartLevelFromPauseMenu() {
+    cancelOverlayFade()
+    levelTimer.reset()
+    try {
+        await restartCurrentLevel(() => {
+            LevelProgressKeys.clearLevel(level)
+            diamondCount = levelEntryCounts.diamonds
+            EnemyTracker.setEnemyCount(levelEntryCounts.pigs)
+        })
+    } catch (err) {
+        console.error('initLevel failed', err)
+        gameState = 'menu'
+        resetSession()
+        return
+    }
+    // Quit to Title can't happen while loading, so the run is still ours.
+    gameState = 'playing'
+    player.preventInput = false
+    startLevelTimer()
+}
+
+// Escape (and the touch pause button, #45) opens/closes the Pause Menu
+// (returns true if handled).
 function handleEscapeMenu() {
     const flow = globalThis.__gameFlow
     if (!flow?.reduceEscapeKey) return false
-    const result = flow.reduceEscapeKey({
+    return applyGameFlowResult(flow.reduceEscapeKey({
         gameState,
         pauseMenuFromPlaying,
         playerGameOver: player.gameOver,
         levelTransitioning,
-        currentLevel: level,
-    })
+        restarting: Boolean(player._restarting),
+    }))
+}
+
+/**
+ * Apply a reduceEscapeKey / reducePauseMenuChoice result to the game. Returns
+ * whether it changed anything.
+ */
+function applyGameFlowResult(result) {
     if (!result.handled) return false
+    const flow = globalThis.__gameFlow
+    const wasPaused = pauseMenuFromPlaying
     if (result.clearKeys) flow.clearHeldInputKeys(keys)
-    if (result.gameState !== undefined) {
-        if (result.gameState === 'menu') levelTimer.pause(performance.now())
-        else if (result.gameState === 'playing') levelTimer.resume(performance.now())
-        gameState = result.gameState
+    if (result.pauseMenuFromPlaying && !wasPaused) {
+        // The canvas still holds the last level frame: keep it as the frozen level.
+        capturePauseSnapshot()
+        levelTimer.pause(performance.now())
+        stopPlayerSounds()
+        pauseMenuFocus = 'resume'
     }
-    if (result.pauseMenuFromPlaying !== undefined) pauseMenuFromPlaying = result.pauseMenuFromPlaying
+    if (wasPaused && !result.pauseMenuFromPlaying) clearMenuHighlights()
+    if (result.gameState === 'playing') levelTimer.resume(performance.now())
+    gameState = result.gameState
+    pauseMenuFromPlaying = result.pauseMenuFromPlaying
+    player.preventInput = result.playerPreventInput
+    if (result.resetSession) resetSession()
     if (result.selectedLevel !== undefined) {
         selectedLevel = result.selectedLevel
         syncMenuSelectionUI()
     }
-    if (result.playerPreventInput !== undefined) player.preventInput = result.playerPreventInput
-    if (result.resyncMenuSelectionToLevel) {
-        selectedLevel = level
-        syncMenuSelectionUI()
-    }
+    if (result.restartLevel) void restartLevelFromPauseMenu()
     return true
 }
 

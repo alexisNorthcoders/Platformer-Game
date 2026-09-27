@@ -4,7 +4,8 @@
  *
  * Manual check (no automated browser harness here): resize the window so the
  * canvas letterboxes, click just inside each button edge on both axes, and
- * confirm ◀ / ▶ / PLAY (Title Screen) and Start / Level (Pause Menu) still
+ * confirm ◀ / ▶ / PLAY (Title Screen) and Resume / Restart Level / Quit to
+ * Title (Pause Menu) still
  * register; clicks a few px outside should not.
  */
 export function pointInRect(px, py, rect) {
@@ -54,13 +55,34 @@ export function coverSourceRect(sw, sh, dw, dh) {
 }
 
 /**
- * Which Pause Menu button a logical point hits: 'start' | 'level' | 'fullscreen' | null.
- * The Fullscreen button (#46) only exists while `showFullscreen` is true (a
- * touch device that supports the Fullscreen API).
+ * Which Pause Menu button a logical point hits: 'resume' | 'restart' | 'quit' |
+ * 'fullscreen' | null. The Fullscreen button (#46) only exists while
+ * `showFullscreen` is true (a touch device that supports the Fullscreen API).
  */
 export function pauseMenuHitTarget(px, py, layout, { showFullscreen = false } = {}) {
-    if (pointInRect(px, py, layout.startBtn)) return 'start'
-    if (pointInRect(px, py, layout.levelBtn)) return 'level'
-    if (showFullscreen && pointInRect(px, py, layout.fullscreenBtn)) return 'fullscreen'
+    if (layout.resumeBtn && pointInRect(px, py, layout.resumeBtn)) return 'resume'
+    if (layout.restartBtn && pointInRect(px, py, layout.restartBtn)) return 'restart'
+    if (layout.quitBtn && pointInRect(px, py, layout.quitBtn)) return 'quit'
+    if (showFullscreen && layout.fullscreenBtn && pointInRect(px, py, layout.fullscreenBtn)) return 'fullscreen'
     return null
+}
+
+/** The Pause Menu buttons in keyboard order (↓ moves along it). */
+export function pauseMenuItems({ showFullscreen = false } = {}) {
+    return showFullscreen ? ['resume', 'restart', 'quit', 'fullscreen'] : ['resume', 'restart', 'quit']
+}
+
+/** Pause Menu keyboard: ↑/↓ move the focus, Enter/Space choose it. */
+export function pauseMenuKeyAction(key) {
+    if (key === 'ArrowUp') return 'up'
+    if (key === 'ArrowDown') return 'down'
+    if (key === 'Enter' || key === ' ') return 'choose'
+    return null
+}
+
+/** The item `delta` steps from `current` in `items`, wrapping; the first item if `current` isn't there. */
+export function stepMenuFocus(items, current, delta) {
+    const i = items.indexOf(current)
+    if (i < 0) return items[0]
+    return items[(((i + delta) % items.length) + items.length) % items.length]
 }

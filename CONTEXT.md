@@ -11,11 +11,11 @@ The screen shown before any level is played, where the player picks a level and 
 _Avoid_: Main menu, start screen, menu (on its own)
 
 **Pause Menu**:
-The overlay opened during play (Escape or the touch pause button), drawn over the frozen level.
+The overlay opened during play (Escape or the touch pause button), drawn over the dimmed, frozen level. Its buttons are Resume, Restart Level (the level as on entering it: diamonds and Pigs back, counts rolled back) and Quit to Title (plus Fullscreen on touch devices); levels are picked on the Title Screen only.
 _Avoid_: Escape menu, in-game menu
 
 **Level Preview**:
-A framed thumbnail on the Title Screen (and the Pause Menu) showing the currently selected level's map.
+A framed thumbnail on the Title Screen showing the currently selected level's map.
 
 **Title Scene**:
 The ambient animation behind the Title Screen: Pigs running and throwing bombs. Purely decorative; it never affects game state.

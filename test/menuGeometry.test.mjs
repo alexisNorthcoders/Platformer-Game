@@ -4,8 +4,11 @@ import {
     canvasLogicalCoords,
     coverSourceRect,
     pauseMenuHitTarget,
+    pauseMenuItems,
+    pauseMenuKeyAction,
     pointInRect,
     stepLevel,
+    stepMenuFocus,
     titleScreenHitTarget,
     titleScreenKeyTarget,
 } from '../js/menuGeometry.mjs'
@@ -51,8 +54,9 @@ const TITLE_SCREEN = {
 }
 
 const PAUSE_MENU = {
-    startBtn: { x: 287, y: 330, w: 450, h: 52 },
-    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+    resumeBtn: { x: 392, y: 200, w: 240, h: 52 },
+    restartBtn: { x: 392, y: 264, w: 240, h: 52 },
+    quitBtn: { x: 392, y: 328, w: 240, h: 52 },
     fullscreenBtn: { x: 794, y: 20, w: 210, h: 52 },
 }
 
@@ -79,7 +83,7 @@ test('titleScreenHitTarget: misses return null (level label, preview, blank spac
 })
 
 test('titleScreenHitTarget: never reports Pause Menu buttons', () => {
-    assert.equal(titleScreenHitTarget(300, 350, PAUSE_MENU), null)
+    assert.equal(titleScreenHitTarget(500, 220, PAUSE_MENU), null)
     assert.equal(titleScreenHitTarget(900, 40, PAUSE_MENU), null)
 })
 
@@ -154,14 +158,29 @@ test('coverSourceRect: tall images are cropped to their centre, full width', () 
     assert.deepEqual(crop, { sx: 0, sy: 175, sw: 100, sh: 50 })
 })
 
-test('pauseMenuHitTarget: Start and Level hit their buttons', () => {
-    assert.equal(pauseMenuHitTarget(300, 350, PAUSE_MENU), 'start')
-    assert.equal(pauseMenuHitTarget(300, 410, PAUSE_MENU), 'level')
+test('pauseMenuHitTarget: Resume, Restart Level and Quit to Title hit their buttons', () => {
+    assert.equal(pauseMenuHitTarget(500, 220, PAUSE_MENU), 'resume')
+    assert.equal(pauseMenuHitTarget(500, 290, PAUSE_MENU), 'restart')
+    assert.equal(pauseMenuHitTarget(500, 350, PAUSE_MENU), 'quit')
 })
 
-test('pauseMenuHitTarget: misses return null', () => {
+test('pauseMenuHitTarget: edges are inclusive for every button', () => {
+    for (const [name, target] of [['resumeBtn', 'resume'], ['restartBtn', 'restart'], ['quitBtn', 'quit']]) {
+        const r = PAUSE_MENU[name]
+        assert.equal(pauseMenuHitTarget(r.x, r.y, PAUSE_MENU), target)
+        assert.equal(pauseMenuHitTarget(r.x + r.w, r.y + r.h, PAUSE_MENU), target)
+        assert.equal(pauseMenuHitTarget(r.x - 0.5, r.y + r.h / 2, PAUSE_MENU), null)
+    }
+})
+
+test('pauseMenuHitTarget: misses return null (gaps between buttons, the dimmed level)', () => {
     assert.equal(pauseMenuHitTarget(10, 10, PAUSE_MENU), null)
-    assert.equal(pauseMenuHitTarget(300, 388, PAUSE_MENU), null)
+    assert.equal(pauseMenuHitTarget(500, 258, PAUSE_MENU), null)
+    assert.equal(pauseMenuHitTarget(500, 500, PAUSE_MENU), null)
+})
+
+test('pauseMenuHitTarget: never reports Title Screen buttons', () => {
+    assert.equal(pauseMenuHitTarget(790, 292, TITLE_SCREEN), null)
 })
 
 test('pauseMenuHitTarget: Fullscreen only hits while shown', () => {
@@ -175,4 +194,35 @@ test('pauseMenuHitTarget: Fullscreen edges are inclusive, like the other buttons
     assert.equal(pauseMenuHitTarget(r.x, r.y, PAUSE_MENU, { showFullscreen: true }), 'fullscreen')
     assert.equal(pauseMenuHitTarget(r.x + r.w, r.y + r.h, PAUSE_MENU, { showFullscreen: true }), 'fullscreen')
     assert.equal(pauseMenuHitTarget(r.x + r.w / 2, r.y + r.h + 0.5, PAUSE_MENU, { showFullscreen: true }), null)
+})
+
+test('pauseMenuItems: Resume, Restart Level, Quit to Title; Fullscreen last and only when shown', () => {
+    assert.deepEqual(pauseMenuItems(), ['resume', 'restart', 'quit'])
+    assert.deepEqual(pauseMenuItems({ showFullscreen: false }), ['resume', 'restart', 'quit'])
+    assert.deepEqual(pauseMenuItems({ showFullscreen: true }), ['resume', 'restart', 'quit', 'fullscreen'])
+})
+
+test('pauseMenuKeyAction: ↑/↓ move, Enter/Space choose, others ignored', () => {
+    assert.equal(pauseMenuKeyAction('ArrowUp'), 'up')
+    assert.equal(pauseMenuKeyAction('ArrowDown'), 'down')
+    assert.equal(pauseMenuKeyAction('Enter'), 'choose')
+    assert.equal(pauseMenuKeyAction(' '), 'choose')
+    // Escape toggles the Pause Menu through reduceEscapeKey, not here.
+    assert.equal(pauseMenuKeyAction('Escape'), null)
+    assert.equal(pauseMenuKeyAction('ArrowLeft'), null)
+    assert.equal(pauseMenuKeyAction('r'), null)
+})
+
+test('stepMenuFocus: moves through the items and wraps at both ends', () => {
+    const items = ['resume', 'restart', 'quit']
+    assert.equal(stepMenuFocus(items, 'resume', 1), 'restart')
+    assert.equal(stepMenuFocus(items, 'restart', -1), 'resume')
+    assert.equal(stepMenuFocus(items, 'quit', 1), 'resume')
+    assert.equal(stepMenuFocus(items, 'resume', -1), 'quit')
+})
+
+test('stepMenuFocus: a focus not in the list (e.g. Fullscreen hidden) restarts from the first item', () => {
+    const items = ['resume', 'restart', 'quit']
+    assert.equal(stepMenuFocus(items, 'fullscreen', 1), 'resume')
+    assert.equal(stepMenuFocus(items, null, -1), 'resume')
 })

@@ -21,12 +21,16 @@ export const TITLE_SCREEN = {
     playBtn: { x: 658, y: 270, w: 220, h: 60 },
 }
 
+// Pause Menu (#65): a brick panel centred over the dimmed, frozen level with
+// a "PAUSED" caption and the three buttons stacked in keyboard order.
 export const PAUSE_MENU = {
-    preview: { x: 227, y: 96, w: 570, h: 208 },
-    startBtn: { x: 287, y: 344, w: 450, h: 52 },
-    levelBtn: { x: 287, y: 406, w: 450, h: 52 },
+    panel: { x: 288, y: 100, w: 448, h: 364 },
+    caption: { x: 512, y: 190 },
+    resumeBtn: { x: 360, y: 218, w: 304, h: 52 },
+    restartBtn: { x: 360, y: 278, w: 304, h: 52 },
+    quitBtn: { x: 360, y: 338, w: 304, h: 52 },
     // Touch devices with the Fullscreen API only (#46). Top right: the
     // landscape touch controller (pause button included) overlays the bottom
-    // of the canvas, so a button under Level would sit beneath it.
+    // of the canvas, so a button under the others would sit beneath it.
     fullscreenBtn: { x: 684, y: 12, w: 320, h: 52 },
 }

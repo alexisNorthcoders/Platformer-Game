@@ -84,6 +84,14 @@ const LevelProgressKeys = (function () {
         isEnemyDefeated(levelNum, kind, x, y) {
             return defeatedEnemies.has(enemyKey(levelNum, kind, x, y))
         },
+        /** Forget this level's diamonds and Pigs, so they come back (Restart Level). */
+        clearLevel(levelNum) {
+            for (const set of [collectedDiamonds, defeatedEnemies]) {
+                for (const key of set) {
+                    if (key.split(':')[1] === String(levelNum)) set.delete(key)
+                }
+            }
+        },
         clearAll() {
             collectedDiamonds.clear()
             defeatedEnemies.clear()

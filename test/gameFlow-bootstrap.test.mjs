@@ -7,6 +7,7 @@ test('gameFlow-bootstrap wires session + escape helpers onto globalThis.__gameFl
     const flow = globalThis.__gameFlow
     assert.ok(flow)
     assert.equal(typeof flow.reduceEscapeKey, 'function')
+    assert.equal(typeof flow.reducePauseMenuChoice, 'function')
     assert.equal(typeof flow.clearHeldInputKeys, 'function')
     assert.equal(typeof flow.resetPlayerForNewLevelRun, 'function')
 })

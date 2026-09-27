@@ -19,6 +19,10 @@ const EnemyTracker = (function () {
             return enemyCount
         },
         getEnemyCount: () => enemyCount,
+        /** Back to the count on entering the level (Restart Level). */
+        setEnemyCount: (count) => {
+            enemyCount = count
+        },
         isLevelHalfCleared: () => levelEnemies <= initialEnemies / 2,
     }
 })()
