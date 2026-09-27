@@ -13,6 +13,11 @@ import { onHeldInputKeysCleared } from './sessionReset.mjs'
 // In landscape the game fills the height with the same controls semi-transparent
 // in the bottom corners, clear of the HUD. Rotating while holding ▶ switches
 // layout live and the player stops (no key stuck).
+//
+// Enter (#44): the door button above B shows only while the player stands at
+// an open door (and input isn't blocked), in both layouts. Tapping it enters
+// through the same canPlayerEnterDoor/enterDoor as keyboard ↑ (globals from
+// eventListeners.js). B only ever jumps, even at a door.
 const controller = document.getElementById('touch-controller')
 const controls = createTouchControls()
 let held = controls.held()
@@ -51,6 +56,23 @@ for (const el of controller.querySelectorAll('[data-zone]')) {
         })
     }
 }
+
+const enterButton = controller.querySelector('[data-action="enter"]')
+
+enterButton.addEventListener('pointerdown', (event) => {
+    event.preventDefault()
+    if (canPlayerEnterDoor()) enterDoor()
+})
+
+// Door overlap changes as the player moves, so re-check every frame. The check
+// is a few rect comparisons; on desktop the button is inside a display:none
+// controller, so toggling it costs nothing.
+function syncEnterButton() {
+    requestAnimationFrame(syncEnterButton)
+    const hidden = !canPlayerEnterDoor()
+    if (enterButton.hidden !== hidden) enterButton.hidden = hidden
+}
+syncEnterButton()
 
 controller.addEventListener('contextmenu', (event) => event.preventDefault())
 

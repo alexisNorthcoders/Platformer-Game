@@ -46,3 +46,9 @@ test('canEnterDoor checks every door, not just the first', () => {
     const hitbox = hitboxAt(120, 220)
     assert.equal(canEnterDoor({ hitbox, doors: [farDoor, DOOR], doorClosed: false }), true)
 })
+
+test('canEnterDoor is false while input is blocked (menu, pause, transition, game over)', () => {
+    const hitbox = hitboxAt(120, 220)
+    assert.equal(canEnterDoor({ hitbox, doors: [DOOR], doorClosed: false, preventInput: true }), false)
+    assert.equal(canEnterDoor({ hitbox, doors: [DOOR], doorClosed: false, preventInput: false }), true)
+})

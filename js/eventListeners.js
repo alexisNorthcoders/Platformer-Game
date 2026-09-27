@@ -1,7 +1,8 @@
 // doorEntry and levelTimer are globals set by their *-bootstrap.mjs modules,
-// loaded before this script in index.html.
+// loaded before this script in index.html. Shared by keyboard ↑ and the touch
+// controller's Enter button (touchControls-bootstrap.mjs).
 function canPlayerEnterDoor() {
-    return doorEntry.canEnterDoor({ hitbox: player.hitbox, doors, doorClosed })
+    return doorEntry.canEnterDoor({ hitbox: player.hitbox, doors, doorClosed, preventInput: player.preventInput })
 }
 
 function enterDoor() {

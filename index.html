@@ -44,10 +44,15 @@
     #touch-controller {
       --tc-button-size: min(84px, 19vw);
       --tc-gap: min(16px, 3vw);
-      /* Tall enough for the staggered A/B pair plus padding and the home bar;
-         in the portrait split mobile-bootstrap.mjs reserves this height when
-         fitting the canvas (the landscape overlay reserves none). */
-      --tc-panel-min-height: calc(var(--tc-button-size) * 1.6 + var(--tc-gap) * 2 + env(safe-area-inset-bottom));
+      --tc-enter-size: calc(var(--tc-button-size) * 0.8);
+      /* Room above the A/B pair for the Enter button (#44), which pops up
+         there without shifting the other controls. */
+      --tc-enter-room: calc(var(--tc-enter-size) + var(--tc-gap));
+      /* Tall enough for the staggered A/B pair, the Enter button above it,
+         padding and the home bar; in the portrait split mobile-bootstrap.mjs
+         reserves this height when fitting the canvas (the landscape overlay
+         reserves none). */
+      --tc-panel-min-height: calc(var(--tc-button-size) * 1.6 + var(--tc-enter-room) + var(--tc-gap) * 2 + env(safe-area-inset-bottom));
       --tc-fill: rgba(245, 240, 230, 0.18);
       --tc-fill-pressed: rgba(245, 240, 230, 0.45);
       --tc-border: 2px solid rgba(245, 240, 230, 0.55);
@@ -59,7 +64,7 @@
       box-sizing: border-box;
       width: 100%;
       min-height: var(--tc-panel-min-height);
-      padding: var(--tc-gap) var(--tc-side-pad) calc(var(--tc-gap) + env(safe-area-inset-bottom));
+      padding: calc(var(--tc-gap) + var(--tc-enter-room)) var(--tc-side-pad) calc(var(--tc-gap) + env(safe-area-inset-bottom));
       align-items: center;
       justify-content: space-between;
       touch-action: none;
@@ -90,8 +95,27 @@
     }
 
     #touch-controller .tc-actions {
+      position: relative;
       display: flex;
       gap: var(--tc-gap);
+    }
+
+    /* Enter (#44): only shown while the player can go through a door, just
+       above Jump. */
+    #touch-controller [data-action="enter"] {
+      position: absolute;
+      right: calc((var(--tc-button-size) - var(--tc-enter-size)) / 2);
+      bottom: calc(100% + var(--tc-gap));
+    }
+
+    #touch-controller .tc-button.tc-enter {
+      width: var(--tc-enter-size);
+      height: var(--tc-enter-size);
+    }
+
+    #touch-controller .tc-enter svg {
+      width: 55%;
+      height: 55%;
     }
 
     /* Attack sits lower-left of Jump, like a gamepad's A/B pair. */
@@ -130,7 +154,8 @@
         pointer-events: none;
       }
 
-      #touch-controller [data-zone] {
+      #touch-controller [data-zone],
+      #touch-controller [data-action] {
         pointer-events: auto;
       }
     }
@@ -142,6 +167,15 @@
       <div class="tc-button" data-held="right">▶</div>
     </div>
     <div class="tc-actions">
+      <div data-action="enter" hidden>
+        <div class="tc-button tc-enter">
+          <!-- Door glyph -->
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 15V2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h2v1H1v-1zm2 0h6V3H5z" />
+            <circle cx="9.5" cy="9" r="1" />
+          </svg>
+        </div>
+      </div>
       <div data-zone="attack">
         <div class="tc-button" data-held="attack">A</div>
       </div>
