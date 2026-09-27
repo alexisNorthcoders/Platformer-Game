@@ -12,17 +12,14 @@ export function gameOverPrompt(isTouch) {
 }
 
 /**
- * Restart on a tap while `isGameOver()` is true. Taps while a restart is still
- * in flight are ignored, so tapping repeatedly restarts once.
+ * Restart on a tap while `isGameOver()` is true. `restart` must guard against
+ * re-entry itself (restartFromGameOver clears gameOver and checks
+ * player._restarting), which is what stops repeated taps double restarting.
  */
 export function bindTapToRestart(target, { isGameOver, restart }) {
-    let restarting = false
     target.addEventListener('pointerdown', (event) => {
-        if (restarting || !isGameOver()) return
+        if (!isGameOver()) return
         event.preventDefault()
-        restarting = true
-        new Promise(resolve => resolve(restart()))
-            .catch(err => console.error('Restart from game over failed', err))
-            .finally(() => { restarting = false })
+        restart()
     })
 }

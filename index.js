@@ -405,6 +405,7 @@ const isTouch = gameOverRestart.isTouchDevice()
 if (isTouch) {
     gameOverRestart.bindTapToRestart(canvas, {
         isGameOver: () => player.gameOver,
+        // Late-bound: restartFromGameOver is assigned further down this file.
         restart: () => window.restartFromGameOver(),
     })
 }
