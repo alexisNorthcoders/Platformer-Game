@@ -360,8 +360,8 @@ function drawMenuBackdrop() {
     c.fillRect(0, 0, canvas.width, canvas.height)
 }
 
-// Title Scene (#64): Pigs on a strip of castle floor below the Title Screen
-// menu. Only stepped and drawn here, so it stops once play starts and isn't
+// Title Scene (#64): Pigs on a strip of castle floor below the Title Screen's
+// Level Preview and panel. Only stepped and drawn here, so it stops once play starts and isn't
 // behind the Pause Menu. Silent, and it takes no input.
 const titleSceneLib = globalThis.__titleScene
 const titleScene = titleSceneLib.createTitleScene()
@@ -374,13 +374,12 @@ let titleSceneFloor = null
 function titleSceneFloorImage() {
     if (titleSceneFloor || !menuImageReady(terrainSheet)) return titleSceneFloor
     const tiles = titleSceneLib.titleSceneFloorTiles()
-    const { floorY, width, floorTile: t } = titleSceneLib.TITLE_SCENE
     titleSceneFloor = document.createElement('canvas')
-    titleSceneFloor.width = width
-    titleSceneFloor.height = tiles[0].h
+    titleSceneFloor.width = canvas.width
+    titleSceneFloor.height = tiles[0].dh
     const g = titleSceneFloor.getContext('2d')
     g.imageSmoothingEnabled = false
-    for (const tile of tiles) g.drawImage(terrainSheet, t.x, t.y, t.w, t.h, tile.x, tile.y - floorY, tile.w, tile.h)
+    for (const p of tiles) g.drawImage(terrainSheet, p.sx, p.sy, p.sw, p.sh, p.dx, p.dy, p.dw, p.dh)
     return titleSceneFloor
 }
 

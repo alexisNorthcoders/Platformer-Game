@@ -1,6 +1,6 @@
 /**
  * Title Scene (#64): the ambient Pig animation behind the Title Screen, on a
- * strip of castle floor below the menu. Bomb Pigs patrol and throw bombs, the
+ * strip of castle floor below its Level Preview and panel. Bomb Pigs patrol and throw bombs, the
  * King Pig struts or idles, and a Pig with a Match now and then lights a
  * cannon.
  *
@@ -17,7 +17,7 @@ export const SCENE_SCALE = 2
 
 export const TITLE_SCENE = {
     width: 1024,
-    /** Top of the floor strip, where the pigs stand. The menu ends at y 388. */
+    /** Top of the floor strip, where the pigs stand. The Title Screen's panels end at y 388. */
     floorY: 512,
     /** The Terrain tile repeated along the floor: the plain middle of the one-tile brick bar. */
     floorTile: { x: 64, y: 160, w: 32, h: 32 },
@@ -42,39 +42,40 @@ export const TITLE_SCENE = {
     maxStepMs: 100,
 }
 
-const S = 'Sprites/'
+const SPRITES = 'Sprites/'
 
 /** Sprite sheets: frame size and the anchor (source px) placed on an actor's (x, y). */
 export const SHEETS = {
-    bombPigIdle: { src: `${S}05-Pig Thowing a Bomb/Idle (26x26).png`, frames: 10, w: 26, h: 26, anchorX: 13, anchorY: 26 },
-    bombPigRun: { src: `${S}05-Pig Thowing a Bomb/Run (26x26).png`, frames: 6, w: 26, h: 26, anchorX: 13, anchorY: 26 },
-    bombPigPick: { src: `${S}05-Pig Thowing a Bomb/Picking Bomb (26x26).png`, frames: 4, w: 26, h: 26, anchorX: 13, anchorY: 26 },
-    bombPigThrow: { src: `${S}05-Pig Thowing a Bomb/Throwing Boom (26x26).png`, frames: 5, w: 26, h: 26, anchorX: 13, anchorY: 26 },
-    kingIdle: { src: `${S}02-King Pig/Idle (38x28).png`, frames: 12, w: 38, h: 28, anchorX: 19, anchorY: 28 },
-    kingRun: { src: `${S}02-King Pig/Run (38x28).png`, frames: 6, w: 38, h: 28, anchorX: 19, anchorY: 28 },
-    matchOn: { src: `${S}07-Pig With a Match/Match On (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
-    matchLight: { src: `${S}07-Pig With a Match/Lighting the Match (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
-    matchCannon: { src: `${S}07-Pig With a Match/Lighting the Cannon (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
+    bombPigIdle: { src: `${SPRITES}05-Pig Thowing a Bomb/Idle (26x26).png`, frames: 10, w: 26, h: 26, anchorX: 13, anchorY: 26 },
+    bombPigRun: { src: `${SPRITES}05-Pig Thowing a Bomb/Run (26x26).png`, frames: 6, w: 26, h: 26, anchorX: 13, anchorY: 26 },
+    bombPigPick: { src: `${SPRITES}05-Pig Thowing a Bomb/Picking Bomb (26x26).png`, frames: 4, w: 26, h: 26, anchorX: 13, anchorY: 26 },
+    bombPigThrow: { src: `${SPRITES}05-Pig Thowing a Bomb/Throwing Boom (26x26).png`, frames: 5, w: 26, h: 26, anchorX: 13, anchorY: 26 },
+    kingIdle: { src: `${SPRITES}02-King Pig/Idle (38x28).png`, frames: 12, w: 38, h: 28, anchorX: 19, anchorY: 28 },
+    kingRun: { src: `${SPRITES}02-King Pig/Run (38x28).png`, frames: 6, w: 38, h: 28, anchorX: 19, anchorY: 28 },
+    matchOn: { src: `${SPRITES}07-Pig With a Match/Match On (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
+    matchLight: { src: `${SPRITES}07-Pig With a Match/Lighting the Match (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
+    matchCannon: { src: `${SPRITES}07-Pig With a Match/Lighting the Cannon (26x18).png`, frames: 3, w: 26, h: 18, anchorX: 13, anchorY: 18 },
     // The cannon's wheels end 3px above its frame's bottom.
-    cannonIdle: { src: `${S}10-Cannon/Idle.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
-    cannonShoot: { src: `${S}10-Cannon/Shoot (44x28).png`, frames: 4, w: 44, h: 28, anchorX: 29, anchorY: 25 },
-    cannonBall: { src: `${S}10-Cannon/Cannon Ball.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
+    cannonIdle: { src: `${SPRITES}10-Cannon/Idle.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
+    cannonShoot: { src: `${SPRITES}10-Cannon/Shoot (44x28).png`, frames: 4, w: 44, h: 28, anchorX: 29, anchorY: 25 },
+    cannonBall: { src: `${SPRITES}10-Cannon/Cannon Ball.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
     // Bomb frames: the bomb's base is at (26, 39); explosions centre on it.
-    bombOff: { src: `${S}09-Bomb/Bomb Off.png`, frames: 1, w: 52, h: 56, anchorX: 26, anchorY: 39 },
-    bombOn: { src: `${S}09-Bomb/Bomb On (52x56).png`, frames: 4, w: 52, h: 56, anchorX: 26, anchorY: 39 },
-    boom: { src: `${S}09-Bomb/Boooooom (52x56).png`, frames: 6, w: 52, h: 56, anchorX: 26, anchorY: 39 },
+    bombOff: { src: `${SPRITES}09-Bomb/Bomb Off.png`, frames: 1, w: 52, h: 56, anchorX: 26, anchorY: 39 },
+    bombOn: { src: `${SPRITES}09-Bomb/Bomb On (52x56).png`, frames: 4, w: 52, h: 56, anchorX: 26, anchorY: 39 },
+    boom: { src: `${SPRITES}09-Bomb/Boooooom (52x56).png`, frames: 6, w: 52, h: 56, anchorX: 26, anchorY: 39 },
 }
 
 const FRAME_MS = 100
 /** Throwing Boom lets go of the bomb on this frame. */
 const THROW_RELEASE_FRAME = 3
-const FUSE_MS = 4 * FRAME_MS * 3
-const LIGHT_CANNON_MS = 3 * FRAME_MS * 2
 
-const bombPigTimes = {
-    pick: SHEETS.bombPigPick.frames * FRAME_MS,
-    throw: SHEETS.bombPigThrow.frames * FRAME_MS,
+/** How long `loops` plays of a sheet's animation take. */
+function playMs(sheetName, loops = 1) {
+    return SHEETS[sheetName].frames * FRAME_MS * loops
 }
+
+const FUSE_MS = playMs('bombOn', 3)
+const LIGHT_CANNON_MS = playMs('matchCannon', 2)
 
 /** Frame index `ms` into a looping animation. */
 export function loopFrame(ms, frames, frameMs = FRAME_MS) {
@@ -118,12 +119,13 @@ export function pickPatrolTarget(rng, bounds, x) {
 }
 
 /**
- * Where a Bomb Pig at `x` throws: towards the side with more room, landing
- * inside throwBounds. `dir` is -1 (left) or 1 (right).
+ * Where a Bomb Pig at `x` facing `facing` throws: ahead if a full throw fits
+ * inside throwBounds, otherwise it turns round. `dir` is -1 (left) or 1 (right).
  */
-export function throwTarget(rng, x) {
+export function throwTarget(rng, x, facing) {
     const { throwBounds, throwDistance } = TITLE_SCENE
-    const dir = x - throwBounds.minX >= throwBounds.maxX - x ? -1 : 1
+    const room = d => (d < 0 ? x - throwBounds.minX : throwBounds.maxX - x)
+    const dir = room(facing) >= throwDistance.min ? facing : -facing
     const distance = between(rng, throwDistance.min, throwDistance.max)
     const landX = Math.min(throwBounds.maxX, Math.max(throwBounds.minX, x + dir * distance))
     return { dir, landX }
@@ -166,24 +168,29 @@ function idleFor(rng, min, max) {
 }
 
 function createBombPig(rng, x) {
-    const pig = { x, dir: -1, target: x, bombThrown: false, ...idleFor(rng, 200, 1800) }
-    return pig
+    return { x, dir: -1, target: x, bombThrown: false, ...idleFor(rng, 200, 1800) }
+}
+
+/** An idle pig sets off towards a new patrol target. */
+function startRun(rng, pig, bounds) {
+    pig.target = pickPatrolTarget(rng, bounds, pig.x)
+    pig.dir = Math.sign(pig.target - pig.x)
+    Object.assign(pig, { state: 'run', t: 0 })
 }
 
 /** A fresh scene. `rng` drives every choice (Math.random in the game). */
 export function createTitleScene({ rng = Math.random } = {}) {
-    const { bombPigPatrol: b, kingPatrol: k, floorY } = TITLE_SCENE
+    const { bombPigPatrol: b, kingPatrol: k } = TITLE_SCENE
     const w = b.maxX - b.minX
     return {
         rng,
         time: 0,
         lastNow: null,
         bombPigs: [0.12, 0.45, 0.8].map(f => createBombPig(rng, b.minX + w * f)),
-        king: { x: (k.minX + k.maxX) / 2, dir: 1, target: 0, ...idleFor(rng, 500, 2000) },
+        king: { x: (k.minX + k.maxX) / 2, dir: 1, target: (k.minX + k.maxX) / 2, ...idleFor(rng, 500, 2000) },
         matchPig: { state: 'wait', t: 0, until: between(rng, 1500, 3500) },
         cannon: { shooting: false, t: 0 },
         projectiles: [],
-        floorY,
     }
 }
 
@@ -218,7 +225,7 @@ function stepBombPig(scene, pig, dt) {
             pig.x = stepToward(pig.x, pig.target, TITLE_SCENE.bombPigSpeed, dt)
             if (pig.x === pig.target) {
                 if (rng() < 0.6) {
-                    const { dir, landX } = throwTarget(rng, pig.x)
+                    const { dir, landX } = throwTarget(rng, pig.x, pig.dir)
                     Object.assign(pig, { state: 'pick', t: 0, dir, landX, bombThrown: false })
                 } else {
                     Object.assign(pig, idleFor(rng, 500, 1800))
@@ -226,21 +233,17 @@ function stepBombPig(scene, pig, dt) {
             }
             break
         case 'idle':
-            if (pig.t >= pig.until) {
-                pig.target = pickPatrolTarget(rng, bounds, pig.x)
-                pig.dir = Math.sign(pig.target - pig.x)
-                Object.assign(pig, { state: 'run', t: 0 })
-            }
+            if (pig.t >= pig.until) startRun(rng, pig, bounds)
             break
         case 'pick':
-            if (pig.t >= bombPigTimes.pick) Object.assign(pig, { state: 'throw', t: 0 })
+            if (pig.t >= playMs('bombPigPick')) Object.assign(pig, { state: 'throw', t: 0 })
             break
         case 'throw':
             if (!pig.bombThrown && pig.t >= THROW_RELEASE_FRAME * FRAME_MS) {
                 pig.bombThrown = true
                 throwBomb(scene, pig)
             }
-            if (pig.t >= bombPigTimes.throw) Object.assign(pig, idleFor(rng, 400, 1200))
+            if (pig.t >= playMs('bombPigThrow')) Object.assign(pig, idleFor(rng, 400, 1200))
             break
     }
 }
@@ -253,9 +256,7 @@ function stepKing(scene, dt) {
         king.x = stepToward(king.x, king.target, TITLE_SCENE.kingSpeed, dt)
         if (king.x === king.target) Object.assign(king, idleFor(rng, 1500, 4000))
     } else if (king.t >= king.until) {
-        king.target = pickPatrolTarget(rng, TITLE_SCENE.kingPatrol, king.x)
-        king.dir = Math.sign(king.target - king.x)
-        Object.assign(king, { state: 'run', t: 0 })
+        startRun(rng, king, TITLE_SCENE.kingPatrol)
     }
 }
 
@@ -268,13 +269,16 @@ function stepMatchPig(scene, dt) {
     } else if (pig.state === 'light' && pig.t >= LIGHT_CANNON_MS) {
         fireCannon(scene)
         Object.assign(pig, { state: 'relight', t: 0 })
-    } else if (pig.state === 'relight' && pig.t >= SHEETS.matchLight.frames * FRAME_MS) {
+    } else if (pig.state === 'relight' && pig.t >= playMs('matchLight')) {
         Object.assign(pig, { state: 'wait', t: 0, until: between(scene.rng, 3000, 7000) })
     }
+}
 
+/** The cannon plays its shot once, then idles. */
+function stepCannon(scene, dt) {
     const cannon = scene.cannon
     cannon.t += dt
-    if (cannon.shooting && cannon.t >= SHEETS.cannonShoot.frames * FRAME_MS) {
+    if (cannon.shooting && cannon.t >= playMs('cannonShoot')) {
         scene.cannon = { shooting: false, t: 0 }
     }
 }
@@ -292,7 +296,7 @@ function stepProjectile(p, dt) {
     } else if (p.phase === 'fuse' && p.t >= FUSE_MS) {
         p.phase = 'boom'
         p.t = 0
-    } else if (p.phase === 'boom' && p.t >= SHEETS.boom.frames * FRAME_MS) {
+    } else if (p.phase === 'boom' && p.t >= playMs('boom')) {
         p.phase = 'done'
     }
 }
@@ -303,6 +307,7 @@ export function stepTitleScene(scene, dtMs) {
     for (const pig of scene.bombPigs) stepBombPig(scene, pig, dtMs)
     stepKing(scene, dtMs)
     stepMatchPig(scene, dtMs)
+    stepCannon(scene, dtMs)
     for (const p of scene.projectiles) stepProjectile(p, dtMs)
     scene.projectiles = scene.projectiles.filter(p => p.phase !== 'done')
 }
@@ -324,30 +329,41 @@ export function pauseTitleScene(scene) {
     scene.lastNow = null
 }
 
-function draw(sheetName, frame, x, y, flip = false) {
+/** Draw-list entry: frame `frame` of a sheet with its anchor on (x, y). */
+function spriteAt(sheetName, frame, x, y, flip = false) {
     return { sheet: sheetName, ...spriteDrawRect(SHEETS[sheetName], frame, x, y, flip) }
+}
+
+/** `ms` into a sheet's looping animation. */
+function looping(sheetName, ms, x, y, flip, frameMs) {
+    return spriteAt(sheetName, loopFrame(ms, SHEETS[sheetName].frames, frameMs), x, y, flip)
+}
+
+/** `ms` into a sheet's play-once animation. */
+function once(sheetName, ms, x, y, flip) {
+    return spriteAt(sheetName, onceFrame(ms, SHEETS[sheetName].frames), x, y, flip)
 }
 
 function bombPigSprite(pig, y) {
     // Sprites face left; flip when walking or throwing right.
     const flip = pig.dir > 0
     switch (pig.state) {
-        case 'run': return draw('bombPigRun', loopFrame(pig.t, 6), pig.x, y, flip)
-        case 'pick': return draw('bombPigPick', onceFrame(pig.t, 4), pig.x, y, flip)
-        case 'throw': return draw('bombPigThrow', onceFrame(pig.t, 5), pig.x, y, flip)
-        default: return draw('bombPigIdle', loopFrame(pig.t, 10), pig.x, y, flip)
+        case 'run': return looping('bombPigRun', pig.t, pig.x, y, flip)
+        case 'pick': return once('bombPigPick', pig.t, pig.x, y, flip)
+        case 'throw': return once('bombPigThrow', pig.t, pig.x, y, flip)
+        default: return looping('bombPigIdle', pig.t, pig.x, y, flip)
     }
 }
 
 function projectileSprite(p) {
     const { x, y } = p.pos
-    if (p.phase === 'boom') return draw('boom', onceFrame(p.t, 6), x, y)
+    if (p.phase === 'boom') return once('boom', p.t, x, y)
     if (p.kind === 'ball') {
         // Ball.png holds the ball at (29, 19); centre it on the flight path.
-        return draw('cannonBall', 0, x, y + 6 * SCENE_SCALE)
+        return spriteAt('cannonBall', 0, x, y + 6 * SCENE_SCALE)
     }
-    if (p.phase === 'fuse') return draw('bombOn', loopFrame(p.t, 4), x, y)
-    return draw('bombOff', 0, x, y)
+    if (p.phase === 'fuse') return looping('bombOn', p.t, x, y)
+    return spriteAt('bombOff', 0, x, y)
 }
 
 /**
@@ -358,28 +374,33 @@ export function titleSceneDrawList(scene) {
     const { floorY, cannonX, matchPigX } = TITLE_SCENE
     const list = []
     const cannon = scene.cannon.shooting
-        ? draw('cannonShoot', onceFrame(scene.cannon.t, 4), cannonX, floorY)
-        : draw('cannonIdle', 0, cannonX, floorY)
+        ? once('cannonShoot', scene.cannon.t, cannonX, floorY)
+        : spriteAt('cannonIdle', 0, cannonX, floorY)
     list.push(cannon)
     const mp = scene.matchPig
-    if (mp.state === 'light') list.push(draw('matchCannon', loopFrame(mp.t, 3), matchPigX, floorY))
-    else if (mp.state === 'relight') list.push(draw('matchLight', onceFrame(mp.t, 3), matchPigX, floorY))
-    else list.push(draw('matchOn', loopFrame(mp.t, 3), matchPigX, floorY))
+    if (mp.state === 'light') list.push(looping('matchCannon', mp.t, matchPigX, floorY))
+    else if (mp.state === 'relight') list.push(once('matchLight', mp.t, matchPigX, floorY))
+    else list.push(looping('matchOn', mp.t, matchPigX, floorY))
 
     const king = scene.king
     list.push(king.state === 'run'
-        ? draw('kingRun', loopFrame(king.t, 6, 140), king.x, floorY, king.dir > 0)
-        : draw('kingIdle', loopFrame(king.t, 12), king.x, floorY, king.dir > 0))
+        ? looping('kingRun', king.t, king.x, floorY, king.dir > 0, 140)
+        : looping('kingIdle', king.t, king.x, floorY, king.dir > 0))
     for (const pig of scene.bombPigs) list.push(bombPigSprite(pig, floorY))
     for (const p of scene.projectiles) list.push(projectileSprite(p))
     return list
 }
 
-/** Destination rects for the floor tiles, left to right across the canvas. */
+/**
+ * drawImage arguments for the floor strip, left to right across the canvas,
+ * with the strip's top at y 0 (index.js draws it once into a canvas).
+ */
 export function titleSceneFloorTiles() {
-    const { width, floorY, floorTile } = TITLE_SCENE
-    const size = floorTile.w * SCENE_SCALE
+    const { width, floorTile: t } = TITLE_SCENE
+    const dw = t.w * SCENE_SCALE
     const tiles = []
-    for (let x = 0; x < width; x += size) tiles.push({ x, y: floorY, w: size, h: floorTile.h * SCENE_SCALE })
+    for (let dx = 0; dx < width; dx += dw) {
+        tiles.push({ sx: t.x, sy: t.y, sw: t.w, sh: t.h, dx, dy: 0, dw, dh: t.h * SCENE_SCALE })
+    }
     return tiles
 }

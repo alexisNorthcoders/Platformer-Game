@@ -15,6 +15,7 @@ import {
     stepToward,
     throwTarget,
     titleSceneDrawList,
+    titleSceneFloorTiles,
 } from '../js/titleScene.mjs'
 import { TITLE_SCREEN } from '../js/menuLayout.mjs'
 import { frameAround } from '../js/menuArt.mjs'
@@ -80,17 +81,20 @@ test('arcPoint: starts and ends on its points, peaks mid-flight', () => {
     assert.deepEqual(arcPoint(from, to, 80, 2), to)
 })
 
-test('throwTarget: throws towards the side with more room, landing inside the strip', () => {
+test('throwTarget: throws the way the pig faces, turning round near an end, landing inside the strip', () => {
     const rng = seeded(2)
-    const { throwBounds } = TITLE_SCENE
+    const { throwBounds, bombPigPatrol: b } = TITLE_SCENE
     for (let i = 0; i < 2000; i++) {
-        const x = TITLE_SCENE.bombPigPatrol.minX + rng() * (TITLE_SCENE.bombPigPatrol.maxX - TITLE_SCENE.bombPigPatrol.minX)
-        const { dir, landX } = throwTarget(rng, x)
+        const x = b.minX + rng() * (b.maxX - b.minX)
+        const facing = rng() < 0.5 ? -1 : 1
+        const { dir, landX } = throwTarget(rng, x, facing)
         assert.ok(landX >= throwBounds.minX && landX <= throwBounds.maxX, `${landX}`)
         assert.equal(Math.sign(landX - x), dir)
     }
-    assert.equal(throwTarget(() => 0.5, TITLE_SCENE.bombPigPatrol.minX).dir, 1)
-    assert.equal(throwTarget(() => 0.5, TITLE_SCENE.bombPigPatrol.maxX).dir, -1)
+    assert.equal(throwTarget(() => 0.5, 400, -1).dir, -1)
+    assert.equal(throwTarget(() => 0.5, 400, 1).dir, 1)
+    assert.equal(throwTarget(() => 0.5, b.minX, -1).dir, 1)
+    assert.equal(throwTarget(() => 0.5, b.maxX, 1).dir, -1)
 })
 
 test('spriteDrawRect: anchors the frame on (x, y) at 2×, mirrored when flipped', () => {
@@ -107,7 +111,9 @@ test('spriteDrawRect: anchors the frame on (x, y) at 2×, mirrored when flipped'
 test('scene: pigs stay on the strip and keep patrolling, throwing and detonating', () => {
     for (const seed of [1, 7, 42]) {
         const scene = createTitleScene({ rng: seeded(seed) })
-        const thrown = new Map()
+        const thrown = new Set()
+        const exploded = new Set()
+        const lastX = new Map()
         const lastMoved = new Map()
         let now = 0
         let bombsThrown = 0
@@ -117,16 +123,16 @@ test('scene: pigs stay on the strip and keep patrolling, throwing and detonating
             for (const pig of s.bombPigs) {
                 const b = TITLE_SCENE.bombPigPatrol
                 assert.ok(pig.x >= b.minX && pig.x <= b.maxX, `bomb pig at ${pig.x}`)
-                if (pig.x !== pig.lastX) lastMoved.set(pig, now)
-                pig.lastX = pig.x
+                if (pig.x !== lastX.get(pig)) lastMoved.set(pig, now)
+                lastX.set(pig, pig.x)
                 // Never idle or mid-throw for long: at most ~6 s without moving.
                 assert.ok(now - (lastMoved.get(pig) ?? 0) < 6000, `pig stuck at ${pig.x}`)
             }
             const k = TITLE_SCENE.kingPatrol
             assert.ok(s.king.x >= k.minX && s.king.x <= k.maxX, `king at ${s.king.x}`)
             for (const p of s.projectiles) {
-                if (p.kind === 'bomb' && !thrown.has(p)) { thrown.set(p, true); bombsThrown++ }
-                if (p.kind === 'bomb' && p.phase === 'boom' && !p.counted) { p.counted = true; explosions++ }
+                if (p.kind === 'bomb' && !thrown.has(p)) { thrown.add(p); bombsThrown++ }
+                if (p.kind === 'bomb' && p.phase === 'boom' && !exploded.has(p)) { exploded.add(p); explosions++ }
                 assert.ok(p.pos.x >= 0 && p.pos.x <= TITLE_SCENE.width, `projectile at ${p.pos.x}`)
             }
         })
@@ -159,18 +165,18 @@ test('scene: King Pig both struts and idles', () => {
     assert.deepEqual([...seen].sort(), ['idle', 'run'])
 })
 
-test('draw list: every sprite is a known sheet frame, below the menu', () => {
+test('draw list: every sprite is a known sheet frame, below the Level Preview and panel', () => {
     const scene = createTitleScene({ rng: seeded(9) })
     const frame = frameAround(TITLE_SCREEN.preview)
-    const menuBottom = Math.max(TITLE_SCREEN.panel.y + TITLE_SCREEN.panel.h, frame.y + frame.h)
+    const panelsBottom = Math.max(TITLE_SCREEN.panel.y + TITLE_SCREEN.panel.h, frame.y + frame.h)
     const sources = new Set(Object.values(SHEETS).map(s => s.src))
     run(scene, 60_000, s => {
         for (const d of titleSceneDrawList(s)) {
             assert.ok(sources.has(d.src), d.src)
             assert.ok(d.sx >= 0 && d.sx + d.sw <= SHEETS[d.sheet].w * SHEETS[d.sheet].frames)
             // Sprite frames carry transparent padding, so compare the drawn
-            // frame's lower half: the scene never climbs into the menu.
-            assert.ok(d.dy + d.dh / 2 > menuBottom, `${d.sheet} at ${d.dy}`)
+            // frame's lower half: the scene never climbs over the Title Screen's panels.
+            assert.ok(d.dy + d.dh / 2 > panelsBottom, `${d.sheet} at ${d.dy}`)
         }
     })
 })
@@ -187,4 +193,12 @@ test('advanceTitleScene: real-time steps are clamped, and pausing forgets the la
     pauseTitleScene(scene)
     advanceTitleScene(scene, 120_000)
     assert.equal(scene.time, 16 + TITLE_SCENE.maxStepMs)
+})
+
+test('floor tiles: whole Terrain tiles at 2× spanning the canvas width', () => {
+    const tiles = titleSceneFloorTiles()
+    assert.equal(tiles[0].dx, 0)
+    const last = tiles[tiles.length - 1]
+    assert.ok(last.dx + last.dw >= TITLE_SCENE.width)
+    for (const p of tiles) assert.equal(p.dw, p.sw * 2)
 })

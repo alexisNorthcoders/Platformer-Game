@@ -33,3 +33,7 @@ _Avoid_: Goblin, bomber
 
 **King Pig**:
 The crowned Pig.
+
+**Match Pig**:
+A Pig holding a lit match, who lights a cannon to fire cannon balls.
+_Avoid_: Pig with a Match (except when naming the sprite folder)
