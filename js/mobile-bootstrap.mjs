@@ -4,9 +4,19 @@ import { unlockAudioOnFirstGesture } from './audioUnlock.mjs'
 // Loaded after index.js (canvas sized to native 1024×576) and audio.js
 // (global `audioContext`).
 const canvas = document.querySelector('canvas')
+const touchController = document.getElementById('touch-controller')
+
+// In touch portrait the controller panel sits below the canvas (index.html CSS);
+// keep its minimum height free so the game fits above it.
+function controllerReservedHeight() {
+    if (!touchController) return 0
+    const style = getComputedStyle(touchController)
+    return style.display === 'none' ? 0 : parseFloat(style.minHeight) || 0
+}
 
 function fitCanvasToViewport() {
-    const { width, height } = fitCanvasSize(window.innerWidth, window.innerHeight, canvas.width, canvas.height)
+    const availableHeight = window.innerHeight - controllerReservedHeight()
+    const { width, height } = fitCanvasSize(window.innerWidth, availableHeight, canvas.width, canvas.height)
     canvas.style.width = `${width}px`
     canvas.style.height = `${height}px`
 }

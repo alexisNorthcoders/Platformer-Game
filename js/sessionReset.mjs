@@ -4,7 +4,20 @@
  */
 import { clearPlayerHurtTint } from './playerContactHurtTint.mjs'
 
+const heldInputKeysClearedListeners = new Set()
+
+/**
+ * Run `listener` whenever clearHeldInputKeys runs (pause, level start, restart),
+ * so other input sources such as the touch controller drop their held state too.
+ * Returns an unsubscribe function.
+ */
+export function onHeldInputKeysCleared(listener) {
+    heldInputKeysClearedListeners.add(listener)
+    return () => heldInputKeysClearedListeners.delete(listener)
+}
+
 export function clearHeldInputKeys(keys) {
+    for (const listener of heldInputKeysClearedListeners) listener()
     if (!keys || typeof keys !== 'object') return
     for (const id of Object.keys(keys)) {
         const entry = keys[id]
