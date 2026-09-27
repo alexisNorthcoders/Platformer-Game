@@ -18,3 +18,15 @@ export function canvasLogicalCoords(clientX, clientY, boundingRect, canvasWidth,
         y: (clientY - boundingRect.top) * scaleY,
     }
 }
+
+/**
+ * Which menu button a logical point hits: 'start' | 'level' | 'fullscreen' | null.
+ * The Fullscreen button (#46) only exists while `showFullscreen` is true (pause
+ * menu on a touch device that supports the Fullscreen API).
+ */
+export function menuHitTarget(px, py, menu, { showFullscreen = false } = {}) {
+    if (pointInRect(px, py, menu.startBtn)) return 'start'
+    if (pointInRect(px, py, menu.levelBtn)) return 'level'
+    if (showFullscreen && pointInRect(px, py, menu.fullscreenBtn)) return 'fullscreen'
+    return null
+}

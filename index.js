@@ -37,6 +37,10 @@ const MENU = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
     startBtn: { x: 287, y: 330, w: 450, h: 52 },
     levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+    // Pause menu only, on touch devices with the Fullscreen API (#46). Top
+    // right: the landscape touch controller (pause button included) overlays
+    // the bottom of the canvas, so a button under Level would sit beneath it.
+    fullscreenBtn: { x: 794, y: 20, w: 210, h: 52 },
 }
 
 let collisionBlocks = []
@@ -307,9 +311,34 @@ function drawMenu() {
     c.fillText('Start Game – Level ', MENU.startBtn.x + 24, startCy)
     c.fillText('Level: ', MENU.levelBtn.x + 24, levelCy)
 
+    if (showFullscreenButton()) {
+        drawMenuButtonBackground(MENU.fullscreenBtn)
+        c.fillStyle = '#f5f0e6'
+        const label = globalThis.__fullscreen?.isFullscreen(document) ? 'Exit Fullscreen' : 'Fullscreen'
+        c.fillText(label, MENU.fullscreenBtn.x + 24, MENU.fullscreenBtn.y + MENU.fullscreenBtn.h / 2)
+    }
+
     menuStartDigitSprites.forEach(s => s.draw(2))
     menuLevelSelectDigitSprites.forEach(s => s.draw(2))
     c.restore()
+}
+
+// fullscreen-bootstrap.mjs and gameOverRestart-bootstrap.mjs load before this
+// script in index.html.
+const isTouch = gameOverRestart.isTouchDevice()
+const fullscreenAvailable = Boolean(globalThis.__fullscreen?.isFullscreenAvailable(document, isTouch))
+
+function showFullscreenButton() {
+    return pauseMenuFromPlaying && fullscreenAvailable
+}
+
+function menuHitTarget(x, y) {
+    const opts = { showFullscreen: showFullscreenButton() }
+    const g = globalThis.__menuGeom
+    if (g?.menuHitTarget) return g.menuHitTarget(x, y, MENU, opts)
+    if (pointInRect(x, y, MENU.startBtn)) return 'start'
+    if (pointInRect(x, y, MENU.levelBtn)) return 'level'
+    return null
 }
 
 function pointInRect(px, py, rect) {
@@ -387,21 +416,22 @@ async function startGame(levelToStart) {
 canvas.addEventListener('click', (e) => {
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
-    if (pointInRect(x, y, MENU.startBtn)) {
+    const target = menuHitTarget(x, y)
+    if (target === 'start') {
         void startGame(selectedLevel)
         return
     }
-    if (pointInRect(x, y, MENU.levelBtn)) {
+    if (target === 'level') {
         const n = levelsKeyCount()
         if (n < 1) return
         selectedLevel = selectedLevel >= n ? 1 : selectedLevel + 1
         syncMenuSelectionUI()
+        return
     }
+    // A click counts as the user activation requestFullscreen needs.
+    if (target === 'fullscreen') globalThis.__fullscreen?.toggleFullscreen(document)
 })
 
-// gameOverRestart is a global set by gameOverRestart-bootstrap.mjs, loaded
-// before this script in index.html.
-const isTouch = gameOverRestart.isTouchDevice()
 if (isTouch) {
     gameOverRestart.bindTapToRestart(canvas, {
         isGameOver: () => player.gameOver,

@@ -20,6 +20,16 @@ fitCanvasToViewport()
 window.addEventListener('resize', fitCanvasToViewport)
 window.addEventListener('orientationchange', () => requestAnimationFrame(fitCanvasToViewport))
 window.visualViewport?.addEventListener('resize', fitCanvasToViewport)
+// Entering or leaving fullscreen (#46), including via the system back gesture,
+// changes the viewport; most browsers also fire resize, but not reliably before
+// the new size settles, so refit on the change itself too.
+//
+// Manual check (#46), Android Chrome: pause, tap Fullscreen (top right) and the
+// browser UI hides with canvas and controller refitted in both orientations;
+// tap Exit Fullscreen, and separately leave via the back gesture, and both
+// refit back. On iPhone Safari and desktop the button never appears.
+document.addEventListener('fullscreenchange', fitCanvasToViewport)
+document.addEventListener('webkitfullscreenchange', fitCanvasToViewport)
 
 // Stop the page behaving like a web page under touch. CSS touch-action /
 // overscroll-behavior cover most browsers; iOS Safari ignores user-scalable=no
