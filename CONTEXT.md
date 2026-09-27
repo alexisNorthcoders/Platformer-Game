@@ -23,6 +23,10 @@ _Avoid_: Menu background, attract mode
 
 ### Characters
 
+**King**:
+The character the player controls.
+_Avoid_: Player (that's the person at the keyboard), hero, King Human
+
 **Pig**:
 Any enemy of the King. The kinds below are all Pigs.
 _Avoid_: Goblin, enemy (when a specific kind is meant)
@@ -37,3 +41,9 @@ The crowned Pig.
 **Match Pig**:
 A Pig holding a lit match, who lights a cannon to fire cannon balls.
 _Avoid_: Pig with a Match (except when naming the sprite folder)
+
+### Objects
+
+**Bomb**:
+A lit explosive that blows up once its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. The King drops Bombs; Bomb Pigs throw them.
+_Avoid_: King's bomb, Pig bomb, grenade
