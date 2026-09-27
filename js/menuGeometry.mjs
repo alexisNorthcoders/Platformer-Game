@@ -19,14 +19,21 @@ export function canvasLogicalCoords(clientX, clientY, boundingRect, canvasWidth,
     }
 }
 
+/** Which Title Screen button a logical point hits: 'start' | 'level' | null. */
+export function titleScreenHitTarget(px, py, layout) {
+    if (pointInRect(px, py, layout.startBtn)) return 'start'
+    if (pointInRect(px, py, layout.levelBtn)) return 'level'
+    return null
+}
+
 /**
- * Which menu button a logical point hits: 'start' | 'level' | 'fullscreen' | null.
- * The Fullscreen button (#46) only exists while `showFullscreen` is true (pause
- * menu on a touch device that supports the Fullscreen API).
+ * Which Pause Menu button a logical point hits: 'start' | 'level' | 'fullscreen' | null.
+ * The Fullscreen button (#46) only exists while `showFullscreen` is true (a
+ * touch device that supports the Fullscreen API).
  */
-export function menuHitTarget(px, py, menu, { showFullscreen = false } = {}) {
-    if (pointInRect(px, py, menu.startBtn)) return 'start'
-    if (pointInRect(px, py, menu.levelBtn)) return 'level'
-    if (showFullscreen && pointInRect(px, py, menu.fullscreenBtn)) return 'fullscreen'
+export function pauseMenuHitTarget(px, py, layout, { showFullscreen = false } = {}) {
+    if (pointInRect(px, py, layout.startBtn)) return 'start'
+    if (pointInRect(px, py, layout.levelBtn)) return 'level'
+    if (showFullscreen && pointInRect(px, py, layout.fullscreenBtn)) return 'fullscreen'
     return null
 }

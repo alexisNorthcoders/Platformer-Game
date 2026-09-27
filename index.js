@@ -33,13 +33,21 @@ let pauseMenuFromPlaying = false
 /** True from entering the door until the next level's fade-in completes. */
 let levelTransitioning = false
 
-const MENU = {
+// The Title Screen and Pause Menu each own their layout, so one can change
+// without moving the other (#61).
+const TITLE_SCREEN = {
     preview: { x: 207, y: 88, w: 610, h: 220 },
     startBtn: { x: 287, y: 330, w: 450, h: 52 },
     levelBtn: { x: 287, y: 392, w: 450, h: 52 },
-    // Pause menu only, on touch devices with the Fullscreen API (#46). Top
-    // right: the landscape touch controller (pause button included) overlays
-    // the bottom of the canvas, so a button under Level would sit beneath it.
+}
+
+const PAUSE_MENU = {
+    preview: { x: 207, y: 88, w: 610, h: 220 },
+    startBtn: { x: 287, y: 330, w: 450, h: 52 },
+    levelBtn: { x: 287, y: 392, w: 450, h: 52 },
+    // Touch devices with the Fullscreen API only (#46). Top right: the
+    // landscape touch controller (pause button included) overlays the bottom
+    // of the canvas, so a button under Level would sit beneath it.
     fullscreenBtn: { x: 794, y: 20, w: 210, h: 52 },
 }
 
@@ -204,8 +212,8 @@ const menuButtonSprite = new Sprite({
 })
 
 let menuPreviewSprite = null
-let menuStartDigitSprites = []
-let menuLevelSelectDigitSprites = []
+let titleScreenDigitSprites = []
+let pauseMenuDigitSprites = []
 
 function drawMenuButtonBackground(rect) {
     const img = menuButtonSprite?.image
@@ -227,7 +235,7 @@ function drawMenuButtonBackground(rect) {
     c.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1)
 }
 
-function drawMenuPreviewCover() {
+function drawMenuPreviewCover(rect) {
     const sp = menuPreviewSprite
     const img = sp?.image
     const imageReady = Boolean(
@@ -236,12 +244,12 @@ function drawMenuPreviewCover() {
     )
     if (!imageReady) {
         c.fillStyle = '#1a1a2e'
-        c.fillRect(MENU.preview.x, MENU.preview.y, MENU.preview.w, MENU.preview.h)
+        c.fillRect(rect.x, rect.y, rect.w, rect.h)
         return
     }
     const sw = img.naturalWidth
     const sh = img.naturalHeight
-    const { x: dx, y: dy, w: dw, h: dh } = MENU.preview
+    const { x: dx, y: dy, w: dw, h: dh } = rect
     const scale = Math.max(dw / sw, dh / sh)
     const rw = sw * scale
     const rh = sh * scale
@@ -251,7 +259,8 @@ function drawMenuPreviewCover() {
     c.drawImage(img, 0, 0, sw, sh, ox, oy, rw, rh)
 }
 
-function refreshMenuDigits() {
+/** Selected-level digits after the Start and Level labels of `layout`. */
+function createMenuDigitSprites(layout) {
     c.save()
     c.font = 'bold 22px sans-serif'
     const startLabel = 'Start Game – Level '
@@ -259,19 +268,27 @@ function refreshMenuDigits() {
     const levelLabel = 'Level: '
     const levelLabelW = c.measureText(levelLabel).width
     c.restore()
-    menuStartDigitSprites = createNumberSprites(selectedLevel, {
-        x: MENU.startBtn.x + 24 + startLabelW,
-        y: MENU.startBtn.y + 16,
-    }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10)
-    menuLevelSelectDigitSprites = createNumberSprites(selectedLevel, {
-        x: MENU.levelBtn.x + 24 + levelLabelW,
-        y: MENU.levelBtn.y + 16,
-    }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10)
+    return [
+        ...createNumberSprites(selectedLevel, {
+            x: layout.startBtn.x + 24 + startLabelW,
+            y: layout.startBtn.y + 16,
+        }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10),
+        ...createNumberSprites(selectedLevel, {
+            x: layout.levelBtn.x + 24 + levelLabelW,
+            y: layout.levelBtn.y + 16,
+        }, 10, './Sprites/12-Live and Coins/Numbers (6x8).png', 10),
+    ]
+}
+
+function refreshMenuDigits() {
+    titleScreenDigitSprites = createMenuDigitSprites(TITLE_SCREEN)
+    pauseMenuDigitSprites = createMenuDigitSprites(PAUSE_MENU)
 }
 
 function refreshMenuPreview() {
+    // Drawn with drawMenuPreviewCover into each screen's own preview rect.
     menuPreviewSprite = new Sprite({
-        position: { x: MENU.preview.x, y: MENU.preview.y },
+        position: { x: 0, y: 0 },
         imageSrc: `./img/Level ${selectedLevel}.png`,
         frameRate: 1,
         loop: true,
@@ -288,38 +305,48 @@ function syncMenuSelectionUI() {
     } catch (_) { /* ignore quota / private mode */ }
 }
 
-function drawMenu() {
-    c.save()
+/** Backdrop, Level Preview, title and Start/Level buttons of `layout`. */
+function drawMenuBase(layout, digitSprites) {
     c.imageSmoothingEnabled = false
     c.clearRect(0, 0, canvas.width, canvas.height)
     c.fillStyle = '#0d0d12'
     c.fillRect(0, 0, canvas.width, canvas.height)
 
-    drawMenuPreviewCover()
+    drawMenuPreviewCover(layout.preview)
 
     menuTitleSprite.draw(2)
 
-    drawMenuButtonBackground(MENU.startBtn)
-    drawMenuButtonBackground(MENU.levelBtn)
+    drawMenuButtonBackground(layout.startBtn)
+    drawMenuButtonBackground(layout.levelBtn)
 
     c.fillStyle = '#f5f0e6'
     c.font = 'bold 22px sans-serif'
     c.textAlign = 'left'
     c.textBaseline = 'middle'
-    const startCy = MENU.startBtn.y + MENU.startBtn.h / 2
-    const levelCy = MENU.levelBtn.y + MENU.levelBtn.h / 2
-    c.fillText('Start Game – Level ', MENU.startBtn.x + 24, startCy)
-    c.fillText('Level: ', MENU.levelBtn.x + 24, levelCy)
+    const startCy = layout.startBtn.y + layout.startBtn.h / 2
+    const levelCy = layout.levelBtn.y + layout.levelBtn.h / 2
+    c.fillText('Start Game – Level ', layout.startBtn.x + 24, startCy)
+    c.fillText('Level: ', layout.levelBtn.x + 24, levelCy)
 
-    if (showFullscreenButton()) {
-        drawMenuButtonBackground(MENU.fullscreenBtn)
+    digitSprites.forEach(s => s.draw(2))
+}
+
+function drawTitleScreen() {
+    c.save()
+    drawMenuBase(TITLE_SCREEN, titleScreenDigitSprites)
+    c.restore()
+}
+
+function drawPauseMenu() {
+    c.save()
+    drawMenuBase(PAUSE_MENU, pauseMenuDigitSprites)
+    if (fullscreenAvailable) {
+        const r = PAUSE_MENU.fullscreenBtn
+        drawMenuButtonBackground(r)
         c.fillStyle = '#f5f0e6'
         const label = globalThis.__fullscreen?.isFullscreen(document) ? 'Exit Fullscreen' : 'Fullscreen'
-        c.fillText(label, MENU.fullscreenBtn.x + 24, MENU.fullscreenBtn.y + MENU.fullscreenBtn.h / 2)
+        c.fillText(label, r.x + 24, r.y + r.h / 2)
     }
-
-    menuStartDigitSprites.forEach(s => s.draw(2))
-    menuLevelSelectDigitSprites.forEach(s => s.draw(2))
     c.restore()
 }
 
@@ -328,16 +355,21 @@ function drawMenu() {
 const isTouch = gameOverRestart.isTouchDevice()
 const fullscreenAvailable = Boolean(globalThis.__fullscreen?.isFullscreenAvailable(document, isTouch))
 
-function showFullscreenButton() {
-    return pauseMenuFromPlaying && fullscreenAvailable
+function titleScreenHitTarget(x, y) {
+    const g = globalThis.__menuGeom
+    if (g?.titleScreenHitTarget) return g.titleScreenHitTarget(x, y, TITLE_SCREEN)
+    if (pointInRect(x, y, TITLE_SCREEN.startBtn)) return 'start'
+    if (pointInRect(x, y, TITLE_SCREEN.levelBtn)) return 'level'
+    return null
 }
 
-function menuHitTarget(x, y) {
-    const opts = { showFullscreen: showFullscreenButton() }
+function pauseMenuHitTarget(x, y) {
+    const opts = { showFullscreen: fullscreenAvailable }
     const g = globalThis.__menuGeom
-    if (g?.menuHitTarget) return g.menuHitTarget(x, y, MENU, opts)
-    if (pointInRect(x, y, MENU.startBtn)) return 'start'
-    if (pointInRect(x, y, MENU.levelBtn)) return 'level'
+    if (g?.pauseMenuHitTarget) return g.pauseMenuHitTarget(x, y, PAUSE_MENU, opts)
+    if (pointInRect(x, y, PAUSE_MENU.startBtn)) return 'start'
+    if (pointInRect(x, y, PAUSE_MENU.levelBtn)) return 'level'
+    if (opts.showFullscreen && pointInRect(x, y, PAUSE_MENU.fullscreenBtn)) return 'fullscreen'
     return null
 }
 
@@ -419,7 +451,7 @@ async function startGame(levelToStart) {
 canvas.addEventListener('click', (e) => {
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
-    const target = menuHitTarget(x, y)
+    const target = pauseMenuFromPlaying ? pauseMenuHitTarget(x, y) : titleScreenHitTarget(x, y)
     if (target === 'start') {
         void startGame(selectedLevel)
         return
@@ -452,7 +484,8 @@ function animate() {
     window.requestAnimationFrame(animate)
 
     if (gameState === 'menu') {
-        drawMenu()
+        if (pauseMenuFromPlaying) drawPauseMenu()
+        else drawTitleScreen()
         return
     }
 
