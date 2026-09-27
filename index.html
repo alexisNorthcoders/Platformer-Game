@@ -41,9 +41,11 @@
     /* Touch controller (#42). All of its look lives here so it can be reskinned
        (e.g. pixel art) by changing these rules. Hidden unless touch + portrait. */
     #touch-controller {
-      --tc-panel-min-height: 180px;
       --tc-button-size: min(84px, 19vw);
       --tc-gap: min(16px, 3vw);
+      /* Tall enough for the staggered A/B pair plus padding and the home bar;
+         mobile-bootstrap.mjs reserves this height when fitting the canvas. */
+      --tc-panel-min-height: calc(var(--tc-button-size) * 1.6 + var(--tc-gap) * 2 + env(safe-area-inset-bottom));
       --tc-fill: rgba(245, 240, 230, 0.18);
       --tc-fill-pressed: rgba(245, 240, 230, 0.45);
       --tc-border: 2px solid rgba(245, 240, 230, 0.55);

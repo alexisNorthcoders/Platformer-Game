@@ -28,6 +28,11 @@ export function createTouchControls() {
         return state
     }
 
+    function release({ pointerId }) {
+        pointers.delete(pointerId)
+        return held()
+    }
+
     return {
         held,
         pointerDown({ pointerId, zone, x = 0 }) {
@@ -39,14 +44,8 @@ export function createTouchControls() {
             if (pointer) pointer.x = x
             return held()
         },
-        pointerUp({ pointerId }) {
-            pointers.delete(pointerId)
-            return held()
-        },
-        pointerCancel({ pointerId }) {
-            pointers.delete(pointerId)
-            return held()
-        },
+        pointerUp: release,
+        pointerCancel: release,
         // Forget every pointer. Fingers still down stay ignored until lifted and
         // pressed again, so nothing sticks after pause / level start / restart.
         reset() {
