@@ -23,8 +23,15 @@ window.visualViewport?.addEventListener('resize', fitCanvasToViewport)
 // Manual check (#40): on a phone, the whole canvas is visible with no scroll;
 // pinch, double-tap, long-press and pull-down do nothing; rotating rescales;
 // Start / Level taps register; sound plays after the first tap.
+//
+// Only the bare page (html, body, canvas) is suppressed. Menu hit-testing maps
+// taps back to logical coords via canvasLogicalCoords (menuGeometry.mjs), and
+// any future overlay or control element keeps its own touch behaviour.
 const BROWSER_DEFAULTS_TO_SUPPRESS = ['contextmenu', 'selectstart', 'gesturestart', 'gesturechange', 'touchmove']
-const suppressBrowserDefault = (e) => e.preventDefault()
+const PAGE_ROOT = new Set([document.documentElement, document.body, canvas])
+const suppressBrowserDefault = (e) => {
+    if (PAGE_ROOT.has(e.target)) e.preventDefault()
+}
 for (const type of BROWSER_DEFAULTS_TO_SUPPRESS) {
     document.addEventListener(type, suppressBrowserDefault, { passive: false })
 }
