@@ -11,6 +11,7 @@ class Player extends Sprite {
         this.hitCooldownDuration = 1000
         this.contactDamageTimeoutId = null
         this.hurtTint = null
+        this.hurtTintStartTime = null
         this.gameOver = false
         this.isShowingHello = false
         this.canJump = true
@@ -206,6 +207,10 @@ class Player extends Sprite {
         }
     }
 
+    activeHurtTint() {
+        return playerContactHurtTint.playerHurtTintAt(this, performance.now())
+    }
+
     updateHitbox() {
         this.hitbox = {
             position: {
@@ -301,7 +306,7 @@ class Player extends Sprite {
         this.attacking = false
         this.hitCooldown = true
         playHitSound()
-        playerContactHurtTint.applyPlayerContactHurtTint(this)
+        playerContactHurtTint.applyPlayerContactHurtTint(this, performance.now())
         this.loseHP()
 
         if (!this.dead) {
