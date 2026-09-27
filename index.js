@@ -618,7 +618,8 @@ window.restartFromGameOver = async () => {
     }
 }
 
-// Escape opens/closes the in-game level menu (returns true if handled).
+// Escape (and the touch pause button, #45) opens/closes the in-game level
+// menu (returns true if handled).
 function handleEscapeMenu() {
     const flow = globalThis.__gameFlow
     if (!flow?.reduceEscapeKey) return false
