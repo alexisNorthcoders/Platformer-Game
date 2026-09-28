@@ -7,6 +7,7 @@ import {
     clearBombs,
     createBombState,
     findBlastVictims,
+    landsAtBlocks,
     pauseBombs,
     stepBombs,
     tryDropBomb,
@@ -224,4 +225,138 @@ test('findBlastVictims: an explosion rect from stepBombs catches a King standing
     const [{ rect: blast }] = explosions(stepBombs(state, BOMB.fuseMs))
     const king = { hitbox: rect(FEET.x - 27, FEET.y - 53, 55, 53) }
     assert.equal(findBlastVictims(blast, { king, pigs: [], boxes: [] }).king, king)
+})
+
+// Mid-air drops (#75): the Bomb falls, lands, and only then lights its fuse.
+
+const AIR = { x: 300, y: 100 }
+const FLOOR_Y = 400
+/** A lands-at query with one floor at FLOOR_Y everywhere. */
+const floorAt = (y) => (x, fromY, toY) => (fromY <= y && y <= toY ? y : null)
+
+/** Steps until the Bomb has landed (its sheet is no longer Bomb Off); returns the ms taken. */
+function fallUntilLanded(state, landsAt, step = 16) {
+    let ms = 0
+    while (bombDrawList(state)[0].sheet === 'bombOff') {
+        stepBombs(state, step, landsAt)
+        ms += step
+        assert.ok(ms < 10_000, 'the Bomb never landed')
+    }
+    return ms
+}
+
+test('a Bomb dropped in mid-air is drawn as Bomb Off while it falls', () => {
+    const state = createBombState()
+    assert.equal(tryDropBomb(state, AIR, floorAt(FLOOR_Y)), true)
+    assert.deepEqual(bombDrawList(state), [{ sheet: 'bombOff', ...spriteDrawRect(BOMB_SHEETS.bombOff, 0, 300, 100, false) }])
+    stepBombs(state, 100, floorAt(FLOOR_Y))
+    const [sprite] = bombDrawList(state)
+    assert.equal(sprite.sheet, 'bombOff')
+    assert.ok(sprite.dy > spriteDrawRect(BOMB_SHEETS.bombOff, 0, 300, 100, false).dy, 'it has moved down')
+})
+
+test('the fall ends exactly where the lands-at query says, then the Bomb stays put', () => {
+    const state = createBombState()
+    const calls = []
+    const landsAt = (x, fromY, toY) => {
+        calls.push({ x, fromY, toY })
+        return floorAt(FLOOR_Y)(x, fromY, toY)
+    }
+    tryDropBomb(state, AIR, landsAt)
+    calls.length = 0 // the drop's own on-the-ground check
+    fallUntilLanded(state, landsAt)
+    assert.ok(calls.every(c => c.x === 300), 'queried at the Bomb\'s x')
+    assert.ok(calls.every((c, i) => i === 0 || c.fromY === calls[i - 1].toY), 'each step sweeps on from the last')
+    const [sprite] = bombDrawList(state)
+    assert.deepEqual(sprite, { sheet: 'bombOn', ...spriteDrawRect(BOMB_SHEETS.bombOn, 0, 300, FLOOR_Y, false) })
+    stepBombs(state, 500, () => null)
+    assert.equal(bombDrawList(state)[0].dy, sprite.dy, 'nothing moves a landed Bomb')
+})
+
+test('the fuse is measured from landing, not from the drop', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, floorAt(FLOOR_Y))
+    const fallMs = fallUntilLanded(state, floorAt(FLOOR_Y), 10)
+    assert.ok(fallMs > 100, 'the fall takes a while')
+    // Landing falls inside the last step; the rest of that step went to the fuse.
+    assert.deepEqual(explosions(run(state, BOMB.fuseMs - 10)), [])
+    const events = explosions(run(state, 10))
+    assert.equal(events.length, 1)
+    assert.equal(events[0].rect.position.y, FLOOR_Y - 39 * SPRITE_SCALE, 'the blast is centred on where it landed')
+})
+
+test('landing mid-step lights the fuse at the landing moment, not the end of the step', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, () => null)
+    // One 100ms step from rest ends at y + g·100² (Euler); a floor halfway there is met at 50ms.
+    const floorY = AIR.y + (BOMB.gravity * 100 * 100) / 2
+    stepBombs(state, 100, floorAt(floorY))
+    assert.equal(bombDrawList(state)[0].sheet, 'bombOn')
+    assert.deepEqual(explosions(stepBombs(state, BOMB.fuseMs - 50 - 1)), [])
+    assert.equal(explosions(stepBombs(state, 1)).length, 1)
+})
+
+test('a falling Bomb is live: a second drop is refused', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, floorAt(FLOOR_Y))
+    stepBombs(state, 50, floorAt(FLOOR_Y))
+    assert.equal(tryDropBomb(state, { x: 900, y: 100 }, floorAt(FLOOR_Y)), false)
+    assert.equal(bombDrawList(state).length, 1)
+    assert.equal(bombDrawList(state)[0].sheet, 'bombOff')
+})
+
+test('a Bomb dropped on the ground skips the fall: lit at once, 1.2s fuse from the drop', () => {
+    const state = createBombState()
+    const feet = { x: 300, y: FLOOR_Y - 0.01 } // the King stands just above the block
+    tryDropBomb(state, feet, floorAt(FLOOR_Y))
+    assert.deepEqual(bombDrawList(state), [{ sheet: 'bombOn', ...spriteDrawRect(BOMB_SHEETS.bombOn, 0, 300, FLOOR_Y, false) }])
+    assert.deepEqual(explosions(stepBombs(state, 1199, floorAt(FLOOR_Y))), [])
+    assert.equal(explosions(stepBombs(state, 1, floorAt(FLOOR_Y))).length, 1)
+})
+
+test('a Bomb dropped at a ledge, feet half over the edge, stays lit on the ledge', () => {
+    const state = createBombState()
+    const landsAt = landsAtBlocks([{ position: { x: 0, y: FLOOR_Y }, width: 280, height: 64 }])
+    tryDropBomb(state, { x: 300, y: FLOOR_Y - 0.01, halfWidth: 27 }, landsAt)
+    assert.deepEqual(bombDrawList(state), [{ sheet: 'bombOn', ...spriteDrawRect(BOMB_SHEETS.bombOn, 0, 300, FLOOR_Y, false) }])
+})
+
+test('a large step lands the Bomb on the first block it passes, not below it', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, floorAt(FLOOR_Y))
+    stepBombs(state, 100, floorAt(FLOOR_Y))
+    const landsAt = landsAtBlocks([
+        { position: { x: 0, y: 150 }, width: 1000, height: 64 },
+        { position: { x: 0, y: 600 }, width: 1000, height: 64 },
+    ])
+    fallUntilLanded(state, landsAt, BOMB.maxStepMs)
+    assert.equal(bombDrawList(state)[0].dy, spriteDrawRect(BOMB_SHEETS.bombOn, 0, 300, 150, false).dy)
+    assert.equal(explosions(run(state, BOMB.fuseMs)).length, 1)
+})
+
+test('a Bomb that falls out of the level without landing is gone', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, () => null)
+    const events = []
+    for (let t = 0; t < BOMB.maxFallMs + 100; t += 16) events.push(...stepBombs(state, 16, () => null))
+    assert.deepEqual(events, [])
+    assert.deepEqual(bombDrawList(state), [])
+    assert.equal(tryDropBomb(state, FEET), true)
+})
+
+test('landsAtBlocks: the top of the first block under x that the sweep crosses', () => {
+    const blocks = [
+        { position: { x: 0, y: 500 }, width: 64, height: 64 },
+        { position: { x: 0, y: 300 }, width: 64, height: 64 },
+        { position: { x: 64, y: 200 }, width: 64, height: 64 }, // beside x
+        { position: 0, width: 44, height: 32 }, // a broken Box's block
+    ]
+    const landsAt = landsAtBlocks(blocks)
+    assert.equal(landsAt(32, 100, 600), 300)
+    assert.equal(landsAt(32, 100, 299), null, 'not reached yet')
+    assert.equal(landsAt(32, 301, 600), 500, 'already below the first top')
+    assert.equal(landsAt(64, 100, 250), 200, 'a block edge counts')
+    assert.equal(landsAt(200, 0, 1000), null)
+    assert.equal(landsAt(140, 100, 250, 20), 200, 'halfWidth reaches the block')
+    assert.equal(landsAt(140, 100, 250, 5), null)
 })

@@ -439,13 +439,21 @@ function drawTitleScene() {
 const bombLib = globalThis.__bomb
 const bombs = bombLib.createBombState()
 const bombImages = new Map(
-    // Gameplay never draws Bomb Off: a dropped Bomb is lit.
-    [bombLib.BOMB_SHEETS.bombOn, bombLib.BOMB_SHEETS.boom].map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
+    Object.values(bombLib.BOMB_SHEETS).map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
 )
 
-/** Drops a Bomb with its base on `feet` (world px), unless one is already live. */
+/** Where a falling Bomb lands (#75): on the level's collision blocks. */
+function bombLandsAt(x, fromY, toY) {
+    return bombLib.landsAtBlocks(player.collisionBlocks)(x, fromY, toY)
+}
+
+/**
+ * Drops a Bomb with its base on `feet` (world px; halfWidth: the King's feet
+ * span), unless one is already live. In mid-air it falls onto the collision
+ * blocks below before its fuse starts.
+ */
 function dropBomb(feet) {
-    bombLib.tryDropBomb(bombs, feet)
+    bombLib.tryDropBomb(bombs, feet, bombLandsAt)
 }
 
 /**
@@ -466,7 +474,7 @@ function hitBlastVictims(rect) {
 
 /** Steps and draws the Bombs; call inside the camera transform. */
 function updateAndDrawBombs() {
-    for (const event of bombLib.advanceBombs(bombs, performance.now())) {
+    for (const event of bombLib.advanceBombs(bombs, performance.now(), bombLandsAt)) {
         if (event.type === 'explosion') hitBlastVictims(event.rect)
     }
     drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
