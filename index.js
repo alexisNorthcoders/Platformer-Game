@@ -474,6 +474,8 @@ function hitBlastVictims(rect) {
 
 /** Steps and draws the Bombs; call inside the camera transform. */
 function updateAndDrawBombs() {
+    // A dead King's Bomb never goes off: Pigs it would beat stay beaten after the retry.
+    if (player.gameOver) bombLib.defuseBombs(bombs)
     for (const event of bombLib.advanceBombs(bombs, performance.now(), bombLandsAt)) {
         if (event.type === 'explosion') hitBlastVictims(event.rect)
     }

@@ -182,6 +182,15 @@ export function clearBombs(state) {
     state.lastNow = null
 }
 
+/**
+ * Removes a Bomb that could still explode (falling or burning its fuse)
+ * without it exploding, e.g. when the King dies or goes through a Door. A
+ * blast that already went off has done its damage and plays out.
+ */
+export function defuseBombs(state) {
+    if (state.bomb && state.bomb.phase !== 'boom') state.bomb = null
+}
+
 /** Call while Bombs aren't stepped (Pause Menu, loading), so they resume where they were. */
 export function pauseBombs(state) {
     state.lastNow = null

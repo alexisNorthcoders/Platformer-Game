@@ -1,5 +1,5 @@
 // doorEntry and levelTimer are globals set by their *-bootstrap.mjs modules,
-// loaded before this script in index.html. Shared by keyboard ↑ and the touch
+// loaded before this script in index.html; bombLib and bombs come from index.js. Shared by keyboard ↑ and the touch
 // controller's Enter button (touchControls-bootstrap.mjs).
 function canPlayerEnterDoor() {
     return doorEntry.canEnterDoor({ hitbox: player.hitbox, doors, doorClosed, preventInput: player.preventInput })
@@ -12,6 +12,8 @@ function enterDoor() {
     levelTransitioning = true
     levelTimer.stop(performance.now())
     player.switchSprite('enterDoor')
+    // Nothing goes off while the King walks through (index.js clears it on arrival).
+    bombLib.defuseBombs(bombs)
 }
 
 window.addEventListener('keydown', (event) => {
