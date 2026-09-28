@@ -13,8 +13,8 @@ function enterDoor() {
     levelTransitioning = true
     levelTimer.stop(performance.now())
     player.switchSprite('enterDoor')
-    // Nothing goes off while the King walks through (index.js clears it on arrival).
-    bombLib.defuseBombs(bombs)
+    // Nothing goes off or carries over while the King walks through.
+    bombLib.clearBombs(bombs)
 }
 
 window.addEventListener('keydown', (event) => {

@@ -453,6 +453,8 @@ function bombLandsAt(x, fromY, toY) {
  * blocks below before its fuse starts.
  */
 function dropBomb(feet) {
+    // The game-over retry gives input back before the level reloads: no Bomb until it has.
+    if (player._restarting) return
     bombLib.tryDropBomb(bombs, feet, bombLandsAt)
 }
 
@@ -966,8 +968,6 @@ async function restartCurrentLevel(beforeLoad) {
         numberSprites = createNumberSprites(diamondCount)
         enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
         await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
-        // The game-over retry gives input back before the load: drop any Bomb dropped meanwhile.
-        bombLib.clearBombs(bombs)
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
     } finally {
