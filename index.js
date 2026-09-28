@@ -448,10 +448,27 @@ function dropBomb(feet) {
     bombLib.tryDropBomb(bombs, feet)
 }
 
+/**
+ * A blast (#74) hits everyone caught in it once, through the hammer's hit
+ * paths (Pigs die and Boxes break as from the hammer), with no knockback.
+ */
+function hitBlastVictims(rect) {
+    player.updateHitbox()
+    const victims = bombLib.findBlastVictims(rect, {
+        king: player,
+        pigs: ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing),
+        boxes,
+    })
+    if (victims.king) victims.king.takeBlastHit()
+    victims.pigs.forEach(pig => pig.hit())
+    victims.boxes.forEach(box => box.hit())
+}
+
 /** Steps and draws the Bombs; call inside the camera transform. */
 function updateAndDrawBombs() {
-    // The explosion events carry the blast rect; nothing is hurt yet (#74).
-    bombLib.advanceBombs(bombs, performance.now())
+    for (const event of bombLib.advanceBombs(bombs, performance.now())) {
+        if (event.type === 'explosion') hitBlastVictims(event.rect)
+    }
     drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
 }
 

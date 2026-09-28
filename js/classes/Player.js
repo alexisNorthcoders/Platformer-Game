@@ -319,6 +319,17 @@ class Player extends Sprite {
     }
 
     takeContactDamageFromEnemy(enemyForKnockback) {
+        this.takeHit(enemyForKnockback)
+    }
+
+    /** Caught in a Bomb's blast (#74): a hit with no knockback, unless in hitCooldown or dead. */
+    takeBlastHit() {
+        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown })) return
+        this.takeHit(null)
+    }
+
+    /** Loses a hitpoint and starts hitCooldown with the hurt tint; knocked away from `knockbackFrom` if given. */
+    takeHit(knockbackFrom) {
         this.action = false
         this.attacking = false
         this.hitCooldown = true
@@ -326,11 +337,11 @@ class Player extends Sprite {
         playerContactHurtTint.applyPlayerContactHurtTint(this, performance.now())
         this.loseHP()
 
-        if (!this.dead) {
+        if (!this.dead && knockbackFrom) {
             const knockbackSpeed = 10
             this.velocity.x = ContactDamageHelpers.contactKnockbackVelocityX(
                 this.hitbox,
-                enemyForKnockback.hitbox,
+                knockbackFrom.hitbox,
                 knockbackSpeed
             )
             this.velocity.y = Math.min(this.velocity.y, -4)

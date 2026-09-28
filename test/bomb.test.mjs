@@ -6,6 +6,7 @@ import {
     bombDrawList,
     clearBombs,
     createBombState,
+    findBlastVictims,
     pauseBombs,
     stepBombs,
     tryDropBomb,
@@ -181,4 +182,46 @@ test('clearBombs removes a live Bomb (a new level or restart starts with none)',
     assert.deepEqual(bombDrawList(state), [])
     assert.deepEqual(stepBombs(state, 2000), [])
     assert.equal(tryDropBomb(state, FEET), true)
+})
+
+/** A hitbox-shaped rect. */
+function rect(x, y, width, height) {
+    return { position: { x, y }, width, height }
+}
+
+const BLAST = rect(100, 100, 104, 112)
+
+test('findBlastVictims: the King, Pigs and Boxes overlapping the blast are included', () => {
+    const king = { hitbox: rect(150, 150, 55, 53) }
+    const pig = { hitpoints: 2, hitbox: rect(60, 120, 50, 40) } // pokes in from the left
+    const box = { isBreaking: false, hitbox: rect(190, 200, 44, 32) } // corner inside
+    assert.deepEqual(findBlastVictims(BLAST, { king, pigs: [pig], boxes: [box] }), {
+        king,
+        pigs: [pig],
+        boxes: [box],
+    })
+})
+
+test('findBlastVictims: anyone outside the blast rect is excluded', () => {
+    const king = { hitbox: rect(400, 100, 55, 53) }
+    const pigs = [{ hitpoints: 2, hitbox: rect(0, 0, 50, 40) }]
+    const boxes = [{ isBreaking: false, hitbox: rect(100, 300, 44, 32) }]
+    assert.deepEqual(findBlastVictims(BLAST, { king, pigs, boxes }), { king: null, pigs: [], boxes: [] })
+})
+
+test('findBlastVictims: dead Pigs and broken Boxes are excluded even inside the blast', () => {
+    const alive = { hitpoints: 1, hitbox: rect(120, 120, 50, 40) }
+    const dead = { hitpoints: 0, hitbox: rect(120, 120, 50, 40) }
+    const whole = { isBreaking: false, hitbox: rect(130, 130, 44, 32) }
+    const broken = { isBreaking: true, hitbox: rect(130, 130, 44, 32) }
+    const victims = findBlastVictims(BLAST, { king: null, pigs: [dead, alive], boxes: [broken, whole] })
+    assert.deepEqual(victims, { king: null, pigs: [alive], boxes: [whole] })
+})
+
+test('findBlastVictims: an explosion rect from stepBombs catches a King standing on the Bomb', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET)
+    const [{ rect: blast }] = explosions(stepBombs(state, BOMB.fuseMs))
+    const king = { hitbox: rect(FEET.x - 27, FEET.y - 53, 55, 53) }
+    assert.equal(findBlastVictims(blast, { king, pigs: [], boxes: [] }).king, king)
 })
