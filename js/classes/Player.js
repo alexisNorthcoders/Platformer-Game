@@ -222,6 +222,7 @@ class Player extends Sprite {
             this.loop = anim.loop
             this.currentAnimation = anim
             this.flip = anim.flip || false
+            this.flipOffsetX = anim.flipOffsetX || 0
         }
     }
 

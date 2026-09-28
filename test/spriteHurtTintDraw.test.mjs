@@ -76,7 +76,7 @@ function loadSpriteWithCanvas(c, document = createDocumentMock()) {
     return new Function('_c', 'document', `const c = _c;\n${src}\nreturn Sprite`)(c, document)
 }
 
-function makeSprite(Sprite, { naturalWidth, naturalHeight, frameRate, position, hurtTint, flip, currentFrame = 0 }) {
+function makeSprite(Sprite, { naturalWidth, naturalHeight, frameRate, position, hurtTint, flip, flipOffsetX = 0, currentFrame = 0 }) {
     const s = Object.create(Sprite.prototype)
     s.loaded = true
     s.opacity = 1
@@ -93,6 +93,7 @@ function makeSprite(Sprite, { naturalWidth, naturalHeight, frameRate, position, 
     s.currentFrame = currentFrame
     s.hurtTint = hurtTint
     s.flip = flip
+    s.flipOffsetX = flipOffsetX
     s.updateFrames = () => {}
     return s
 }
@@ -158,6 +159,24 @@ test('Sprite.draw flipped hurt tint lands at the flipped destination x', () => {
     assert.deepEqual(mockC.drawImageCalls, [
         [off, 0, 0, frameW, frameH, expectedX, s.position.y, frameW * scale, frameH * scale],
     ])
+})
+
+test('Sprite.draw flipOffsetX shifts the flipped destination by offset * scale', () => {
+    const mockC = createCanvas2dLikeMock()
+    const Sprite = loadSpriteWithCanvas(mockC)
+    const s = makeSprite(Sprite, {
+        naturalWidth: 400,
+        naturalHeight: 50,
+        frameRate: 4,
+        position: { x: 100, y: 5 },
+        flip: true,
+        flipOffsetX: -15,
+    })
+
+    Sprite.prototype.draw.call(s, 2)
+
+    // covers screen [px + o*s, px + W + o*s] under scale(-1, 1)
+    assert.equal(mockC.drawImageCalls[0][5], -100 - 100 * 2 + 15 * 2)
 })
 
 test('Sprite.draw reuses one off-screen canvas across tinted draws', () => {
