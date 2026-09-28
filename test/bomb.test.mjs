@@ -278,11 +278,22 @@ test('the fuse is measured from landing, not from the drop', () => {
     tryDropBomb(state, AIR, floorAt(FLOOR_Y))
     const fallMs = fallUntilLanded(state, floorAt(FLOOR_Y), 10)
     assert.ok(fallMs > 100, 'the fall takes a while')
-    assert.deepEqual(explosions(run(state, 1190)), [])
-    assert.deepEqual(explosions(stepBombs(state, 9, floorAt(FLOOR_Y))), [])
-    const events = explosions(stepBombs(state, 1, floorAt(FLOOR_Y)))
+    // Landing falls inside the last step; the rest of that step went to the fuse.
+    assert.deepEqual(explosions(run(state, BOMB.fuseMs - 10)), [])
+    const events = explosions(run(state, 10))
     assert.equal(events.length, 1)
     assert.equal(events[0].rect.position.y, FLOOR_Y - 39 * SPRITE_SCALE, 'the blast is centred on where it landed')
+})
+
+test('landing mid-step lights the fuse at the landing moment, not the end of the step', () => {
+    const state = createBombState()
+    tryDropBomb(state, AIR, () => null)
+    // One 100ms step from rest ends at y + g·100² (Euler); a floor halfway there is met at 50ms.
+    const floorY = AIR.y + (BOMB.gravity * 100 * 100) / 2
+    stepBombs(state, 100, floorAt(floorY))
+    assert.equal(bombDrawList(state)[0].sheet, 'bombOn')
+    assert.deepEqual(explosions(stepBombs(state, BOMB.fuseMs - 50 - 1)), [])
+    assert.equal(explosions(stepBombs(state, 1)).length, 1)
 })
 
 test('a falling Bomb is live: a second drop is refused', () => {

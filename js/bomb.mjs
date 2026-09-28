@@ -72,9 +72,10 @@ export function tryDropBomb(state, feet, landsAt = onTheGround) {
 }
 
 /**
- * A lands-at query over collision blocks ({ position, width, height }): the
- * top of the highest block spanning x (± halfWidth) whose top lies in
- * [fromY, toY]. Blocks without a position (a broken Box's) are skipped.
+ * A lands-at query over collision blocks ({ position, width, height }, with
+ * position their top-left corner, as CollisionBlock draws and Player collides
+ * them): the top of the highest block spanning x (± halfWidth) whose top lies
+ * in [fromY, toY]. Blocks without a position (a broken Box's) are skipped.
  */
 export function landsAtBlocks(blocks) {
     return (x, fromY, toY, halfWidth = 0) => {
@@ -90,8 +91,9 @@ export function landsAtBlocks(blocks) {
 }
 
 /**
- * Moves a falling Bomb `dtMs` under gravity; on meeting a floor it sits there
- * and its fuse starts from 0.
+ * Moves a falling Bomb `dtMs` under gravity, sweeping its whole path this step
+ * so it can't pass through a floor. On meeting one it sits there, lit, and
+ * the rest of the step is returned for its fuse; otherwise returns 0.
  */
 function fall(state, dtMs, landsAt) {
     const bomb = state.bomb
@@ -100,12 +102,14 @@ function fall(state, dtMs, landsAt) {
     const toY = bomb.y + bomb.vy * dtMs
     const floorY = landsAt(bomb.x, bomb.y, toY)
     if (floorY != null) {
+        // Constant speed within a step: landing came this share of the way through it.
+        const share = toY > bomb.y ? Math.min(1, Math.max(0, (floorY - bomb.y) / (toY - bomb.y))) : 0
         state.bomb = litBomb(bomb.x, floorY)
-    } else if (bomb.t >= BOMB.maxFallMs) {
-        state.bomb = null
-    } else {
-        bomb.y = toY
+        return dtMs * (1 - share)
     }
+    if (bomb.t >= BOMB.maxFallMs) state.bomb = null
+    else bomb.y = toY
+    return 0
 }
 
 /**
@@ -132,8 +136,8 @@ const noFloor = () => null
 export function stepBombs(state, dtMs, landsAt = noFloor) {
     const events = []
     if (state.bomb?.phase === 'fall') {
-        fall(state, dtMs, landsAt)
-        return events
+        dtMs = fall(state, dtMs, landsAt)
+        if (dtMs <= 0) return events
     }
     const bomb = state.bomb
     if (!bomb) return events
