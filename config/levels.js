@@ -16,4 +16,20 @@ const levels = {
     15: { playerPosition: { x: 50, y: 500 }, lastDirection: 'right' },
     16: { playerPosition: { x: 1890, y: 100 }, lastDirection: 'left' },
     17: { playerPosition: { x: 30, y: 400 }, lastDirection: 'right' },
+    // Sky Moat (built by tools/build_level_18.py): falling in the water sends
+    // the King back to the last Checkpoint he passed.
+    18: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        water: { top: 496 },
+        checkpoints: [
+            { x: 1057, y: 232 },
+            { x: 1790, y: 104 },
+            { x: 2850, y: 232 },
+            { x: 3521, y: 40 },
+            { x: 4130, y: 232 },
+            { x: 4642, y: 168 },
+            { x: 5730, y: 40 },
+        ],
+    },
 };

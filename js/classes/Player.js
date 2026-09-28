@@ -429,7 +429,7 @@ class Player extends Sprite {
 
         if (player.position.y > canvas.height) {
             this.loseHP()
-            this.setPosition(levels[level].playerPosition)
+            respawnKing()
         }
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]

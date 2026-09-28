@@ -60,3 +60,17 @@ _Avoid_: Pig with a Match (except when naming the sprite folder)
 **Bomb**:
 An explosive that, once lit, blows up when its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. The King drops Bombs, on the ground or in mid-air (a Bomb dropped in mid-air falls unlit and lights its fuse on landing); Bomb Pigs throw them. A live Bomb never outlasts its moment: it is gone, without blowing up, when the King dies, goes through a Door, or the level is restarted or quit.
 _Avoid_: King's bomb, Pig bomb, grenade
+
+**Moving Platform**:
+A wooden plank that glides back and forth along a fixed path (sideways, up and down, or diagonally), easing to a stop at each end. The King can jump up through it and land on top; standing on it carries him, and a lit Bomb resting on it rides along too.
+_Avoid_: Elevator, lift, ferry (except when describing one's path)
+
+### Places
+
+**Water**:
+The moat along the bottom of an open-air level. Falling in costs the King a heart and puts him back at his last Checkpoint.
+_Avoid_: Sea, pit
+
+**Checkpoint**:
+A flag on a long level marking where the King comes back after falling into the Water. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
+_Avoid_: Save point, respawn point
