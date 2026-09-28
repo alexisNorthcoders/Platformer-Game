@@ -33,6 +33,7 @@ export function resetPlayerForNewLevelRun(player) {
     player.action = false
     player.attacking = false
     player.canAttack = true
+    player.canDropBomb = true
     player.running = false
     player.hitCooldown = false
     clearPlayerHurtTint(player)

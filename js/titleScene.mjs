@@ -13,7 +13,19 @@
  * its feet. Sprites draw at the game's 2× pixel scale.
  */
 
-export const SCENE_SCALE = 2
+import {
+    BOMB_SHEETS,
+    FRAME_MS,
+    SPRITE_SCALE,
+    loopFrame,
+    onceFrame,
+    playMs as sheetPlayMs,
+    spriteDrawRect,
+} from './spriteAnimation.mjs'
+
+export { loopFrame, onceFrame, spriteDrawRect }
+
+export const SCENE_SCALE = SPRITE_SCALE
 
 export const TITLE_SCENE = {
     width: 1024,
@@ -63,33 +75,19 @@ export const SHEETS = {
     cannonIdle: { src: `${SPRITES}10-Cannon/Idle.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
     cannonShoot: { src: `${SPRITES}10-Cannon/Shoot (44x28).png`, frames: 4, w: 44, h: 28, anchorX: 29, anchorY: 25 },
     cannonBall: { src: `${SPRITES}10-Cannon/Cannon Ball.png`, frames: 1, w: 44, h: 28, anchorX: 29, anchorY: 25 },
-    // Bomb frames: the bomb's base is at (26, 39); explosions centre on it.
-    bombOff: { src: `${SPRITES}09-Bomb/Bomb Off.png`, frames: 1, w: 52, h: 56, anchorX: 26, anchorY: 39 },
-    bombOn: { src: `${SPRITES}09-Bomb/Bomb On (52x56).png`, frames: 4, w: 52, h: 56, anchorX: 26, anchorY: 39 },
-    boom: { src: `${SPRITES}09-Bomb/Boooooom (52x56).png`, frames: 6, w: 52, h: 56, anchorX: 26, anchorY: 39 },
+    ...BOMB_SHEETS,
 }
 
-const FRAME_MS = 100
 /** Throwing Boom lets go of the bomb on this frame. */
 const THROW_RELEASE_FRAME = 3
 
 /** How long `loops` plays of a sheet's animation take. */
 function playMs(sheetName, loops = 1) {
-    return SHEETS[sheetName].frames * FRAME_MS * loops
+    return sheetPlayMs(SHEETS[sheetName], loops)
 }
 
 const FUSE_MS = playMs('bombOn', 3)
 const LIGHT_CANNON_MS = playMs('matchCannon', 2)
-
-/** Frame index `ms` into a looping animation. */
-export function loopFrame(ms, frames, frameMs = FRAME_MS) {
-    return Math.floor(ms / frameMs) % frames
-}
-
-/** Frame index `ms` into a play-once animation (holds the last frame). */
-export function onceFrame(ms, frames, frameMs = FRAME_MS) {
-    return Math.min(frames - 1, Math.floor(ms / frameMs))
-}
 
 /** `x` moved towards `target` at `speed` px/ms for `dtMs`, stopping on it. */
 export function stepToward(x, target, speed, dtMs) {
@@ -144,26 +142,6 @@ export function arcPoint(from, to, peak, s) {
     return {
         x: from.x + (to.x - from.x) * t,
         y: from.y + (to.y - from.y) * t - 4 * peak * t * (1 - t),
-    }
-}
-
-/**
- * drawImage arguments for `frame` of `sheet` with its anchor on (x, y),
- * mirrored when `flip` (the pack's sprites face left). Whole pixels.
- */
-export function spriteDrawRect(sheet, frame, x, y, flip, scale = SCENE_SCALE) {
-    const anchorX = flip ? sheet.w - sheet.anchorX : sheet.anchorX
-    return {
-        src: sheet.src,
-        sx: frame * sheet.w,
-        sy: 0,
-        sw: sheet.w,
-        sh: sheet.h,
-        dx: Math.round(x - anchorX * scale),
-        dy: Math.round(y - sheet.anchorY * scale),
-        dw: sheet.w * scale,
-        dh: sheet.h * scale,
-        flip,
     }
 }
 

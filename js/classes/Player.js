@@ -7,6 +7,7 @@ class Player extends Sprite {
         this.hitCooldown = false
         this.action = false
         this.canAttack = true
+        this.canDropBomb = true
         this.running = false
         this.hitCooldownDuration = 1000
         this.contactDamageTimeoutId = null
@@ -160,6 +161,7 @@ class Player extends Sprite {
 
         if (!keys.a.pressed && !keys.d.pressed) this.running = false;
         if (!keys.space.pressed) this.canAttack = true;
+        if (!keys.s.pressed) this.canDropBomb = true
         if (!keys.w.pressed) this.canJump = true
         if (this.preventInput || this.action) return;
 
@@ -172,6 +174,12 @@ class Player extends Sprite {
         }
         if (keys.space.pressed && this.canAttack) {
             this.attack()
+        }
+        // Each press of S drops at most one Bomb, and only on the ground; the
+        // King's animation carries on (index.js's dropBomb places it).
+        if (keys.s.pressed && this.canDropBomb) {
+            this.canDropBomb = false
+            if (this.isGrounded) dropBomb(this.feetPosition())
         }
 
         // Running
@@ -191,6 +199,15 @@ class Player extends Sprite {
 
         if (this.lastDirection === 'right' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleRight')
         if (this.lastDirection === 'left' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleLeft')
+    }
+
+    /** The middle of the King's feet (bottom centre of his hitbox), in world px. */
+    feetPosition() {
+        this.updateHitbox()
+        return {
+            x: this.hitbox.position.x + this.hitbox.width / 2,
+            y: this.hitbox.position.y + this.hitbox.height,
+        }
     }
 
     switchSprite(name) {

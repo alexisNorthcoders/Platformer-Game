@@ -139,6 +139,7 @@ const player = new Player({
                             LevelProgressKeys.clearAll()
                         }
                         levelTimer.reset()
+                        bombLib.clearBombs(bombs)
                         await initLevel(level)
                         recordLevelEntry()
                         const dir = levels[level].lastDirection
@@ -176,6 +177,9 @@ const keys = {
         pressed: false
     },
     space: {
+        pressed: false
+    },
+    s: {
         pressed: false
     }
 
@@ -403,13 +407,13 @@ function titleSceneFloorImage() {
     return titleSceneFloor
 }
 
-function drawTitleScene() {
-    titleSceneLib.advanceTitleScene(titleScene, performance.now())
-    c.imageSmoothingEnabled = false
-    const floor = titleSceneFloorImage()
-    if (floor) c.drawImage(floor, 0, titleSceneLib.TITLE_SCENE.floorY)
-    for (const d of titleSceneLib.titleSceneDrawList(titleScene)) {
-        const img = titleSceneImages.get(d.src)
+/**
+ * Draws a draw list (the Title Scene's, the Bombs') whose images are in
+ * `images` by src, skipping any not loaded yet. Flipped entries are mirrored.
+ */
+function drawSpriteList(list, images) {
+    for (const d of list) {
+        const img = images.get(d.src)
         if (!menuImageReady(img)) continue
         if (!d.flip) {
             c.drawImage(img, d.sx, d.sy, d.sw, d.sh, d.dx, d.dy, d.dw, d.dh)
@@ -420,6 +424,35 @@ function drawTitleScene() {
         c.drawImage(img, d.sx, d.sy, d.sw, d.sh, -d.dx - d.dw, d.dy, d.dw, d.dh)
         c.restore()
     }
+}
+
+function drawTitleScene() {
+    titleSceneLib.advanceTitleScene(titleScene, performance.now())
+    c.imageSmoothingEnabled = false
+    const floor = titleSceneFloorImage()
+    if (floor) c.drawImage(floor, 0, titleSceneLib.TITLE_SCENE.floorY)
+    drawSpriteList(titleSceneLib.titleSceneDrawList(titleScene), titleSceneImages)
+}
+
+// Bombs (#73): the King drops one with S (Player.handleInput → dropBomb).
+// Stepped only while playing, so a live Bomb freezes behind the Pause Menu.
+const bombLib = globalThis.__bomb
+const bombs = bombLib.createBombState()
+const bombImages = new Map(
+    // Gameplay never draws Bomb Off: a dropped Bomb is lit.
+    [bombLib.BOMB_SHEETS.bombOn, bombLib.BOMB_SHEETS.boom].map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
+)
+
+/** Drops a Bomb with its base on `feet` (world px), unless one is already live. */
+function dropBomb(feet) {
+    bombLib.tryDropBomb(bombs, feet)
+}
+
+/** Steps and draws the Bombs; call inside the camera transform. */
+function updateAndDrawBombs() {
+    // The explosion events carry the blast rect; nothing is hurt yet (#74).
+    bombLib.advanceBombs(bombs, performance.now())
+    drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
 }
 
 function drawTitleScreen() {
@@ -613,6 +646,7 @@ function resetSession() {
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
     LevelProgressKeys.clearAll()
+    bombLib.clearBombs(bombs)
 }
 
 // The only input route for the menu buttons, on touch too: taps synthesise a
@@ -706,6 +740,8 @@ function animate() {
     window.requestAnimationFrame(animate)
 
     if (gameState === 'menu') {
+        // Bombs freeze behind the Pause Menu and carry on after Resume.
+        bombLib.pauseBombs(bombs)
         if (pauseMenuFromPlaying) {
             titleSceneLib.pauseTitleScene(titleScene)
             drawPauseMenu()
@@ -716,6 +752,7 @@ function animate() {
     titleSceneLib.pauseTitleScene(titleScene)
 
     if (gameState === 'loading') {
+        bombLib.pauseBombs(bombs)
         c.clearRect(0, 0, canvas.width, canvas.height)
         c.fillStyle = '#000000'
         c.fillRect(0, 0, canvas.width, canvas.height)
@@ -788,6 +825,7 @@ function animate() {
     }
 
     player.draw(2);
+    updateAndDrawBombs()
     if (diamonds) {
         diamonds.forEach(diamond => {
             if (diamond.loaded) {
@@ -883,6 +921,7 @@ async function restartCurrentLevel(beforeLoad) {
     player._restarting = true
     try {
         beforeLoad?.()
+        bombLib.clearBombs(bombs)
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
         player.dead = false
@@ -966,6 +1005,8 @@ function applyGameFlowResult(result) {
         // The canvas still holds the last level frame: keep it as the frozen level.
         capturePauseSnapshot()
         levelTimer.pause(performance.now())
+        // Freeze a live Bomb now, not on the next menu frame.
+        bombLib.pauseBombs(bombs)
         stopPlayerSounds()
         pauseMenuFocus = 'resume'
     }
