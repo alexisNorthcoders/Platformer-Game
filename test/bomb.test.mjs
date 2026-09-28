@@ -6,6 +6,7 @@ import {
     bombDrawList,
     clearBombs,
     createBombState,
+    defuseBombs,
     findBlastVictims,
     landsAtBlocks,
     pauseBombs,
@@ -183,6 +184,43 @@ test('clearBombs removes a live Bomb (a new level or restart starts with none)',
     assert.deepEqual(bombDrawList(state), [])
     assert.deepEqual(stepBombs(state, 2000), [])
     assert.equal(tryDropBomb(state, FEET), true)
+})
+
+test('clearBombs mid-fall: no explosion follows on later steps', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET, () => null)
+    stepBombs(state, 50, () => null)
+    clearBombs(state)
+    assert.deepEqual(explosions(run(state, 3000)), [])
+    assert.deepEqual(bombDrawList(state), [])
+})
+
+test('defuseBombs removes a Bomb burning its fuse: no explosion follows (King death, Door)', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET)
+    stepBombs(state, 500)
+    defuseBombs(state)
+    assert.deepEqual(bombDrawList(state), [])
+    assert.deepEqual(explosions(run(state, 3000)), [])
+    assert.equal(tryDropBomb(state, FEET), true)
+})
+
+test('defuseBombs removes a falling Bomb', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET, () => null)
+    defuseBombs(state)
+    assert.deepEqual(bombDrawList(state), [])
+    assert.deepEqual(explosions(run(state, 3000, 10)), [])
+})
+
+test('defuseBombs lets a blast that already went off finish drawing, with no second explosion', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET)
+    assert.equal(explosions(run(state, BOMB.fuseMs + 10)).length, 1)
+    defuseBombs(state)
+    assert.equal(bombDrawList(state)[0].sheet, 'boom')
+    assert.deepEqual(explosions(run(state, BOMB.boomMs)), [])
+    assert.deepEqual(bombDrawList(state), [])
 })
 
 /** A hitbox-shaped rect. */
