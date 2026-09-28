@@ -11,8 +11,12 @@ The screen shown before any level is played, where the player picks a level and 
 _Avoid_: Main menu, start screen, menu (on its own)
 
 **Pause Menu**:
-The overlay opened during play (Escape or the touch pause button), drawn over the dimmed, frozen level. Its buttons are Resume, Restart Level (the level as on entering it: diamonds and Pigs back, counts rolled back) and Quit to Title (plus Fullscreen on touch devices); levels are picked on the Title Screen only.
+The overlay opened during play (Escape or the touch pause button), drawn over the dimmed, frozen level. Its buttons are Resume, Restart Level and Quit to Title (plus Fullscreen on touch devices); levels are picked on the Title Screen only.
 _Avoid_: Escape menu, in-game menu
+
+**Game Over Screen**:
+The overlay shown after the King loses his last heart and his death plays out, drawn over the dimmed, frozen level. It names the level and offers Try Again (Restart Level under another label) and Quit to Title. Losing the last heart is the only way to reach it; a game over costs only the level's progress, never the session.
+_Avoid_: Death screen, game over overlay, game over menu
 
 **Level Preview**:
 A framed thumbnail on the Title Screen showing the currently selected level's map.
@@ -20,6 +24,15 @@ A framed thumbnail on the Title Screen showing the currently selected level's ma
 **Title Scene**:
 The ambient animation behind the Title Screen: Pigs running and throwing bombs. Purely decorative; it never affects game state.
 _Avoid_: Menu background, attract mode
+
+### Actions
+
+**Restart Level**:
+Play the current level again as it was on entering it: diamonds and Pigs back, counts rolled back, the level timer at zero. Offered on the Pause Menu, and as Try Again on the Game Over Screen. There is no other kind of restart.
+_Avoid_: Retry, respawn (Try Again is only a button label)
+
+**Quit to Title**:
+Leave the level for the Title Screen with a clean session. Offered on the Pause Menu and the Game Over Screen.
 
 ### Characters
 
