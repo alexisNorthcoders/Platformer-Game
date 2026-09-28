@@ -439,7 +439,8 @@ function drawTitleScene() {
 const bombLib = globalThis.__bomb
 const bombs = bombLib.createBombState()
 const bombImages = new Map(
-    Object.values(bombLib.BOMB_SHEETS).map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
+    // Gameplay never draws Bomb Off: a dropped Bomb is lit.
+    [bombLib.BOMB_SHEETS.bombOn, bombLib.BOMB_SHEETS.boom].map(sheet => [sheet.src, loadMenuImage(`./${sheet.src}`)])
 )
 
 /** Drops a Bomb with its base on `feet` (world px), unless one is already live. */

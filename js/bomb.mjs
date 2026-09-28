@@ -90,12 +90,17 @@ export function pauseBombs(state) {
     state.lastNow = null
 }
 
+/** Each phase's sheet: the fuse loops Bomb On, the boom plays Boooooom once. */
+const PHASE_ART = {
+    fuse: { sheet: 'bombOn', frameAt: loopFrame },
+    boom: { sheet: 'boom', frameAt: onceFrame },
+}
+
 /** Everything to draw this frame: drawImage arguments plus the sheet name. */
 export function bombDrawList(state) {
     const bomb = state.bomb
     if (!bomb) return []
-    const sheet = bomb.phase === 'fuse' ? 'bombOn' : 'boom'
-    const { frames } = BOMB_SHEETS[sheet]
-    const frame = bomb.phase === 'fuse' ? loopFrame(bomb.t, frames) : onceFrame(bomb.t, frames)
+    const { sheet, frameAt } = PHASE_ART[bomb.phase]
+    const frame = frameAt(bomb.t, BOMB_SHEETS[sheet].frames)
     return [{ sheet, ...spriteDrawRect(BOMB_SHEETS[sheet], frame, bomb.x, bomb.y, false) }]
 }
