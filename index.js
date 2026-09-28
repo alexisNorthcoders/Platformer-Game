@@ -48,6 +48,9 @@ let collisionBlocks = []
 let background = null
 let boxes = []
 let platforms = []
+let movingPlatforms = []
+/** Where the King comes back after falling into the water: the level start or the furthest Checkpoint reached. */
+let respawnPoint = null
 let doors = []
 let enemies = []
 let enemyKing = []
@@ -484,6 +487,114 @@ function updateAndDrawBombs() {
     drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
 }
 
+/**
+ * Moves each Moving Platform one frame, carrying the King and a lit Bomb that
+ * stand on it. Runs after the King's input and before he moves.
+ */
+function stepMovingPlatforms() {
+    if (!movingPlatforms.length) return
+    const lib = globalThis.__movingPlatform
+    player.updateHitbox()
+    for (const platform of movingPlatforms) {
+        const surface = platform.surface()
+        const { dx, dy } = platform.step()
+        if (!player.gameOver && lib.isRiding(player.hitbox, player.velocity.y, surface)) {
+            player.position.x += dx
+            player.position.y += dy
+            player.updateHitbox()
+        }
+        const bomb = bombs.bomb
+        if (bomb && bomb.phase !== 'fall' && lib.isResting(bomb.x, bomb.y, surface)) {
+            bomb.x += dx
+            bomb.y += dy
+        }
+    }
+}
+
+function currentCheckpoints() {
+    return levels[level]?.checkpoints ?? []
+}
+
+/** Moves the respawn point on as the King passes the level's Checkpoints. */
+function reachCheckpoints() {
+    if (!respawnPoint || player.gameOver) return
+    respawnPoint = globalThis.__checkpoint.respawnPointAfter(currentCheckpoints(), respawnPoint, player.position.x)
+}
+
+/** The King falls into the water: back to the respawn point, standing still. */
+function respawnKing() {
+    player.setPosition(respawnPoint ?? levels[level].playerPosition)
+    player.velocity.x = 0
+    player.velocity.y = 0
+}
+
+// Checkpoint flag, in 2× pixel-art px: a pole with a pennant, grey until reached.
+const CHECKPOINT_FLAG = { poleHeight: 76, poleWidth: 4, clothWidth: 28, clothHeight: 20 }
+
+function drawCheckpoints() {
+    const checkpoints = currentCheckpoints()
+    if (!checkpoints.length || !respawnPoint) return
+    const now = performance.now()
+    const { poleHeight, poleWidth, clothWidth, clothHeight } = CHECKPOINT_FLAG
+    c.save()
+    for (const checkpoint of checkpoints) {
+        // The King's feet are 88px below his position; the pole stands beside them.
+        const baseX = Math.round(checkpoint.x + 30)
+        const baseY = Math.round(checkpoint.y + 88)
+        const reached = globalThis.__checkpoint.isReached(checkpoint, respawnPoint)
+        c.fillStyle = '#3f3851'
+        c.fillRect(baseX - 2, baseY - poleHeight - 2, poleWidth + 4, poleHeight + 2)
+        c.fillStyle = '#a1acad'
+        c.fillRect(baseX, baseY - poleHeight, poleWidth, poleHeight)
+        c.fillStyle = '#fbcaae'
+        c.fillRect(baseX - 2, baseY - poleHeight - 6, poleWidth + 4, 6)
+        // Pennant: rows narrowing to a point, flapping by a pixel or two.
+        const top = baseY - poleHeight + 4
+        c.fillStyle = reached ? '#d25654' : '#6e5967'
+        for (let row = 0; row < clothHeight; row += 2) {
+            const taper = 1 - Math.abs(row - clothHeight / 2) / (clothHeight / 2)
+            const wave = reached ? Math.round(Math.sin(now / 150 + row / 4) * 1.5) * 2 : 0
+            c.fillRect(baseX + poleWidth, top + row, Math.max(2, Math.round((clothWidth * taper) / 2) * 2) + wave, 2)
+        }
+    }
+    c.restore()
+}
+
+// Water along the bottom of levels with `water` in levels.js: painted on the
+// level image too (for the Level Preview); drawn again over the King here so
+// he sinks into it, with the waves moving.
+const WATER = { deep: 'rgba(52, 78, 116, 0.82)', crest: '#98cbd8', foam: '#dcf2ed', pixel: 4 }
+
+function drawWater() {
+    const water = levels[level]?.water
+    if (!water) return
+    const { pixel } = WATER
+    const now = performance.now()
+    const left = Math.floor(camera.x / pixel) * pixel
+    const right = camera.x + canvas.width
+    c.save()
+    c.fillStyle = WATER.deep
+    c.fillRect(left, water.top + pixel, right - left, canvas.height - water.top)
+    for (let x = left; x < right; x += pixel) {
+        const wave = Math.sin(x / 38 + now / 420) + Math.sin(x / 17 - now / 610) * 0.5
+        const lift = Math.round(wave * 1.5) * pixel
+        c.fillStyle = WATER.crest
+        c.fillRect(x, water.top - lift, pixel, pixel * 2 + lift)
+        if (wave > 1.1) {
+            c.fillStyle = WATER.foam
+            c.fillRect(x, water.top - lift - pixel, pixel, pixel)
+        }
+    }
+    // Glints drifting on the surface.
+    c.fillStyle = WATER.foam
+    for (let i = 0; i < 12; i++) {
+        const gx = left + ((i * 331 + now / 30) % (right - left))
+        const gy = water.top + pixel * (3 + (i * 7) % 12)
+        c.fillRect(Math.round(gx / pixel) * pixel, gy, pixel * 3, pixel / 2)
+    }
+    c.restore()
+}
+
 function drawTitleScreen() {
     const layout = TITLE_SCREEN
     c.save()
@@ -828,6 +939,9 @@ function animate() {
             platform.draw(2);
         });
     }
+    stepMovingPlatforms()
+    movingPlatforms.forEach(platform => platform.draw(2))
+    drawCheckpoints()
     if (enemies) {
         enemies.forEach(enemy => {
             enemy.draw(2);
@@ -864,6 +978,8 @@ function animate() {
         });
     }
     player.update();
+    reachCheckpoints()
+    drawWater()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);

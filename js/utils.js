@@ -1,13 +1,8 @@
-Array.prototype.parse2D = function () {
-    let step;
-    if (this.length === 144) step = 16
-    else if (this.length === 288) step = 32
-    else if (this.length === 432) step = 48
-    else step = 30 
-
+/** Splits a tile layer's flat data into rows of `columns` (the map's width in tiles). */
+Array.prototype.parse2D = function (columns) {
     const rows = []
-    for (let i = 0; i < this.length; i += step) {
-        rows.push(this.slice(i, i + step))
+    for (let i = 0; i < this.length; i += columns) {
+        rows.push(this.slice(i, i + columns))
     }
     return rows
 }
@@ -270,6 +265,9 @@ function createDoor(positions) {
         autoplay: false,
     }))
 }
+function createMovingPlatforms(paths) {
+    return paths.map(path => new MovingPlatform({ path }))
+}
 function createBackground(level) {
     return new Sprite({
         position: {
@@ -321,7 +319,7 @@ function createCannon(positions) {
 
 async function createAssets(level, options = {}) {
     const preserve = options.preserveCollectedProgress === true
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, cannon, enemyMatch } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms } = await loadAssets(level, 2)
     const diamondPositions = preserve
         ? diamonds.filter(([x, y]) => !LevelProgressKeys.isDiamondCollected(level, x, y))
         : diamonds
@@ -334,13 +332,14 @@ async function createAssets(level, options = {}) {
     const enemyMatchPositions = preserve
         ? enemyMatch.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'match', x, y))
         : enemyMatch
-    const platforms_2Collisiongs = platforms_2.parse2D()
+    const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
-    const parsedCollisions = collisions.parse2D()
+    const parsedCollisions = collisions.parse2D(mapColumns)
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
         boxes: createBoxes(boxes),
         platforms: createPlatforms(platforms),
+        movingPlatforms: createMovingPlatforms(movingPlatforms),
         doors: createDoor(door),
         enemies: createEnemies(enemyPositions, level),
         cannon: createCannon(cannon),
@@ -360,11 +359,12 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, doors, enemies, collisionBlocks, enemyKing, background, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),
-        platforms.flatMap(platform => platform.collisionBlocks)
+        platforms.flatMap(platform => platform.collisionBlocks),
+        movingPlatforms.flatMap(platform => platform.collisionBlocks)
     );
 
     applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks);
@@ -377,6 +377,7 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
     playerContactHurtTint.clearPlayerHurtTint(player)
 
     player.setPosition(playerPosition)
+    respawnPoint = playerPosition
     player.lastDirection = lastDirection
     EnemyTracker.initializeLevel(enemies.length)
     doorClosed = true
