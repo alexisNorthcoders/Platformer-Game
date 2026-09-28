@@ -1005,6 +1005,8 @@ function applyGameFlowResult(result) {
         // The canvas still holds the last level frame: keep it as the frozen level.
         capturePauseSnapshot()
         levelTimer.pause(performance.now())
+        // Freeze a live Bomb now, not on the next menu frame.
+        bombLib.pauseBombs(bombs)
         stopPlayerSounds()
         pauseMenuFocus = 'resume'
     }

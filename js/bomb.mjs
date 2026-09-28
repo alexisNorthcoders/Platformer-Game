@@ -11,7 +11,7 @@
  * the floor. Sprites draw at the game's 2× pixel scale.
  */
 
-import { BOMB_SHEETS, loopFrame, onceFrame, playMs, spriteDrawRect } from './spriteAnimation.mjs'
+import { BOMB_SHEETS, SPRITE_SCALE, loopFrame, onceFrame, playMs, spriteDrawRect } from './spriteAnimation.mjs'
 
 export const BOMB = {
     /** The Bomb On animation played 3 times. */
@@ -23,6 +23,12 @@ export const BOMB = {
      * hidden tab) counts as this much, so a Bomb never skips its fuse.
      */
     maxStepMs: 100,
+    /**
+     * The blast, in source px (drawn at SPRITE_SCALE): 52×56 with the Bomb's
+     * base at (26, 39). Fixed here, not read from the Boooooom art, so the
+     * explosion event's rect stays stable if the art changes.
+     */
+    blast: { w: 52, h: 56, anchorX: 26, anchorY: 39 },
 }
 
 /** No Bomb live. */
@@ -41,13 +47,16 @@ export function tryDropBomb(state, feet) {
 }
 
 /**
- * The blast: the Boooooom frame (52×56 source px, drawn at 2×) with its anchor
- * on the Bomb's base, so it matches the visible explosion. Same shape as a
- * hitbox ({ position, width, height }).
+ * The blast rect (BOMB.blast at SPRITE_SCALE) with its anchor on the Bomb's
+ * base. Same shape as a hitbox ({ position, width, height }).
  */
 function blastRect(bomb) {
-    const r = spriteDrawRect(BOMB_SHEETS.boom, 0, bomb.x, bomb.y, false)
-    return { position: { x: r.dx, y: r.dy }, width: r.dw, height: r.dh }
+    const { w, h, anchorX, anchorY } = BOMB.blast
+    return {
+        position: { x: bomb.x - anchorX * SPRITE_SCALE, y: bomb.y - anchorY * SPRITE_SCALE },
+        width: w * SPRITE_SCALE,
+        height: h * SPRITE_SCALE,
+    }
 }
 
 /**

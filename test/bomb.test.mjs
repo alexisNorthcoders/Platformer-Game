@@ -141,6 +141,30 @@ test('advanceBombs steps by the frame time; after pauseBombs the next frame only
     assert.equal(explosions(events).length, 1, 'the remaining 1100ms of fuse burn after resuming')
 })
 
+test('the blast rect is BOMB.blast (52×56, base at 26, 39), not read from the Boooooom art', () => {
+    assert.deepEqual(BOMB.blast, { w: 52, h: 56, anchorX: 26, anchorY: 39 })
+})
+
+test('frame loop: pausing mid-fuse and sitting in the menu for many frames freezes the Bomb until Resume', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET)
+    const events = []
+    let now = 0
+    // Playing: 600ms of fuse at ~16ms frames.
+    for (; now <= 600; now += 16) events.push(...advanceBombs(state, now))
+    const frameBefore = bombDrawList(state)[0].sx
+    // Pause transition, then menu frames (the menu branch calls pauseBombs every frame).
+    pauseBombs(state)
+    for (; now <= 10_000; now += 16) pauseBombs(state)
+    assert.equal(bombDrawList(state)[0].sx, frameBefore, 'frozen while paused')
+    // Resume: the first frame only records the time, then the fuse carries on.
+    events.push(...advanceBombs(state, now))
+    assert.equal(bombDrawList(state)[0].sx, frameBefore, 'the resume frame steps nothing')
+    for (let i = 0; i < 100; i++) events.push(...advanceBombs(state, (now += 16)))
+    assert.equal(explosions(events).length, 1)
+    assert.deepEqual(bombDrawList(state), [], 'gone after the boom')
+})
+
 test('advanceBombs caps a long frame gap so a hitch cannot skip the fuse', () => {
     const state = createBombState()
     tryDropBomb(state, FEET)
