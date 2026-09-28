@@ -15,7 +15,7 @@ class Enemy extends Sprite {
 
         this.collisionBlocks = collisionBlocks
 
-        this.attackInterval = setInterval(() => this.attack(), 3000);
+        this.nextAttackAt = globalThis.enemyAttackTimer.nextAttackAt(Date.now(), Math.random())
 
         if (enemyVariant === 'pig') {
             this.pigWalkSpeed = 1
@@ -27,6 +27,16 @@ class Enemy extends Sprite {
 
     pigAiDeferDecision(ms) {
         this.aiNextDecisionAt = Date.now() + ms
+    }
+
+    tickAttack() {
+        const timer = globalThis.enemyAttackTimer
+        if (!timer || this.hitpoints <= 0) return
+        const now = Date.now()
+        if (now < this.nextAttackAt) return
+        this.nextAttackAt = this.attack()
+            ? timer.nextAttackAt(now, Math.random())
+            : timer.attackRetryAt(now, Math.random())
     }
 
     pigPickNextBehavior() {
@@ -97,7 +107,6 @@ class Enemy extends Sprite {
             playHitSound()
             if (this.hitpoints === 0) {
                 this.playerHit = true
-                clearInterval(this.attackInterval);
                 return
 
             } if (this.hitpoints > 0) {
@@ -153,7 +162,7 @@ class Enemy extends Sprite {
     }
 
     attack() {
-        if (this.state === 'matchOn') return
+        if (this.state === 'matchOn') return false
         if (!this.attacking && this.hitpoints > 0 && !this.playerHit) {
             this.attacking = true;
             if (this.enemyVariant === 'pig') this.velocity.x = 0
@@ -167,7 +176,9 @@ class Enemy extends Sprite {
                     this.switchSprite('idle');
                 };
             }
+            return true
         }
+        return false
     }
 
     jump() {
@@ -194,6 +205,7 @@ class Enemy extends Sprite {
         // debug position
         /*  c.fillStyle = 'rgba(0,0,255,0.3)'
          c.fillRect(this.position.x,this.position.y,this.width,this.height)   */
+        this.tickAttack()
         this.pigTickAi()
         this.position.x += this.velocity.x
 
