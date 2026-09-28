@@ -4,6 +4,7 @@ import {
     BOMB,
     advanceBombs,
     bombDrawList,
+    clearBombs,
     createBombState,
     pauseBombs,
     stepBombs,
@@ -146,4 +147,14 @@ test('advanceBombs caps a long frame gap so a hitch cannot skip the fuse', () =>
     advanceBombs(state, 0)
     assert.deepEqual(explosions(advanceBombs(state, 5000)), [])
     assert.equal(bombDrawList(state)[0].sheet, 'bombOn')
+})
+
+test('clearBombs removes a live Bomb (a new level or restart starts with none)', () => {
+    const state = createBombState()
+    tryDropBomb(state, FEET)
+    stepBombs(state, 500)
+    clearBombs(state)
+    assert.deepEqual(bombDrawList(state), [])
+    assert.deepEqual(stepBombs(state, 2000), [])
+    assert.equal(tryDropBomb(state, FEET), true)
 })

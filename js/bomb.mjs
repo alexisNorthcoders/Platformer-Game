@@ -79,6 +79,12 @@ export function advanceBombs(state, now) {
     return dt > 0 ? stepBombs(state, dt) : []
 }
 
+/** Removes any live Bomb, e.g. when a level is (re)built. */
+export function clearBombs(state) {
+    state.bomb = null
+    state.lastNow = null
+}
+
 /** Call while Bombs aren't stepped (Pause Menu, loading), so they resume where they were. */
 export function pauseBombs(state) {
     state.lastNow = null

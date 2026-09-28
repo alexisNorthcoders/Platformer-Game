@@ -139,6 +139,7 @@ const player = new Player({
                             LevelProgressKeys.clearAll()
                         }
                         levelTimer.reset()
+                        bombLib.clearBombs(bombs)
                         await initLevel(level)
                         recordLevelEntry()
                         const dir = levels[level].lastDirection
@@ -644,6 +645,7 @@ function resetSession() {
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
     LevelProgressKeys.clearAll()
+    bombLib.clearBombs(bombs)
 }
 
 // The only input route for the menu buttons, on touch too: taps synthesise a
@@ -918,6 +920,7 @@ async function restartCurrentLevel(beforeLoad) {
     player._restarting = true
     try {
         beforeLoad?.()
+        bombLib.clearBombs(bombs)
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
         player.dead = false
