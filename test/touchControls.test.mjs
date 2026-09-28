@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createTouchControls, syncHeldToKeys } from '../js/touchControls.mjs'
 
-const NONE = { left: false, right: false, jump: false, attack: false }
+const NONE = { left: false, right: false, jump: false, attack: false, bomb: false }
 
 test('nothing is held before any pointer goes down', () => {
     assert.deepEqual(createTouchControls().held(), NONE)
@@ -33,6 +33,19 @@ test('jump and attack buttons hold their key while pressed', () => {
     const tc = createTouchControls()
     assert.deepEqual(tc.pointerDown({ pointerId: 1, zone: 'jump' }), { ...NONE, jump: true })
     assert.deepEqual(tc.pointerDown({ pointerId: 2, zone: 'attack' }), { ...NONE, jump: true, attack: true })
+})
+
+test('the bomb button holds its key while pressed, alongside attack', () => {
+    const tc = createTouchControls()
+    assert.deepEqual(tc.pointerDown({ pointerId: 1, zone: 'bomb' }), { ...NONE, bomb: true })
+    assert.deepEqual(tc.pointerDown({ pointerId: 2, zone: 'attack' }), { ...NONE, bomb: true, attack: true })
+    assert.deepEqual(tc.pointerUp({ pointerId: 1 }), { ...NONE, attack: true })
+})
+
+test('reset releases a held bomb button', () => {
+    const tc = createTouchControls()
+    tc.pointerDown({ pointerId: 1, zone: 'bomb' })
+    assert.deepEqual(tc.reset(), NONE)
 })
 
 test('moving a button pointer does not change what it holds', () => {
@@ -97,10 +110,18 @@ test('held() returns a copy the caller cannot mutate', () => {
 })
 
 test('syncHeldToKeys writes only the keys whose held state changed', () => {
-    const keys = { a: { pressed: false }, d: { pressed: true }, w: { pressed: false }, space: { pressed: false } }
+    const keys = { a: { pressed: false }, d: { pressed: true }, w: { pressed: false }, space: { pressed: false }, s: { pressed: false } }
     // d was pressed by the keyboard; touch never held right, so it is left alone.
     syncHeldToKeys(keys, NONE, { ...NONE, left: true, jump: true })
-    assert.deepEqual(keys, { a: { pressed: true }, d: { pressed: true }, w: { pressed: true }, space: { pressed: false } })
+    assert.deepEqual(keys, { a: { pressed: true }, d: { pressed: true }, w: { pressed: true }, space: { pressed: false }, s: { pressed: false } })
     syncHeldToKeys(keys, { ...NONE, left: true, jump: true }, { ...NONE, attack: true })
-    assert.deepEqual(keys, { a: { pressed: false }, d: { pressed: true }, w: { pressed: false }, space: { pressed: true } })
+    assert.deepEqual(keys, { a: { pressed: false }, d: { pressed: true }, w: { pressed: false }, space: { pressed: true }, s: { pressed: false } })
+})
+
+test('syncHeldToKeys maps the bomb button to s, pressing and releasing', () => {
+    const keys = { a: { pressed: false }, d: { pressed: false }, w: { pressed: false }, space: { pressed: false }, s: { pressed: false } }
+    syncHeldToKeys(keys, NONE, { ...NONE, bomb: true })
+    assert.equal(keys.s.pressed, true)
+    syncHeldToKeys(keys, { ...NONE, bomb: true }, NONE)
+    assert.equal(keys.s.pressed, false)
 })
