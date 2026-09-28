@@ -175,11 +175,12 @@ class Player extends Sprite {
         if (keys.space.pressed && this.canAttack) {
             this.attack()
         }
-        // Each press of S drops at most one Bomb, and only on the ground; the
-        // King's animation carries on (index.js's dropBomb places it).
+        // Each press of S drops at most one Bomb, on the ground or in mid-air
+        // (where it falls first); the King's animation carries on (index.js's
+        // dropBomb places it).
         if (keys.s.pressed && this.canDropBomb) {
             this.canDropBomb = false
-            if (this.isGrounded) dropBomb(this.feetPosition())
+            dropBomb({ ...this.feetPosition(), halfWidth: this.hitbox.width / 2 })
         }
 
         // Running

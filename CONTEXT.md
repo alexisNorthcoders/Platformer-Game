@@ -45,5 +45,5 @@ _Avoid_: Pig with a Match (except when naming the sprite folder)
 ### Objects
 
 **Bomb**:
-A lit explosive that blows up once its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. The King drops Bombs; Bomb Pigs throw them.
+An explosive that, once lit, blows up when its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. The King drops Bombs, on the ground or in mid-air (a Bomb dropped in mid-air falls unlit and lights its fuse on landing); Bomb Pigs throw them.
 _Avoid_: King's bomb, Pig bomb, grenade
