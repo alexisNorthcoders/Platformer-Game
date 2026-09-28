@@ -4,13 +4,14 @@
  *
  * Pure: no DOM, canvas or globals. index.js drops Bombs on S, steps them with
  * advanceBombs() while playing (pauseBombs() otherwise, so they freeze while
- * paused) and draws bombDrawList() inside the camera transform (through
- * globalThis.__bomb, bomb-bootstrap.mjs).
+ * paused), hits findBlastVictims() for each explosion and draws bombDrawList()
+ * inside the camera transform (through globalThis.__bomb, bomb-bootstrap.mjs).
  *
  * Positions are world px; a Bomb's (x, y) is its base, where the Bomb sits on
  * the floor. Sprites draw at the game's 2× pixel scale.
  */
 
+import { rectHitboxesOverlap } from './contactDamageHelpers.mjs'
 import { BOMB_SHEETS, SPRITE_SCALE, loopFrame, onceFrame, playMs, spriteDrawRect } from './spriteAnimation.mjs'
 
 export const BOMB = {
@@ -86,6 +87,20 @@ export function advanceBombs(state, now) {
     const dt = state.lastNow == null ? 0 : Math.min(BOMB.maxStepMs, Math.max(0, now - state.lastNow))
     state.lastNow = now
     return dt > 0 ? stepBombs(state, dt) : []
+}
+
+/**
+ * Who a blast `rect` (an explosion event's) catches (#74): the King (or null)
+ * and the Pigs and Boxes whose hitboxes overlap it. Dead Pigs and broken
+ * Boxes are left out; the King's hitCooldown is his own hit path's to check.
+ */
+export function findBlastVictims(rect, { king, pigs, boxes }) {
+    const caught = entity => rectHitboxesOverlap(rect, entity.hitbox)
+    return {
+        king: king && caught(king) ? king : null,
+        pigs: pigs.filter(pig => pig.hitpoints > 0 && caught(pig)),
+        boxes: boxes.filter(box => !box.isBreaking && caught(box)),
+    }
 }
 
 /** Removes any live Bomb, e.g. when a level is (re)built. */
