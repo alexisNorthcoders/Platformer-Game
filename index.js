@@ -966,6 +966,8 @@ async function restartCurrentLevel(beforeLoad) {
         numberSprites = createNumberSprites(diamondCount)
         enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
         await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
+        // The game-over retry gives input back before the load: drop any Bomb dropped meanwhile.
+        bombLib.clearBombs(bombs)
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
     } finally {
