@@ -93,7 +93,8 @@ const player = new Player({
             frameBuffer: 2,
             loop: true,
             imageSrc: './img/king/Jump (78x58).png',
-            flip: true
+            flip: true,
+            flipOffsetX: -15, // match the 15px shift baked into IdleLeft/RunLeft
         },
 
         idleLeft: {
@@ -125,7 +126,8 @@ const player = new Player({
             frameBuffer: 6,
             loop: false,
             imageSrc: './img/king/Attack (78x58).png',
-            flip: true
+            flip: true,
+            flipOffsetX: -15, // match the 15px shift baked into IdleLeft/RunLeft
         },
         enterDoor: {
             frameRate: 8,

@@ -31,6 +31,7 @@ class Sprite {
         this.autoplay = autoplay
         this.currentAnimation
         this.opacity = 1
+        this.flipOffsetX = 0 // art px; negative moves flipped drawing left
         this.runOnce = false
         this.randomInterval = randomInterval
         this.random = random
@@ -93,7 +94,7 @@ class Sprite {
             source.y,
             cropbox.width,
             cropbox.height,
-            this.flip ? -this.position.x - this.width * scale : this.position.x,
+            this.flip ? -this.position.x - this.width * scale - this.flipOffsetX * scale : this.position.x,
             this.position.y,
             this.width * scale,
             this.height * scale
