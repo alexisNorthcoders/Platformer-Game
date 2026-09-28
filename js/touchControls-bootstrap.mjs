@@ -19,6 +19,10 @@ import { onHeldInputKeysCleared } from './sessionReset.mjs'
 // through the same canPlayerEnterDoor/enterDoor as keyboard ↑ (globals from
 // eventListeners.js). B only ever jumps, even at a door.
 //
+// Bomb (#77): the button above A holds `s`, so it drops a Bomb exactly as
+// keyboard S does: holding it drops one, lifting and pressing again drops the
+// next (Player.canDropBomb).
+//
 // Pause (#45): the small centred ❚❚ button runs index.js's
 // handleEscapeMenu, exactly what Esc does: during play it opens the pause menu,
 // while paused it resumes, and during loading or game over it does nothing.
