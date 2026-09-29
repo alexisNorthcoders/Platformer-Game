@@ -406,5 +406,9 @@ async function initLevel(levelNumber, options = {}) {
         console.error(`Level ${levelNumber} does not exist.`);
         return;
     }
+    // A new level (door, Restart Level, Try Again) never inherits a Quicksand sink;
+    // whoever starts it manages input, so preventInput is left alone.
+    player.sinking = false
+    player.sinkLockedInput = false
     await initializeLevel(levelNumber, level.playerPosition, level.lastDirection, options);
 }

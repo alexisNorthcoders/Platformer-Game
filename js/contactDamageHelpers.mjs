@@ -13,9 +13,9 @@ export function rectHitboxesOverlap(a, b) {
     )
 }
 
-/** True while overlap must not apply contact damage (cooldown after a hit, or dead). */
-export function cannotTakeContactDamage({ dead, hitCooldown }) {
-    return Boolean(dead || hitCooldown)
+/** True while overlap must not apply contact damage (cooldown after a hit, dead, or sinking in Quicksand). */
+export function cannotTakeContactDamage({ dead, hitCooldown, sinking }) {
+    return Boolean(dead || hitCooldown || sinking)
 }
 
 /** Horizontal knockback away from the enemy center (matches Player logic). */

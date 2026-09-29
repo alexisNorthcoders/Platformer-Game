@@ -3,6 +3,10 @@ class Player extends Sprite {
         super({ imageSrc, frameRate, animations, loop })
         this.hitpoints = 3
         this.preventInput = false
+        /** Caught in the Quicksand and sinking out of sight (no way out). */
+        this.sinking = false
+        /** Whether the sinking, not a door/menu, turned preventInput on (so only it turns it off). */
+        this.sinkLockedInput = false
         this.isGrounded = true
         this.hitCooldown = false
         this.action = false
@@ -96,6 +100,11 @@ class Player extends Sprite {
 
         if (this.gameOver) return
 
+        if (this.sinking) {
+            this.sinkStep()
+            return
+        }
+
         // blue box 
         //c.fillStyle = 'rgba(0,0,255,0)'
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
@@ -152,6 +161,39 @@ class Player extends Sprite {
         this.checkForVerticalCollisions()
 
         if (this.dying) this.playDeathAnimation()
+    }
+
+    /** Caught: stops dead, input locked, idle, sinking slowly (Quicksand). */
+    startSinking() {
+        if (this.sinking) return
+        this.sinking = true
+        this.sinkLockedInput = !this.preventInput
+        this.preventInput = true
+        this.velocity.x = 0
+        this.velocity.y = 0
+        this.running = false
+        this.action = false
+        this.attacking = false
+        this.isGrounded = false
+        this.switchSprite(this.lastDirection === 'left' ? 'idleLeft' : 'idleRight')
+    }
+
+    /** Gives back only the input the sinking took. */
+    stopSinking() {
+        if (!this.sinking) return
+        this.sinking = false
+        if (this.sinkLockedInput) this.preventInput = false
+        this.sinkLockedInput = false
+    }
+
+    /** One frame of the sink; once fully under, loses a heart and comes back at the Checkpoint. */
+    sinkStep() {
+        this.position.y = globalThis.__quicksand.sinkStep(this.position.y)
+        this.updateHitbox()
+        if (!globalThis.__quicksand.isSubmerged(this.hitbox.position.y, levels[level]?.sand)) return
+        this.stopSinking()
+        this.loseHP()
+        respawnKing()
     }
 
     jump() {
@@ -329,7 +371,7 @@ class Player extends Sprite {
     }
 
     checkEnemyContactDamage() {
-        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown })) return
+        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
 
         const groups = [enemies, enemyKing, enemyMatch]
         for (let g = 0; g < groups.length; g++) {
@@ -355,7 +397,7 @@ class Player extends Sprite {
 
     /** Caught in a Bomb's blast (#74): a hit with no knockback, unless in hitCooldown or dead. */
     takeBlastHit() {
-        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown })) return
+        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
         this.takeHit(null)
     }
 
@@ -458,6 +500,10 @@ class Player extends Sprite {
     }
     checkForVerticalCollisions() {
 
+        if (globalThis.__quicksand.touchesSand(this.feetPosition().y, levels[level]?.sand)) {
+            this.startSinking()
+            return
+        }
         if (player.position.y > canvas.height) {
             this.loseHP()
             respawnKing()

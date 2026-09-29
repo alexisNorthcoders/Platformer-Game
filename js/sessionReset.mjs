@@ -38,6 +38,8 @@ export function resetPlayerForNewLevelRun(player) {
     player.hitCooldown = false
     clearPlayerHurtTint(player)
     player.canJump = true
+    player.sinking = false
+    player.sinkLockedInput = false
     player.dead = false
     player.gameOver = false
     player.gameOverAt = null
