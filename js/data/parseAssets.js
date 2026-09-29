@@ -22,6 +22,24 @@ function getMovingPlatformPath(obj, scale) {
     }
 }
 
+/**
+ * The planks of a Rotating Platform from its object in the "rotating_platform"
+ * layer: an object whose (x, y) is the hub, with properties radius (map px),
+ * period (seconds a turn at 60 fps), arms (planks, evenly spaced; default 2),
+ * optional phase (0..1 of a turn) and direction (1 clockwise, -1 anticlockwise).
+ */
+function getRotatingPlatformPaths(obj, scale) {
+    const props = Object.fromEntries((obj.properties ?? []).map(p => [p.name, p.value]))
+    const arms = props.arms ?? 2
+    return Array.from({ length: arms }, (_, arm) => ({
+        center: { x: scale * obj.x, y: scale * obj.y },
+        radius: scale * (props.radius ?? 64),
+        periodFrames: Math.round((props.period ?? 8) * 60),
+        phase: (props.phase ?? 0) + arm / arms,
+        direction: props.direction ?? 1,
+    }))
+}
+
 async function loadAssets(level, scale) {
     try {
         const response = await fetch(`/kings-and-pigs/js/data/levels/Level_${level}.json`);
@@ -37,7 +55,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -56,6 +74,7 @@ async function loadAssets(level, scale) {
         const cannonLayer = layers["cannon"];
         const enemyMatchLayer = layers["enemy_match"];
         const movingPlatformLayer = layers["moving_platform"];
+        const rotatingPlatformLayer = layers["rotating_platform"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -92,7 +111,10 @@ async function loadAssets(level, scale) {
             levelWidth: jsonData.width * scale * 32,
             cannon: cannonData ? getAssetsPositions(cannonData) : [],
             enemyMatch: enemyMatchData ? getAssetsPositions(enemyMatchData) : [],
-            movingPlatforms: movingPlatformLayer ? movingPlatformLayer.objects.map(obj => getMovingPlatformPath(obj, scale)) : [],
+            movingPlatforms: [
+                ...(movingPlatformLayer ? movingPlatformLayer.objects.map(obj => getMovingPlatformPath(obj, scale)) : []),
+                ...(rotatingPlatformLayer ? rotatingPlatformLayer.objects.flatMap(obj => getRotatingPlatformPaths(obj, scale)) : []),
+            ],
         };
     } catch (error) {
         console.error(error.message);

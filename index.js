@@ -532,7 +532,9 @@ function stepMovingPlatforms() {
         const { dx, dy } = platform.step()
         if (!player.gameOver && lib.isRiding(player.hitbox, player.velocity.y, surface)) {
             player.position.x += dx
-            player.position.y += dy
+            player.position.y += dy > 0
+                ? lib.carriedDrop(player.hitbox, dy, collisionBlocks.filter(block => block.type !== 'platform'))
+                : dy
             player.updateHitbox()
         }
         const bomb = bombs.bomb
@@ -679,9 +681,74 @@ function drawSand() {
     c.restore()
 }
 
+// A thicket of tall grass along the bottom of levels with `grass` in levels.js.
+// The painted thicket (terrain image) is drawn again over the King so he sinks
+// into it; gusts rustle the blade tips and fireflies drift over it.
+const GRASS = { blade: '#5c8a50', firefly: '#e8f08c', fireflyGlow: 'rgba(232, 240, 140, 0.3)', pixel: 4, tallestTip: 12, fireflySpacing: 150 }
+
+/** Painted blade tips stand 0–6 map px over the thicket: tools/levelgen.py grass_blade_height, per 4-px column. */
+function grassBladeHeight(column) {
+    let h = Math.imul(column, 0x9E3779B1) >>> 0
+    h = Math.imul(h ^ (h >>> 15), 0x85EBCA6B) >>> 0
+    return ((h ^ (h >>> 13)) >>> 0) % 7
+}
+
+/** Walls standing in the thicket, as [left, right] world x: no rustling or fireflies over them. */
+let grassWalls = { blocks: null, spans: [] }
+
+function wallsInGrass(top) {
+    if (grassWalls.blocks !== collisionBlocks) {
+        grassWalls = {
+            blocks: collisionBlocks,
+            spans: collisionBlocks
+                .filter(block => block.type !== 'platform' && block.position.y <= top && block.position.y + block.height > top)
+                .map(block => [block.position.x, block.position.x + block.width]),
+        }
+    }
+    return grassWalls.spans
+}
+
+function drawGrass() {
+    const grass = levels[level]?.grass
+    if (!grass || !background?.loaded) return
+    const { pixel, tallestTip } = GRASS
+    const now = performance.now()
+    const left = Math.floor(camera.x / pixel) * pixel
+    const right = camera.x + canvas.width
+    const top = grass.top - tallestTip
+    const walls = wallsInGrass(grass.top)
+    const inWall = (x, margin = 0) => walls.some(([a, b]) => x + margin > a && x - margin < b)
+    c.save()
+    c.drawImage(background.image, left / 2, top / 2, (right - left) / 2, (canvas.height - top) / 2,
+        left, top, right - left, canvas.height - top)
+    // Gusts run along the thicket, lifting the blade tips they pass a pixel.
+    c.fillStyle = GRASS.blade
+    for (let x = left; x < right; x += pixel) {
+        const gust = Math.sin(x / 160 - now / 600) + Math.sin(x / 47 + now / 900) * 0.4
+        if (gust < 0.9 || inWall(x + pixel / 2)) continue
+        c.fillRect(x, grass.top - grassBladeHeight(x / pixel) * 2 - pixel, pixel, pixel)
+    }
+    // Fireflies: one per stretch of the world, wandering in a slow loop over
+    // the grass and blinking on its own beat.
+    const stretch = GRASS.fireflySpacing
+    for (let k = Math.floor(left / stretch) - 1; k * stretch < right + stretch; k++) {
+        const seed = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1
+        const t = now / 1000 + seed * 20
+        if (Math.sin(t * 1.3 + seed * 6) < -0.2) continue
+        const fx = Math.round((k * stretch + stretch / 2 + Math.sin(t * 0.4) * 50) / 2) * 2
+        const fy = Math.round((grass.top - 24 - seed * 40 + Math.sin(t * 0.9) * 12) / 2) * 2
+        if (inWall(fx, 12)) continue
+        c.fillStyle = GRASS.fireflyGlow
+        c.fillRect(fx - 4, fy - 4, 12, 12)
+        c.fillStyle = GRASS.firefly
+        c.fillRect(fx, fy, 4, 4)
+    }
+    c.restore()
+}
+
 /**
  * The parallax sky: pinned to the camera, shifted by `parallax` × its travel.
- * A far layer (the sun) sits behind it, pinned to the camera and not shifted.
+ * A far layer (the sun or moon) sits behind it, pinned to the camera and not shifted.
  */
 function drawSky() {
     const backdrop = levels[level]?.backdrop
@@ -1161,6 +1228,7 @@ function animate() {
     reachCheckpoints()
     drawWater()
     drawSand()
+    drawGrass()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);
