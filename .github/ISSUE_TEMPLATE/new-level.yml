@@ -43,6 +43,8 @@ body:
         - clouds (blue daytime sky)
         - sun (low desert sun)
         - moon (night, stars)
+        - smoke (soot and a red glow, a volcano)
+        - overcast (grey daytime, low heavy clouds)
         - something new (describe it under Anything else)
     validations:
       required: true
@@ -56,6 +58,7 @@ body:
         - label: Elevator (Moving Platform, up and down)
         - label: Diagonal ride (Moving Platform)
         - label: Rotating Platform (planks turning round a hub)
+        - label: Helix Platform (blades turning flat like a rotor)
   - type: textarea
     id: mechanics
     attributes:

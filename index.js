@@ -55,6 +55,8 @@ let platforms = []
 let movingPlatforms = []
 let helixPlatforms = []
 let crumblingShelves = []
+let rainTops = []
+let puddles = []
 /** Where the King comes back after falling into the water: the level start or the furthest Checkpoint reached. */
 let respawnPoint = null
 let doors = []
@@ -716,6 +718,89 @@ function drawSand() {
     c.restore()
 }
 
+// Rain, in levels with `weather: 'rain'` in levels.js: for looks alone, so
+// nothing below reads or changes the King, the Pigs or Bombs. Fine slanted
+// streaks in front of the level (weather.mjs picks them and where they land),
+// a tiny splash where a drop lands on a wall top, a ring where it lands in a
+// Puddle. Never over the pit: its surface is where a drop stops.
+const RAIN_LOOK = { streak: 'rgba(214, 226, 238, 0.4)', splash: 'rgba(226, 236, 246, 0.7)', ring: 'rgba(226, 236, 246, 0.8)', puddle: '#566a7e', glint: '#aabcca', pixel: 2 }
+
+function weatherIsRain() {
+    return levels[level]?.weather === 'rain'
+}
+
+/** The pit's surface (world y): where a drop that lands on nothing vanishes. */
+function pitSurface() {
+    const cfg = levels[level]
+    return (cfg.grass ?? cfg.water ?? cfg.sand ?? cfg.lava ?? cfg.cloudBank)?.top ?? canvas.height
+}
+
+/** A ring on a Puddle: a flat ellipse widening and fading as it ages. */
+function drawRing(x, y, age) {
+    const rx = 2 + age * 14
+    c.strokeStyle = RAIN_LOOK.ring
+    c.globalAlpha = 1 - age
+    c.lineWidth = RAIN_LOOK.pixel
+    c.beginPath()
+    c.ellipse(Math.round(x), y, rx, rx * 0.3, 0, 0, Math.PI * 2)
+    c.stroke()
+    c.globalAlpha = 1
+}
+
+function drawRain() {
+    if (!weatherIsRain() || !background?.loaded) return
+    const lib = globalThis.__weather
+    const now = performance.now() / 1000
+    const { streaks, splashes } = lib.rainAt(now, { left: camera.x, right: camera.x + canvas.width }, { tops: rainTops, bottom: pitSurface() })
+    const { pixel } = RAIN_LOOK
+    c.save()
+    c.strokeStyle = RAIN_LOOK.streak
+    c.lineWidth = pixel
+    c.beginPath()
+    for (const s of streaks) {
+        c.moveTo(Math.round(s.tailX), Math.round(s.tailY))
+        c.lineTo(Math.round(s.x), Math.round(s.y))
+    }
+    c.stroke()
+    for (const splash of splashes) {
+        if (lib.inPuddle(splash.x, splash.y, puddles)) {
+            drawRing(splash.x, splash.y + 2, splash.age)
+            continue
+        }
+        // Two specks thrown up and out, falling back.
+        const rise = Math.sin(splash.age * Math.PI) * 8
+        const out = 2 + splash.age * 8
+        c.globalAlpha = 1 - splash.age
+        c.fillStyle = RAIN_LOOK.splash
+        for (const side of [-1, 1]) {
+            c.fillRect(Math.round(splash.x + side * out) - 1, Math.round(splash.y - rise) - 2, pixel, pixel)
+        }
+    }
+    c.restore()
+}
+
+/**
+ * A small static Puddle on a Moving or Rotating Platform's plank, riding with
+ * it, with ripples. Purely for looks: it is never slippery.
+ */
+function drawPlankPuddle(platform, seed) {
+    if (!weatherIsRain() || !platform.loaded) return
+    const surface = platform.surface()
+    const width = Math.min(48, Math.round(surface.width * 0.3 / 2) * 2)
+    const x = Math.round(surface.x + (surface.width - width) * (0.3 + 0.4 * globalThis.__weather.hash01(seed, 7)))
+    const y = Math.round(surface.y)
+    c.save()
+    c.fillStyle = RAIN_LOOK.puddle
+    c.fillRect(x + 2, y - 2, width - 4, 6)
+    c.fillRect(x, y, width, 4)
+    c.fillStyle = RAIN_LOOK.glint
+    c.fillRect(x + 2, y - 2, width - 4, 2)
+    for (const ring of globalThis.__weather.puddleRipples(performance.now() / 1000, seed + 1, width)) {
+        drawRing(x + ring.dx, y, ring.age)
+    }
+    c.restore()
+}
+
 // A thicket of tall grass along the bottom of levels with `grass` in levels.js.
 // The painted thicket (terrain image) is drawn again over the King so he sinks
 // into it; gusts rustle the blade tips and fireflies drift over it.
@@ -1328,7 +1413,10 @@ function animate() {
     }
     crumblingShelves.forEach(shelf => shelf.draw())
     helixPlatforms.forEach(platform => platform.draw())
-    movingPlatforms.forEach(platform => platform.draw(2))
+    movingPlatforms.forEach((platform, index) => {
+        platform.draw(2)
+        drawPlankPuddle(platform, index)
+    })
     drawCheckpoints()
     if (enemies) {
         enemies.forEach(enemy => {
@@ -1373,6 +1461,7 @@ function animate() {
     drawGrass()
     drawLava()
     drawCloudBank()
+    drawRain()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);

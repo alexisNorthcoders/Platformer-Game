@@ -132,4 +132,33 @@ const levels = {
             { x: 6306, y: 168 },
         ],
     },
+    // Drizzlewood (built by tools/levels/level_23.py): a pine forest in Rain under an
+    // overcast sky, narrow footholds and short planks over a thicket of tall grass.
+    23: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        grass: { top: 496 },
+        weather: 'rain',
+        backdrop: {
+            far: './img/Level 23 far.png',
+            sky: './img/Level 23 sky.png',
+            terrain: './img/Level 23 terrain.png',
+            parallax: 0.3,
+        },
+        checkpoints: [
+            { x: 610, y: 296 },
+            { x: 866, y: 232 },
+            { x: 1890, y: 168 },
+            { x: 2274, y: 40 },
+            { x: 2786, y: 104 },
+            { x: 4194, y: 168 },
+            { x: 4834, y: 232 },
+            { x: 6114, y: 168 },
+            { x: 7074, y: 232 },
+            { x: 7714, y: 168 },
+            { x: 8610, y: 104 },
+            { x: 9378, y: 40 },
+            { x: 10402, y: 168 },
+        ],
+    },
 };

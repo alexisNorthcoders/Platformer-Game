@@ -192,5 +192,28 @@ for (const spot of [levels[N].playerPosition, ...(levels[N].checkpoints ?? [])])
     }
 }
 
-report.ok = ['fall', 'pigs', 'rides', 'helix', 'crumbling', 'standing', 'farEnd'].every(check => report[check].ok)
+// 6. Weather never touches the King: 300 frames of the same keys with the Weather on
+// and off leave him in the same place with the same hearts, and rain falls in view.
+if (levels[N].weather) {
+    const run = async weather => {
+        const kept = levels[N].weather
+        if (weather) levels[N].weather = weather
+        else delete levels[N].weather
+        await play(N)
+        hold('d', 60)
+        hold('space', 20)
+        step(220)
+        levels[N].weather = kept
+        return { x: player.position.x, y: player.position.y, hearts: player.hitpoints }
+    }
+    const withWeather = await run(levels[N].weather)
+    const without = await run(null)
+    const drops = globalThis.__weather.rainAt(performance.now() / 1000, { left: 0, right: 1024 }, { tops: rainTops, bottom: 496 })
+    report.weather = {
+        ok: withWeather.x === without.x && withWeather.y === without.y && withWeather.hearts === without.hearts,
+        withWeather, without, streaksInView: drops.streaks.length, splashesInView: drops.splashes.length,
+    }
+}
+
+report.ok = ['fall', 'pigs', 'rides', 'helix', 'crumbling', 'standing', 'farEnd', 'weather'].every(check => !report[check] || report[check].ok)
 return report

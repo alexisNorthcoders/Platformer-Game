@@ -19,7 +19,13 @@ function getMovingPlatformPath(obj, scale) {
         to: { x: from.x + scale * (props.dx ?? 0), y: from.y + scale * (props.dy ?? 0) },
         periodFrames: Math.round((props.period ?? 4) * 60),
         phase: props.phase ?? 0,
+        ...plankWidthOf(props, scale),
     }
+}
+
+/** A plank's optional `width` property (map px) as world px; nothing when absent (the default 200). */
+function plankWidthOf(props, scale) {
+    return props.width === undefined ? {} : { width: scale * props.width }
 }
 
 /**
@@ -37,6 +43,7 @@ function getRotatingPlatformPaths(obj, scale) {
         periodFrames: Math.round((props.period ?? 8) * 60),
         phase: (props.phase ?? 0) + arm / arms,
         direction: props.direction ?? 1,
+        ...plankWidthOf(props, scale),
     }))
 }
 
@@ -72,7 +79,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "crumbling_shelf"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "crumbling_shelf", "puddle"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -94,6 +101,7 @@ async function loadAssets(level, scale) {
         const rotatingPlatformLayer = layers["rotating_platform"];
         const helixPlatformLayer = layers["helix_platform"];
         const crumblingShelfLayer = layers["crumbling_shelf"];
+        const puddleLayer = layers["puddle"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -135,6 +143,8 @@ async function loadAssets(level, scale) {
                 ...(rotatingPlatformLayer ? rotatingPlatformLayer.objects.flatMap(obj => getRotatingPlatformPaths(obj, scale)) : []),
             ],
             helixPlatforms: helixPlatformLayer ? helixPlatformLayer.objects.map(obj => getHelixPlatformPath(obj, scale)) : [],
+            // Puddles painted on the island tops: (x, y) the top-left, width, all world px.
+            puddles: puddleLayer ? puddleLayer.objects.map(obj => ({ x: scale * obj.x, y: scale * obj.y, width: scale * obj.width })) : [],
             // A point at each shelf's top-left, map px: its surface in world px.
             crumblingShelves: crumblingShelfLayer ? crumblingShelfLayer.objects.map(obj => ({ x: scale * obj.x, y: scale * obj.y })) : [],
         };

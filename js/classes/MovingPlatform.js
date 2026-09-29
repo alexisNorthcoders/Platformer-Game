@@ -14,7 +14,7 @@ class MovingPlatform extends Sprite {
         this.state = state
         this.collisionBlocks = [new CollisionBlock({
             position: { x: state.x, y: state.y },
-            width: lib.MOVING_PLATFORM.width,
+            width: lib.plankWidth(path),
             height: lib.MOVING_PLATFORM.height,
             type: 'platform',
         })]
@@ -22,14 +22,28 @@ class MovingPlatform extends Sprite {
 
     /** The walkable surface's top-left, before this frame's step. */
     surface() {
-        return { x: this.state.x, y: this.state.y }
+        return { x: this.state.x, y: this.state.y, width: this.collisionBlocks[0].width }
     }
 
     /** A plank on a Rotating Platform hangs from its hub by an iron chain, drawn behind it. */
     draw(scale) {
         const { center } = this.state.path
-        if (center) drawHubChain(center, { x: this.state.x + globalThis.__movingPlatform.MOVING_PLATFORM.width / 2, y: this.state.y })
-        super.draw(scale)
+        if (center) drawHubChain(center, { x: this.state.x + this.collisionBlocks[0].width / 2, y: this.state.y })
+        this.drawPlank(scale)
+    }
+
+    /**
+     * The plank sprite; a short plank (`width` under the default) keeps the
+     * sprite's two ends and drops its middle.
+     */
+    drawPlank(scale) {
+        const surface = this.collisionBlocks[0].width
+        if (surface >= globalThis.__movingPlatform.MOVING_PLATFORM.width || !this.loaded) return super.draw(scale)
+        const half = Math.floor((surface / scale + 4) / 2) // art px of each end
+        c.save()
+        c.drawImage(this.image, 0, 0, half, this.height, this.position.x, this.position.y, half * scale, this.height * scale)
+        c.drawImage(this.image, this.width - half, 0, half, this.height, this.position.x + half * scale, this.position.y, half * scale, this.height * scale)
+        c.restore()
     }
 
     /** Moves one frame along the path; returns { dx, dy }. */
