@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { reduceEscapeKey, reduceGameOverRetry, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
+import { reduceDeathProgress, reduceEscapeKey, reduceGameOverRetry, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
 
 test('Escape during loading is ignored', () => {
     const r = reduceEscapeKey({
@@ -179,4 +179,71 @@ test('game over retry only applies during game over, once', () => {
     assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: false }).handled, false)
     assert.equal(reduceGameOverRetry({ gameState: 'menu', playerGameOver: true }).handled, false)
     assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: true, restarting: true }).handled, false)
+})
+
+test('Escape while the King is dying is ignored', () => {
+    const r = reduceEscapeKey({
+        gameState: 'playing',
+        pauseMenuFromPlaying: false,
+        playerGameOver: false,
+        playerDying: true,
+    })
+    assert.equal(r.handled, false)
+    assert.equal(r.reason, 'dying')
+})
+
+test('R and taps (the game over retry) do nothing while the King is dying', () => {
+    const r = reduceGameOverRetry({ gameState: 'playing', playerGameOver: false, playerDying: true })
+    assert.equal(r.handled, false)
+    const both = reduceGameOverRetry({ gameState: 'playing', playerGameOver: true, playerDying: true })
+    assert.equal(both.handled, false)
+})
+
+test('Enter/Space (Pause Menu choices) do nothing while the King is dying', () => {
+    for (const choice of ['resume', 'restart', 'quit']) {
+        const r = reducePauseMenuChoice({
+            choice,
+            gameState: 'playing',
+            pauseMenuFromPlaying: false,
+            currentLevel: 1,
+        })
+        assert.equal(r.handled, false)
+    }
+})
+
+test('a grounded King whose Dead animation has finished moves dying to game over', () => {
+    const r = reduceDeathProgress({
+        gameState: 'playing',
+        playerDying: true,
+        playerGrounded: true,
+        deathAnimationDone: true,
+    })
+    assert.equal(r.handled, true)
+    assert.equal(r.gameOver, true)
+})
+
+test('a mid-air death stays dying until the King lands, even with the animation done', () => {
+    const r = reduceDeathProgress({
+        gameState: 'playing',
+        playerDying: true,
+        playerGrounded: false,
+        deathAnimationDone: true,
+    })
+    assert.equal(r.handled, false)
+    assert.equal(r.reason, 'stillDying')
+})
+
+test('a grounded King stays dying while the Dead animation is still playing', () => {
+    const r = reduceDeathProgress({
+        gameState: 'playing',
+        playerDying: true,
+        playerGrounded: true,
+        deathAnimationDone: false,
+    })
+    assert.equal(r.handled, false)
+})
+
+test('death progress only applies while playing and dying', () => {
+    assert.equal(reduceDeathProgress({ gameState: 'playing', playerDying: false, playerGrounded: true, deathAnimationDone: true }).handled, false)
+    assert.equal(reduceDeathProgress({ gameState: 'menu', playerDying: true, playerGrounded: true, deathAnimationDone: true }).handled, false)
 })

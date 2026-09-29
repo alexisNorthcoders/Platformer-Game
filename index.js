@@ -25,7 +25,7 @@ function readStoredSelectedLevel() {
     }
 }
 
-/** High-level flow. Death uses `player.gameOver` while this stays `'playing'`. */
+/** High-level flow. Death uses `player.dying` then `player.gameOver` while this stays `'playing'`. */
 let gameState = 'menu' // 'menu' | 'loading' | 'playing'
 let selectedLevel = 1
 /** True while the Pause Menu is open (opened with Escape or the pause button during play). */
@@ -126,6 +126,20 @@ const player = new Player({
             frameBuffer: 6,
             loop: false,
             imageSrc: './img/king/Attack (78x58).png',
+            flip: true,
+            flipOffsetX: -15, // match the 15px shift baked into IdleLeft/RunLeft
+        },
+        dead: {
+            frameRate: 4,
+            frameBuffer: 8,
+            loop: false,
+            imageSrc: './img/king/Dead (78x58).png',
+        },
+        deadLeft: {
+            frameRate: 4,
+            frameBuffer: 8,
+            loop: false,
+            imageSrc: './img/king/Dead (78x58).png',
             flip: true,
             flipOffsetX: -15, // match the 15px shift baked into IdleLeft/RunLeft
         },
@@ -482,7 +496,7 @@ function hitBlastVictims(rect) {
 /** Steps and draws the Bombs; call inside the camera transform. */
 function updateAndDrawBombs() {
     // A dead King's Bomb never goes off: Pigs it would beat stay beaten after the retry.
-    if (player.gameOver) bombLib.defuseBombs(bombs)
+    if (player.dead) bombLib.defuseBombs(bombs)
     for (const event of bombLib.advanceBombs(bombs, performance.now(), bombLandsAt)) {
         if (event.type === 'explosion') hitBlastVictims(event.rect)
     }
@@ -519,7 +533,7 @@ function currentCheckpoints() {
 
 /** Moves the respawn point on as the King passes the level's Checkpoints. */
 function reachCheckpoints() {
-    if (!respawnPoint || player.gameOver) return
+    if (!respawnPoint || player.dead) return
     respawnPoint = globalThis.__checkpoint.respawnPointAfter(currentCheckpoints(), respawnPoint, player.position.x)
 }
 
@@ -881,6 +895,9 @@ function animate() {
     c.imageSmoothingEnabled = false;
     window.requestAnimationFrame(animate)
 
+    // Only a game over in play holds animations still (set again below).
+    Sprite.framesFrozen = false
+
     if (gameState === 'menu') {
         // Bombs freeze behind the Pause Menu and carry on after Resume.
         bombLib.pauseBombs(bombs)
@@ -931,9 +948,13 @@ function animate() {
 
     player.handleInput(keys);
 
+    // Game over freezes the level: everything is still drawn, none of it advances.
+    const levelFrozen = player.gameOver
+    Sprite.framesFrozen = levelFrozen
+
     boxes.forEach(box => {
         box.draw(2);
-        box.update();
+        if (!levelFrozen) box.update();
     });
 
     if (platforms) {
@@ -941,31 +962,31 @@ function animate() {
             platform.draw(2);
         });
     }
-    stepMovingPlatforms()
+    if (!player.gameOver) stepMovingPlatforms()
     movingPlatforms.forEach(platform => platform.draw(2))
     drawCheckpoints()
     if (enemies) {
         enemies.forEach(enemy => {
             enemy.draw(2);
-            enemy.update();
+            if (!levelFrozen) enemy.update();
         });
     }
     if (enemyKing) {
         enemyKing.forEach(king => {
             king.draw(2);
-            king.update();
+            if (!levelFrozen) king.update();
         });
     }
     if (cannon) {
         cannon.forEach(x => {
             x.draw(2)
-            x.update()
+            if (!levelFrozen) x.update()
         })
     }
     if (enemyMatch) {
         enemyMatch.forEach(x => {
             x.draw(2)
-            x.update()
+            if (!levelFrozen) x.update()
         })
     }
 
@@ -975,11 +996,12 @@ function animate() {
         diamonds.forEach(diamond => {
             if (diamond.loaded) {
                 diamond.draw(2);
-                diamond.update();
+                if (!levelFrozen) diamond.update();
             }
         });
     }
     player.update();
+    advanceDeath()
     reachCheckpoints()
     drawWater()
 
@@ -1037,6 +1059,17 @@ function animate() {
     }
 }
 
+/** Dying → game over once the King is on the ground and his Dead animation has finished. */
+function advanceDeath() {
+    const result = globalThis.__gameFlow.reduceDeathProgress({
+        gameState,
+        playerDying: player.dying,
+        playerGrounded: player.isGrounded,
+        deathAnimationDone: player.deathAnimationDone,
+    })
+    if (result.handled && result.gameOver) player.gameOver = true
+}
+
 // Starts from 0; if Escape opened the menu mid-transition, start paused.
 function startLevelTimer() {
     const now = performance.now()
@@ -1074,6 +1107,7 @@ async function restartLevel() {
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
         player.dead = false
+        player.deathAnimationDone = false
         player.hitpoints = 3
         // Old level is still active until createAssets() resolves; stay invulnerable.
         player.hitCooldown = true
@@ -1110,6 +1144,7 @@ window.restartFromGameOver = () => {
     applyGameFlowResult(flow.reduceGameOverRetry({
         gameState,
         playerGameOver: player.gameOver,
+        playerDying: player.dying,
         restarting: Boolean(player._restarting),
     }))
 }
@@ -1123,6 +1158,7 @@ function handleEscapeMenu() {
         gameState,
         pauseMenuFromPlaying,
         playerGameOver: player.gameOver,
+        playerDying: player.dying,
         levelTransitioning,
         restarting: Boolean(player._restarting),
     }))
