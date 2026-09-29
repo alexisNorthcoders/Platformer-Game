@@ -30,6 +30,8 @@ body:
         - water
         - sand
         - grass
+        - lava
+        - cloud bank
         - something new (describe it under Anything else)
     validations:
       required: true

@@ -101,6 +101,56 @@ for (const [i, platform] of helixPlatforms.entries()) {
     respawnKing()
 }
 
+// 3c. Each Crumbling Shelf: rising up through it does not start the countdown;
+//     landing does, and it runs 2 s from the landing even after he hops off;
+//     it drops, comes back about 3 s later, and is whole after a respawn.
+await play(N)
+report.crumbling = { ok: true, shelves: [] }
+for (const [i, shelf] of crumblingShelves.entries()) {
+    const { x, y } = shelf.surface()
+    const away = { ...levels[N].playerPosition }
+    const heartsBefore = player.hitpoints
+    const phase = () => shelf.state.phase
+    // Rising through from just below it.
+    player.setPosition({ x: x + 4 - 35, y: y + 30 - FEET })
+    player.velocity.x = 0
+    player.velocity.y = -6
+    step(2)
+    const risingCounts = phase() !== 'whole'
+    // Landing on top, then off at once to somewhere safe.
+    player.setPosition({ x: x + 4 - 35, y: y - FEET - 0.01 })
+    player.velocity.y = 0
+    step(1)
+    const landed = phase() === 'shaking'
+    player.setPosition(away)
+    player.velocity.x = 0
+    player.velocity.y = 0
+    step(118)
+    const stillShaking = phase() === 'shaking'
+    step(1)
+    const dropped = phase() === 'falling'
+    let fallFrames = 0
+    while (phase() === 'falling' && fallFrames < 600) { step(1); fallFrames++ }
+    const gone = phase() === 'gone' && !crumblingShelves[i].collisionBlocks.some(b => b.position.y < canvas.height)
+    step(179)
+    const notYet = phase() === 'gone'
+    step(1)
+    const back = phase() === 'whole' && shelf.state.y === y
+    // A second crumble, cut short by a respawn: whole and still at once.
+    player.setPosition({ x: x + 4 - 35, y: y - FEET - 0.01 })
+    player.velocity.y = 0
+    step(60)
+    respawnKing()
+    const reset = phase() === 'whole' && shelf.state.y === y && shelf.collisionBlocks[0].position.y === y
+    step(130)
+    const wholeAfterReset = phase() === 'whole'
+    const ok = !risingCounts && landed && stillShaking && dropped && gone && notYet && back && reset && wholeAfterReset
+    report.crumbling.shelves.push({ i, ok, risingCounts, landed, stillShaking, dropped, gone, notYet, back, reset, wholeAfterReset, fallFrames })
+    if (!ok) report.crumbling.ok = false
+    player.hitpoints = heartsBefore
+    respawnKing()
+}
+
 // 4. The start and every checkpoint stand the King on solid ground.
 await play(N)
 report.standing = { ok: true, spots: [] }
@@ -130,5 +180,5 @@ for (const spot of [levels[N].playerPosition, ...(levels[N].checkpoints ?? [])])
     }
 }
 
-report.ok = ['fall', 'pigs', 'rides', 'helix', 'standing', 'farEnd'].every(check => report[check].ok)
+report.ok = ['fall', 'pigs', 'rides', 'helix', 'crumbling', 'standing', 'farEnd'].every(check => report[check].ok)
 return report

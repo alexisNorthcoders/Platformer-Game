@@ -54,6 +54,7 @@ let boxes = []
 let platforms = []
 let movingPlatforms = []
 let helixPlatforms = []
+let crumblingShelves = []
 /** Where the King comes back after falling into the water: the level start or the furthest Checkpoint reached. */
 let respawnPoint = null
 let doors = []
@@ -546,6 +547,38 @@ function stepMovingPlatforms() {
     }
 }
 
+/**
+ * Steps each Crumbling Shelf one frame: the King landing on one starts its
+ * countdown, and one that is falling carries him and a resting Bomb down with
+ * it (a Bomb that goes out of sight with it is gone without blowing up).
+ * Runs after the King's input and before he moves.
+ */
+function stepCrumblingShelves() {
+    if (!crumblingShelves.length) return
+    const lib = globalThis.__crumblingShelf
+    const platformLib = globalThis.__movingPlatform
+    player.updateHitbox()
+    const alive = !player.gameOver && !player.dead
+    for (const shelf of crumblingShelves) {
+        const surface = shelf.surface()
+        const solid = lib.isSolid(shelf.state)
+        const kingOn = alive && solid && lib.isLandedOn(player.hitbox, player.velocity.y, surface)
+        const bomb = bombs.bomb
+        const bombOn = Boolean(bomb) && solid && (bomb.phase === 'fuse') &&
+            bomb.x >= surface.x && bomb.x <= surface.x + surface.width &&
+            Math.abs(bomb.y - surface.y) <= lib.CRUMBLING_SHELF.landTolerancePx
+        const { dy } = shelf.step({ landed: kingOn, blocked: alive && lib.blocksReturn(player.hitbox, shelf.state) })
+        if (dy > 0 && kingOn) {
+            player.position.y += platformLib.carriedDrop(player.hitbox, dy, collisionBlocks.filter(block => block.type !== 'platform'))
+            player.updateHitbox()
+        }
+        if (bombOn) {
+            bomb.y += dy
+            if (!lib.isSolid(shelf.state)) bombLib.clearBombs(bombs)
+        }
+    }
+}
+
 function currentCheckpoints() {
     return levels[level]?.checkpoints ?? []
 }
@@ -559,6 +592,7 @@ function reachCheckpoints() {
 /** The King falls into the water: back to the respawn point, standing still. */
 function respawnKing() {
     player.setPosition(respawnPoint ?? levels[level].playerPosition)
+    crumblingShelves.forEach(shelf => shelf.reset())
     player.velocity.x = 0
     player.velocity.y = 0
 }
@@ -743,6 +777,34 @@ function drawGrass() {
         c.fillRect(fx - 4, fy - 4, 12, 12)
         c.fillStyle = GRASS.firefly
         c.fillRect(fx, fy, 4, 4)
+    }
+    c.restore()
+}
+
+// The Cloud Bank along the bottom of levels with `cloudBank` in levels.js: a
+// floor of cloud painted on the level image too, drawn again over the King so
+// he sinks out of sight into it. Its soft lumps drift slowly along. Colours
+// equal BANK_* in tools/levelgen.py.
+const CLOUD_BANK = { deep: '#c4dee6', mid: '#e2f2f4', crest: '#fafdfc', pixel: 2, driftPerSecond: 12, crestDepth: 6, midDepth: 28 }
+
+function drawCloudBank() {
+    const bank = levels[level]?.cloudBank
+    if (!bank) return
+    const { pixel } = CLOUD_BANK
+    const drift = performance.now() / 1000 * CLOUD_BANK.driftPerSecond
+    const left = Math.floor(camera.x / pixel) * pixel
+    const right = camera.x + canvas.width
+    c.save()
+    for (let x = left; x < right; x += pixel) {
+        // The painted lumps (bank_bump in levelgen.py), drifting.
+        const mx = (x - drift) / 2
+        const tip = bank.top - Math.round(1.5 + Math.sin(mx / 23) + 0.5 * Math.sin(mx / 9 + 1)) * 2
+        c.fillStyle = CLOUD_BANK.crest
+        c.fillRect(x, tip, pixel, CLOUD_BANK.crestDepth)
+        c.fillStyle = CLOUD_BANK.mid
+        c.fillRect(x, tip + CLOUD_BANK.crestDepth, pixel, bank.top + CLOUD_BANK.midDepth - tip - CLOUD_BANK.crestDepth)
+        c.fillStyle = CLOUD_BANK.deep
+        c.fillRect(x, bank.top + CLOUD_BANK.midDepth, pixel, canvas.height - bank.top - CLOUD_BANK.midDepth)
     }
     c.restore()
 }
@@ -1262,7 +1324,9 @@ function animate() {
     if (!player.gameOver) {
         stepMovingPlatforms()
         helixPlatforms.forEach(platform => platform.step())
+        stepCrumblingShelves()
     }
+    crumblingShelves.forEach(shelf => shelf.draw())
     helixPlatforms.forEach(platform => platform.draw())
     movingPlatforms.forEach(platform => platform.draw(2))
     drawCheckpoints()
@@ -1308,6 +1372,7 @@ function animate() {
     drawSand()
     drawGrass()
     drawLava()
+    drawCloudBank()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);

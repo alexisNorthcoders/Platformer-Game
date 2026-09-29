@@ -109,4 +109,27 @@ const levels = {
             { x: 4960, y: 104 },
         ],
     },
+    // Crumbling Heights (built by tools/levels/level_22.py): floating brick
+    // islands over a Cloud Bank, Crumbling Shelves and three Rotating Platforms.
+    22: {
+        playerPosition: { x: 100, y: 232 },
+        lastDirection: 'right',
+        cloudBank: { top: 496 },
+        backdrop: {
+            sky: './img/Level 22 sky.png',
+            terrain: './img/Level 22 terrain.png',
+            parallax: 0.3,
+        },
+        // Blue Pigs, deeper than the sky so they stay readable against it.
+        enemyTint: 'rgba(58, 111, 216, 0.75)',
+        checkpoints: [
+            { x: 930, y: 168 },
+            { x: 2018, y: 168 },
+            { x: 2850, y: 168 },
+            { x: 3618, y: 168 },
+            { x: 4706, y: 168 },
+            { x: 5538, y: 168 },
+            { x: 6306, y: 168 },
+        ],
+    },
 };

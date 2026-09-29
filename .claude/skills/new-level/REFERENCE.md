@@ -52,6 +52,13 @@ Measured from the code while building Level 18. When the code changes, re-check 
 - With an 8 s turn the blades reach across every 4 s and the tips move at most about 2.4 world px/frame, slower than the King's 4. He walks 184 px from the hub to the landing in about 46 frames. The window to leave the hub is about 1 s either side of full reach.
 - Keep Pigs and walls off the blades' full span.
 
+## Crumbling Shelves [`crumblingShelf.mjs`, `CrumblingShelf.js`]
+
+- A short, thin, cracked shelf, one tile (64 world px) wide with a 5-px one-way surface at the top of its tile, like a `platform_2` strip. It is drawn in code (it shakes and falls), so it is not on the level image, only on the Level Preview (`crumbling_shelves` in the layout).
+- Landing on top starts a 2 s countdown that never resets, even if he hops off. Rising up through it does not. It shakes throughout, then falls whole with gravity (carrying the King and a resting Bomb; a Bomb that goes down with it is gone without exploding) and is out of sight once 24 px under the Cloud Bank's surface.
+- It fades back in where it was 3 s later, but not while the King stands on its spot. `respawnKing` and a level restart make it whole and still at once.
+- Treat a shelf as a one-tile island for reach: 1 tile of air between shelves in a row is an easy hop; staircases step 1 row (64 world px) at a time. Every shelf on a level crumbles. No sound: `sounds/` holds none that fits.
+
 ## Map layers [`parseAssets.js`]
 
 Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest are optional.
@@ -67,6 +74,7 @@ Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest 
 | `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase` |
 | `rotating_platform` | points at the hub | properties `radius` (map px), `period` (s a turn), `arms`, `phase` (share of a turn), `direction` |
 | `helix_platform` | points at the middle of the hub's top | properties `radius` (map px, each blade's reach), `period` (s a turn), `phase`, `direction` |
+| `crumbling_shelf` | points at the shelf's top-left | its surface is world (2x, 2y) |
 | `platform` | objects | a static plank (solid, not one-way) |
 
 Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `levelgen.py` applies every offset above; list layout objects by tile or centre.
@@ -84,6 +92,7 @@ Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `leve
 - **A 'moon' sky** paints night bands, stars and the moon on the far layer (`MOON_ABOVE_HORIZON` 150, clear of every wall), dim clouds on the parallax layer, and multiplies the walls, banners and windows by `MOONLIGHT`. Grass grows on every wall top and windows glow with candlelight.
 - The 'grass' pit is a thicket of tall grass, 2-px blades whose tips stand 0–6 px over its surface (`grass_blade_height`, mirrored in `index.js` `grassBladeHeight`), with a pine forest on the horizon.
 - The pit is drawn again in code over the King (`drawWater`, `drawSand`, `drawGrass` in `index.js`), so he sinks into it. Keep its colours equal to the painted ones in `levelgen.py`; `drawGrass` redraws the painted strip of the terrain image instead, so it always matches. Don't draw effects above the pit's surface: they speckle the walls that stand in it.
+- A 'cloud' pit is the Cloud Bank: a flat floor of cloud (crest, mid, deep) on the level image, and `drawCloudBank` in `index.js` redraws it over the King with soft lumps drifting along, never below the painted surface, so nothing painted shows through. Its colours (`CLOUD_BANK`) match `BANK_*` in `levelgen.py`. The level's sky is bluer (`DAY_SKY`) and the horizon has pale cloud mounds. A ground entry with a fourth number, `(first, last, top, bottom)`, is a floating island: the tile set's underside pieces close it, and cloud wisps are painted under it.
 - A 'lava' pit is molten rock with dark crust veins and far black crags on the horizon. `drawLava` in `index.js` heaves its crest, pops bubbles in it and sends embers up from it, keeping the embers off walls that stand in it. Its colours (`LAVA`) match `LAVA_*` in `levelgen.py`.
 - A 'smoke' sky paints soot-to-red bands and a smoking volcano (`VOLCANO_X`) on the far layer, and banks of smoke on the parallax layer. It multiplies the walls, banners and windows by `EMBERLIGHT` and warms the walls towards `LAVA_GLOW` over the last 48 px above the pit. Windows glow as if lit by candles.
 - `enemyGlow` (a CSS colour) gives every enemy a pulsing glow (canvas shadow) round its frame. `boxTint` (a CSS colour) recolours the Boxes and their broken pieces with the 'color' blend, which keeps their shading; Level 21's grey iron is `rgb(150, 158, 170)`.
