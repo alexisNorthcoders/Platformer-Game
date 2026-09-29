@@ -69,6 +69,10 @@ _Avoid_: Elevator, lift, ferry (except when describing one's path)
 A hub with planks hung round it on chains, turning steadily like a wheel; each plank stays level as it goes round, and carries the King just as a Moving Platform does. He boards a plank as it rises past a ledge and steps off as it comes round level with the next one.
 _Avoid_: Wheel (except when describing one), Ferris wheel, spinning platform
 
+**Tumbling Plank**:
+A wooden plank that turns end over end round its own middle, slowly and without stopping, like a clock hand. The King can stand on it only while it lies nearly flat, which it does twice a turn; as it tips further it drops him, and while it stands on end he passes through it. It never pushes or hurts him.
+_Avoid_: Spinning platform, windmill, flip plank
+
 **Crumbling Shelf**:
 A short, thin, cracked plank the King can jump up through and land on. Once he lands on it, it shakes for two seconds, whether he stays or not, then drops away, taking with it anything still on it. It comes back where it was a few seconds later, or at once when he comes back at a Checkpoint or the level is restarted.
 _Avoid_: Crumbling ledge, breaking platform, falling platform
@@ -87,6 +91,10 @@ _Avoid_: Sea, pit
 The floor of cloud along the bottom of a sky level. The King sinks out of sight into it; falling in costs him a heart and puts him back at his last Checkpoint.
 _Avoid_: Cloud sea, sky pit
 
+**Spike Ditch**:
+A ditch cut down into the ground, with spikes along its bottom. Falling in costs the King a heart (he flashes as when hurt; there is never blood) and puts him back at his last Checkpoint.
+_Avoid_: Spike pit, trench
+
 **Checkpoint**:
 A flag on a long level marking where the King comes back after falling into the Water or the Cloud Bank. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
 _Avoid_: Save point, respawn point
@@ -94,11 +102,15 @@ _Avoid_: Save point, respawn point
 ### Weather
 
 **Weather**:
-An effect falling across an open-air level for looks alone, such as Rain. A level has at most one. It never touches the King, the Pigs or Bombs.
+An effect across an open-air level for looks alone, such as Rain or a Storm. A level has at most one. It never touches the King, the Pigs or Bombs.
 
 **Rain**:
 Weather of drops falling slantwise across the level, splashing where they land on walls and platforms. Purely for looks.
-_Avoid_: Storm, drizzle (except in a level's name)
+_Avoid_: Drizzle (except in a level's name)
+
+**Storm**:
+Weather of lightning without rain: bolts in the sky behind the level, and soft flashes that brighten the view now and then. Purely for looks: it never strikes anything.
+_Avoid_: Thunderstorm, lightning (for the whole Weather)
 
 **Puddle**:
 Standing rainwater on an island's bricks or a Moving Platform's plank, rippling where drops land. Purely for looks: it is never slippery.
