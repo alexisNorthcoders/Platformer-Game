@@ -12,7 +12,7 @@ Default canonical labels: needs-triage, needs-info, ready-for-agent, ready-for-h
 
 ### Levels
 
-To create or change a level, follow `.claude/skills/new-level/SKILL.md`. It covers the level toolkit (`tools/levelgen.py`), the King's reach, the map layers and how to check a level in the browser.
+To create or change a level, follow `.claude/skills/new-level/SKILL.md`. It covers the level toolkit (`tools/levelgen.py`), the King's reach, the map layers and how to check a level in the browser: `node tools/play.mjs --level N --file tools/level-checks.js` runs the checks in headless Chromium, with no browser extension needed.
 
 ### Domain docs
 

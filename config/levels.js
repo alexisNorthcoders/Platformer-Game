@@ -59,4 +59,27 @@ const levels = {
             { x: 6178, y: 168 },
         ],
     },
+    // Moonlit Thicket (built by tools/levels/level_20.py): a night forest, tall
+    // grass instead of water, and a Rotating Platform over the first gap.
+    20: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        grass: { top: 496 },
+        // `far` (night sky, stars and the moon) is drawn fixed to the view.
+        backdrop: {
+            far: './img/Level 20 far.png',
+            sky: './img/Level 20 sky.png',
+            terrain: './img/Level 20 terrain.png',
+            parallax: 0.3,
+        },
+        checkpoints: [
+            { x: 1570, y: 232 },
+            { x: 2210, y: 232 },
+            { x: 3554, y: 232 },
+            { x: 4002, y: 104 },
+            { x: 5218, y: 104 },
+            { x: 6210, y: 40 },
+            { x: 6882, y: 168 },
+        ],
+    },
 };

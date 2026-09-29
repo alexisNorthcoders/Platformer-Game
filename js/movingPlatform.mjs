@@ -1,7 +1,8 @@
 /**
  * Moving Platforms: planks that glide back and forth between two points,
  * easing to a stop at each end, carrying the King (and a Bomb resting on
- * them). Pure logic; MovingPlatform.js draws them and index.js steps them
+ * them). A Rotating Platform's planks are the same, on a circular path round
+ * its hub. Pure logic; MovingPlatform.js draws them and index.js steps them
  * once a frame while playing (through globalThis.__movingPlatform).
  *
  * Positions are world px. A path's `from` / `to` are the top-left of the
@@ -24,8 +25,24 @@ export function pathShareAt(frame, periodFrames, phase = 0) {
     return (1 - Math.cos(2 * Math.PI * turn)) / 2
 }
 
-/** A platform's surface top-left at `frame`. */
-export function pathPositionAt({ from, to, periodFrames, phase = 0 }, frame) {
+/**
+ * A plank on a Rotating Platform's hub: the middle of its surface circles
+ * `center` at `radius`, at a steady speed, and the plank stays level. It starts
+ * right of the hub (turned on by `phase` of a turn) and goes clockwise on
+ * screen, or anticlockwise with `direction` -1.
+ */
+function orbitPositionAt({ center, radius, periodFrames, phase = 0, direction = 1 }, frame) {
+    const angle = 2 * Math.PI * (direction * frame / periodFrames + phase)
+    return {
+        x: center.x + radius * Math.cos(angle) - MOVING_PLATFORM.width / 2,
+        y: center.y + radius * Math.sin(angle),
+    }
+}
+
+/** A platform's surface top-left at `frame`: on a ping-pong `from`–`to` path, or round a hub's `center`. */
+export function pathPositionAt(path, frame) {
+    if (path.center) return orbitPositionAt(path, frame)
+    const { from, to, periodFrames, phase = 0 } = path
     const share = pathShareAt(frame, periodFrames, phase)
     return {
         x: from.x + (to.x - from.x) * share,
@@ -60,6 +77,29 @@ export function isRiding(hitbox, velocityY, surface) {
     if (Math.abs(feetY - surface.y) > MOVING_PLATFORM.rideTolerancePx) return false
     return hitbox.position.x <= surface.x + MOVING_PLATFORM.width &&
         hitbox.position.x + hitbox.width >= surface.x
+}
+
+/** Player lands the King this far above a block's top. */
+const STANDING_GAP = 0.01
+
+/**
+ * How far a platform moving down by `dy` carries a rider with `hitbox`: no
+ * lower than standing on a solid block ({ position, width, height }) under his
+ * feet, 0.01 px above its top as Player lands him. A plank sinking past a ledge
+ * he also stands on leaves him on the ledge, rather than dragging him into it
+ * (where the side collision would push him back off it).
+ */
+export function carriedDrop(hitbox, dy, solidBlocks) {
+    if (dy <= 0) return dy
+    const feetY = hitbox.position.y + hitbox.height
+    let drop = dy
+    for (const block of solidBlocks) {
+        const under = hitbox.position.x < block.position.x + block.width &&
+            hitbox.position.x + hitbox.width > block.position.x &&
+            block.position.y >= feetY
+        if (under) drop = Math.min(drop, block.position.y - STANDING_GAP - feetY)
+    }
+    return Math.max(0, drop)
 }
 
 /** Whether a Bomb's base at (x, y) rests on `surface` (the platform before this frame's move). */

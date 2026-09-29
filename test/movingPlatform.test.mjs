@@ -5,6 +5,7 @@ import {
     createMovingPlatformState,
     isResting,
     isRiding,
+    carriedDrop,
     pathPositionAt,
     pathShareAt,
     stepMovingPlatform,
@@ -64,4 +65,52 @@ test('a Bomb resting on the top is carried; one elsewhere is not', () => {
     assert.equal(isResting(1100, 384, SURFACE), true)
     assert.equal(isResting(1100, 300, SURFACE), false)
     assert.equal(isResting(900, 384, SURFACE), false)
+})
+
+// A Rotating Platform's plank circles a hub, staying level: its surface's
+// middle runs round the circle.
+const ORBIT = { center: { x: 1000, y: 300 }, radius: 128, periodFrames: 400 }
+const middle = position => ({ x: position.x + MOVING_PLATFORM.width / 2, y: position.y })
+const near = (a, b) => Math.abs(a.x - b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9
+
+test('a plank on a hub starts at its right, turns clockwise and is back after one period', () => {
+    assert.ok(near(middle(pathPositionAt(ORBIT, 0)), { x: 1128, y: 300 }))
+    assert.ok(near(middle(pathPositionAt(ORBIT, 100)), { x: 1000, y: 428 }), 'a quarter turn later it is under the hub')
+    assert.ok(near(middle(pathPositionAt(ORBIT, 400)), { x: 1128, y: 300 }))
+})
+
+test('a phase turns the plank further round; direction -1 turns it anticlockwise', () => {
+    assert.ok(near(middle(pathPositionAt({ ...ORBIT, phase: 0.5 }, 0)), { x: 872, y: 300 }))
+    assert.ok(near(middle(pathPositionAt({ ...ORBIT, direction: -1 }, 100)), { x: 1000, y: 172 }))
+})
+
+test('a plank on a hub moves at a steady speed', () => {
+    const state = createMovingPlatformState(ORBIT)
+    const speeds = []
+    for (let i = 0; i < 400; i++) {
+        const { dx, dy } = stepMovingPlatform(state)
+        speeds.push(Math.hypot(dx, dy))
+    }
+    assert.ok(Math.max(...speeds) - Math.min(...speeds) < 1e-6)
+})
+
+// A plank sinking past a ledge the King also stands on leaves him on the ledge.
+const LEDGE = { position: { x: 1200, y: 320 }, width: 64, height: 64 }
+
+test('a sinking plank carries the King down when nothing else holds him', () => {
+    assert.equal(carriedDrop(standingHitbox(1050, 300), 1.5, [LEDGE]), 1.5)
+})
+
+test('a sinking plank carries the King no lower than a ledge under him', () => {
+    assert.equal(carriedDrop(standingHitbox(1180, 319.99), 1.5, [LEDGE]), 0)
+    assert.ok(Math.abs(carriedDrop(standingHitbox(1180, 319), 1.5, [LEDGE]) - 0.99) < 1e-9)
+})
+
+test('a ledge beside the King, or one he is already below, does not hold him', () => {
+    assert.equal(carriedDrop(standingHitbox(1100, 319.99), 1.5, [LEDGE]), 1.5)
+    assert.equal(carriedDrop(standingHitbox(1180, 330), 1.5, [LEDGE]), 1.5)
+})
+
+test('a rising plank always carries the King up', () => {
+    assert.equal(carriedDrop(standingHitbox(1180, 319.99), -1.5, [LEDGE]), -1.5)
 })

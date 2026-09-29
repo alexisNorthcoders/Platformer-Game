@@ -30,6 +30,11 @@ class Layout:
     # Moving Platforms: dict(x, y, dx, dy, period, phase). (x, y) is the surface's
     # top-left at the start, map px; period in seconds; phase 0 starts at (x, y), 0.5 at the far end.
     moving_platforms: list = field(default_factory=list)
+    # Rotating Platforms: dict(x, y, radius, period, arms, phase, direction). (x, y)
+    # is the hub, map px; each of `arms` planks circles it at `radius` (to the
+    # middle of its surface), staying level. Clockwise, or anticlockwise with
+    # direction -1; phase turns every plank on by that share of a turn.
+    rotating_platforms: list = field(default_factory=list)
     # (col, top row of the ground they stand on).
     pigs: list = field(default_factory=list)
     king_pigs: list = field(default_factory=list)
@@ -44,11 +49,14 @@ class Layout:
     # The deadly pit along the bottom: its surface in map px (levels.js
     # `water.top` or `sand.top` is twice this), or None for no pit.
     pit_top: int = None
-    # 'water' (waves, far isles) or 'sand' (dunes, far dunes).
+    # 'water' (waves, far isles), 'sand' (dunes, far dunes) or 'grass' (a
+    # night thicket of tall grass, a far pine forest).
     pit: str = 'water'
     # 'clouds': a blue sky with clouds, all on the parallax layer.
     # 'sun': a hot sky with a low sun and rare clouds. The sky colour and the sun
     # go on a far layer that stays fixed in the view (levels.js `backdrop.far`).
+    # 'moon': a night sky with stars and a moon, on the far layer as for 'sun';
+    # the walls are shaded by moonlight and grass grows on them.
     sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
@@ -102,6 +110,13 @@ def build_json(layout, cells):
                                       for key in ('dx', 'dy', 'period', 'phase')
                                   ]) for p in layout.moving_platforms]),
     ]
+    if layout.rotating_platforms:
+        # A point object at the hub (see parseAssets.js getRotatingPlatformPaths).
+        groups.append(('rotating_platform', [
+            dict(x=p['x'], y=p['y'], width=0, height=0, point=True, name='', type='', rotation=0, visible=True,
+                 properties=[dict(name=key, type='float', value=p.get(key, default))
+                             for key, default in (('radius', 64), ('period', 8), ('arms', 2), ('phase', 0), ('direction', 1))])
+            for p in layout.rotating_platforms]))
     next_id = 1
     for name, objects in groups:
         for obj in objects:
@@ -149,6 +164,17 @@ SUN = [(46, (255, 236, 190), 0.25), (36, (255, 236, 190), 0.5), (27, (255, 228, 
        (21, (255, 246, 214), 1), (15, (255, 253, 240), 1)]
 FAR_DUNE, FAR_DUNE_SHADE = (228, 190, 146), (214, 170, 128)
 SAND_DEEP, SAND_MID, SAND_CREST, SAND_RIPPLE = (206, 150, 92), (232, 184, 120), (250, 224, 170), (214, 162, 100)
+# The 'moon' sky: deep night overhead to a dim blue glow at the horizon.
+NIGHT_SKY = [(14, 16, 38), (20, 24, 52), (28, 34, 66), (38, 46, 82), (50, 60, 96), (64, 76, 110)]
+STAR, STAR_DIM = (236, 240, 250), (150, 160, 196)
+# Moon rings, outside in, as for the sun; then its craters.
+MOON = [(40, (170, 186, 214), 0.12), (30, (190, 204, 226), 0.25), (19, (226, 230, 216), 1)]
+MOON_CRATER = (200, 204, 190)
+FAR_PINE, NEAR_PINE = (32, 42, 70), (22, 32, 50)
+NIGHT_CLOUD = (56, 66, 100)
+GRASS_DEEP, GRASS_MID, GRASS_CREST, GRASS_BLADE = (18, 36, 32), (30, 58, 44), (58, 98, 62), (92, 138, 80)
+# Moonlight on the walls: every wall pixel is multiplied by this.
+MOONLIGHT = (150, 160, 205)
 
 
 def lerp(a, b, t):
@@ -168,14 +194,33 @@ def paint_sky(img, horizon, palette=SKY):
             px[x, y] = (*colour, 255)
 
 
-def paint_sun(img, cx, cy):
+def paint_sun(img, cx, cy, rings=SUN):
     """Concentric flat rings; the outer ones blend into the sky bands under them."""
     px = img.load()
-    for radius, colour, opacity in SUN:
+    for radius, colour, opacity in rings:
         for y in range(cy - radius, cy + radius + 1):
             for x in range(cx - radius, cx + radius + 1):
                 if 0 <= x < img.width and 0 <= y < img.height and (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2:
                     px[x, y] = (*lerp(px[x, y], colour, opacity), 255)
+
+
+def paint_moon(img, cx, cy):
+    paint_sun(img, cx, cy, MOON)
+    for dx, dy, r in ((-6, -5, 4), (5, 3, 5), (-3, 8, 3), (8, -8, 2)):
+        paint_blob(img, cx + dx, cy + dy, r, r, MOON_CRATER)
+
+
+def paint_stars(img, rng, horizon):
+    """Fixed in the view with the moon: single pixels, and a few bright crosses."""
+    px = img.load()
+    for _ in range(img.width * horizon // 900):
+        x, y = rng.randrange(img.width), rng.randrange(int(horizon * 0.75))
+        if rng.random() < 0.12:
+            for dx, dy in ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)):
+                if 0 <= x + dx < img.width and 0 <= y + dy < img.height:
+                    px[x + dx, y + dy] = (*STAR, 255)
+        else:
+            px[x, y] = (*(STAR if rng.random() < 0.4 else STAR_DIM), 255)
 
 
 def paint_blob(img, cx, cy, rx, ry, colour):
@@ -203,6 +248,42 @@ def paint_haze(img, rng):
         cx, cy = rng.uniform(0, img.width), rng.uniform(16, 80)
         paint_blob(img, cx, cy, rng.uniform(30, 60), 3, HAZE)
         paint_blob(img, cx + rng.uniform(-20, 20), cy + 6, rng.uniform(16, 30), 2, HAZE)
+
+
+def paint_night_clouds(img, rng):
+    """A few long, dim clouds drifting across the stars."""
+    for _ in range(max(1, img.width // 350)):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(30, 110)
+        paint_blob(img, cx, cy, rng.uniform(40, 80), 4, NIGHT_CLOUD)
+        paint_blob(img, cx + rng.uniform(-30, 30), cy - 4, rng.uniform(20, 40), 4, NIGHT_CLOUD)
+
+
+def paint_pine(img, x, base, height, colour):
+    """A pine silhouette: stacked tiers, each a stepped triangle, on a trunk."""
+    px = img.load()
+    tiers = max(2, height // 14)
+    for y in range(base - height, base):
+        t = (y - (base - height)) / height  # 0 at the tip
+        tier_t = (t * tiers) % 1
+        half = round((2 + 14 * tier_t) * (0.45 + 0.55 * t))
+        if y > base - 5:
+            half = 2  # trunk
+        for dx in range(-half, half + 1):
+            if 0 <= x + dx < img.width and 0 <= y < img.height:
+                px[x + dx, y] = (*colour, 255)
+
+
+def paint_far_forest(img, rng, horizon):
+    """Two ranks of pines on the horizon: a pale far rank and a dark near one."""
+    px = img.load()
+    for colour, heights, step, floor in ((FAR_PINE, (26, 56), (10, 26), 6), (NEAR_PINE, (18, 40), (14, 34), 3)):
+        for y in range(horizon - floor, horizon):
+            for x in range(img.width):
+                px[x, y] = (*colour, 255)
+        x = rng.randint(0, 20)
+        while x < img.width:
+            paint_pine(img, x, horizon - floor + 2, rng.randint(*heights), colour)
+            x += rng.randint(*step)
 
 
 def paint_far_isles(img, rng, horizon):
@@ -248,6 +329,26 @@ def paint_water(img, top):
             px[x, y] = (*colour, 255)
 
 
+def grass_blade_height(x):
+    """Tall grass over the pit's surface: blade tips 0-6 px up, fixed per column."""
+    h = (x // 2 * 0x9E3779B1) & 0xFFFFFFFF  # blades 2 px wide, scattered by an integer hash
+    h = ((h ^ h >> 15) * 0x85EBCA6B) & 0xFFFFFFFF
+    return (h ^ h >> 13) % 7
+
+
+def paint_grass(img, top):
+    px = img.load()
+    for x in range(img.width):
+        tip = top - grass_blade_height(x)
+        for y in range(tip, img.height):
+            depth = y - top
+            colour = GRASS_BLADE if y < tip + 2 else GRASS_CREST if depth < 4 else GRASS_MID if depth < 14 else GRASS_DEEP
+            # Darker blades in the thicket: thin vertical strokes.
+            if depth >= 6 and (x * 5 + depth // 7) % 9 == 0:
+                colour = GRASS_DEEP if depth < 14 else GRASS_MID
+            px[x, y] = (*colour, 255)
+
+
 def paint_sand(img, top):
     px = img.load()
     for y in range(top, img.height):
@@ -281,19 +382,64 @@ def wall_gid(cells, col, row):
     return FRAME['l'] if not left else FRAME['r'] if not right else FRAME['c']
 
 
-def paint_walls(img, cells):
+def paint_walls(img, cells, moonlit=False):
     sheet = Image.open('Sprites/14-TileSets/Terrain (32x32).png').convert('RGBA')
     for col, row in sorted(cells):
-        img.alpha_composite(terrain_tile(sheet, wall_gid(cells, col, row)), (col * TILE, row * TILE))
+        tile = terrain_tile(sheet, wall_gid(cells, col, row))
+        if moonlit:
+            tile = moonlight(tile)
+        img.alpha_composite(tile, (col * TILE, row * TILE))
+    if moonlit:
+        paint_wall_grass(img, cells)
+
+
+def moonlight(tile):
+    """The tile's colours multiplied by MOONLIGHT; alpha kept."""
+    *rgb, alpha = tile.split()
+    return Image.merge('RGBA', [band.point(lambda v, m=m: v * m // 255) for band, m in zip(rgb, MOONLIGHT)] + [alpha])
+
+
+def paint_wall_grass(img, cells):
+    """Grass along every wall top: a strip over the rim, and blades poking up."""
+    px = img.load()
+    for col, row in cells:
+        if (col, row - 1) in cells:
+            continue
+        top = row * TILE
+        for x in range(col * TILE, col * TILE + TILE):
+            tip = top - grass_blade_height(x) // 2 - 1
+            for y in range(tip, top + 3):
+                if 0 <= y < img.height:
+                    px[x, y] = (*(GRASS_BLADE if y < top + 1 else GRASS_CREST), 255)
+
+
+# A moonlit window glows with candlelight: its sky pixels, by brightness.
+CANDLE_DIM, CANDLE, CANDLE_BRIGHT = (214, 128, 72), (246, 180, 96), (255, 226, 150)
+
+
+def candlelit(window):
+    """The window arch moonlit, with its painted sky (the bluish pixels) turned
+    to a warm glow instead."""
+    def glow(p, dim):
+        r, g, b, a = p
+        if b <= r:
+            return dim
+        return (*(CANDLE_BRIGHT if r > 200 else CANDLE if r > 130 else CANDLE_DIM), a)
+    lit = moonlight(window)
+    lit.putdata([glow(p, dim) for p, dim in zip(window.getdata(), lit.getdata())])
+    return lit
 
 
 def paint_decorations(img, layout):
-    """Window arches and banners from Decorations (32x32).png."""
+    """Window arches and banners from Decorations (32x32).png. Under a 'moon'
+    sky they are moonlit too, and the windows candlelit."""
     sheet = Image.open('Sprites/14-TileSets/Decorations (32x32).png').convert('RGBA')
     # The window arch without its light beam (the beam is only semi-opaque).
     window = sheet.crop((72, 102, 106, 146))
     window.putdata([p if p[3] > 200 else (0, 0, 0, 0) for p in window.getdata()])
     banner = sheet.crop((34, 32, 62, 152)).resize((14, 60), Image.NEAREST)
+    if layout.sky == 'moon':
+        window, banner = candlelit(window), moonlight(banner)
     for spot in layout.windows:
         img.alpha_composite(window, spot)
     for spot in layout.banners:
@@ -317,12 +463,31 @@ def sky_width(layout):
 SUN_X, SUN_ABOVE_HORIZON = 360, 76
 
 
+# The moon sits high and left of the sun's spot: clear of every wall, and not
+# behind the King at the start.
+MOON_X, MOON_ABOVE_HORIZON = 340, 150
+
+
 def build_far(layout, width, sun_x):
-    """The 'sun' sky's far layer: sky bands and the sun, fixed in the view."""
+    """The far layer of a 'sun' or 'moon' sky: sky bands, stars and the sun or
+    moon, fixed in the view. `sun_x` places the sun or moon."""
     img = Image.new('RGBA', (width, horizon(layout)))
-    paint_sky(img, horizon(layout), HOT_SKY)
-    paint_sun(img, sun_x, horizon(layout) - SUN_ABOVE_HORIZON)
+    if layout.sky == 'moon':
+        paint_sky(img, horizon(layout), NIGHT_SKY)
+        paint_stars(img, random.Random(layout.seed + 1), horizon(layout))
+        paint_moon(img, sun_x, horizon(layout) - MOON_ABOVE_HORIZON)
+    else:
+        paint_sky(img, horizon(layout), HOT_SKY)
+        paint_sun(img, sun_x, horizon(layout) - SUN_ABOVE_HORIZON)
     return img
+
+
+def has_far(layout):
+    return layout.sky in ('sun', 'moon')
+
+
+def far_x(layout):
+    return MOON_X if layout.sky == 'moon' else SUN_X
 
 
 def build_sky(layout, width):
@@ -332,11 +497,13 @@ def build_sky(layout, width):
     rng = random.Random(layout.seed)
     if layout.sky == 'sun':
         paint_haze(img, rng)
+    elif layout.sky == 'moon':
+        paint_night_clouds(img, rng)
     else:
         paint_sky(img, horizon(layout))
         paint_clouds(img, rng)
     if layout.pit_top is not None:
-        (paint_far_dunes if layout.pit == 'sand' else paint_far_isles)(img, rng, horizon(layout))
+        {'sand': paint_far_dunes, 'grass': paint_far_forest}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
     return img
 
 
@@ -344,8 +511,8 @@ def build_terrain(layout, cells):
     """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
     if layout.pit_top is not None:
-        (paint_sand if layout.pit == 'sand' else paint_water)(img, layout.pit_top)
-    paint_walls(img, cells)
+        {'sand': paint_sand, 'grass': paint_grass}.get(layout.pit, paint_water)(img, layout.pit_top)
+    paint_walls(img, cells, moonlit=layout.sky == 'moon')
     paint_decorations(img, layout)
     return img
 
@@ -354,8 +521,8 @@ def build_preview(layout, terrain):
     """A map-wide sky under the terrain: the Title Screen's Level Preview. The
     preview shows the middle of the map, so a sun goes there."""
     img = Image.new('RGBA', terrain.size)
-    if layout.sky == 'sun':
-        img.alpha_composite(build_far(layout, terrain.width, terrain.width // 2 + SUN_X - VIEW_WIDTH // 2))
+    if has_far(layout):
+        img.alpha_composite(build_far(layout, terrain.width, terrain.width // 2 + far_x(layout) - VIEW_WIDTH // 2))
     img.alpha_composite(build_sky(layout, terrain.width))
     img.alpha_composite(terrain)
     return img
@@ -368,8 +535,8 @@ def build(number, layout):
         json.dump(build_json(layout, cells), f, indent=1)
     terrain = build_terrain(layout, cells)
     build_sky(layout, sky_width(layout)).save(f'img/Level {number} sky.png')
-    if layout.sky == 'sun':
-        build_far(layout, VIEW_WIDTH, SUN_X).save(f'img/Level {number} far.png')
+    if has_far(layout):
+        build_far(layout, VIEW_WIDTH, far_x(layout)).save(f'img/Level {number} far.png')
     terrain.save(f'img/Level {number} terrain.png')
     build_preview(layout, terrain).save(f'img/Level {number}.png')
     print(f'Wrote Level_{number}.json and the Level {number} images '

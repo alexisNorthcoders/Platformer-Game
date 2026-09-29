@@ -65,6 +65,10 @@ _Avoid_: King's bomb, Pig bomb, grenade
 A wooden plank that glides back and forth along a fixed path (sideways, up and down, or diagonally), easing to a stop at each end. The King can jump up through it and land on top; standing on it carries him, and a lit Bomb resting on it rides along too.
 _Avoid_: Elevator, lift, ferry (except when describing one's path)
 
+**Rotating Platform**:
+A hub with planks hung round it on chains, turning steadily like a wheel; each plank stays level as it goes round, and carries the King just as a Moving Platform does. He boards a plank as it rises past a ledge and steps off as it comes round level with the next one.
+_Avoid_: Wheel (except when describing one), Ferris wheel, spinning platform
+
 ### Places
 
 **Water**:
