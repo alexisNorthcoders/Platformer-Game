@@ -260,6 +260,9 @@ function createDoor(positions) {
 function createMovingPlatforms(paths) {
     return paths.map(path => new MovingPlatform({ path }))
 }
+function createHelixPlatforms(paths) {
+    return paths.map(path => new HelixPlatform({ path }))
+}
 /** The level image; a level with a parallax sky (levels.js `backdrop`) draws its terrain layer instead. */
 function createBackground(level) {
     return new Sprite({
@@ -321,7 +324,7 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)
@@ -330,6 +333,7 @@ async function createAssets(level, options = {}) {
         boxes: createBoxes(boxes),
         platforms: createPlatforms(platforms),
         movingPlatforms: createMovingPlatforms(movingPlatforms),
+        helixPlatforms: createHelixPlatforms(helixPlatforms),
         doors: createDoor(door),
         enemies: createEnemies(enemy, level),
         cannon: createCannon(cannon),
@@ -351,14 +355,24 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
-    enemies.concat(enemyKing, enemyMatch).forEach(enemy => enemy.tint = enemyTint)
+    const enemyGlow = levels[level]?.enemyGlow ?? null
+    enemies.concat(enemyKing, enemyMatch).forEach(enemy => {
+        enemy.tint = enemyTint
+        enemy.glow = enemyGlow
+    })
+    const boxTint = levels[level]?.boxTint ?? null
+    boxes.forEach(box => {
+        box.tint = boxTint
+        box.tintMode = 'color'
+    })
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),
         platforms.flatMap(platform => platform.collisionBlocks),
-        movingPlatforms.flatMap(platform => platform.collisionBlocks)
+        movingPlatforms.flatMap(platform => platform.collisionBlocks),
+        helixPlatforms.flatMap(platform => platform.collisionBlocks)
     );
 
     applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks);

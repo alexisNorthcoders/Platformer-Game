@@ -79,6 +79,11 @@ class Sprite {
 
         c.save()
         c.globalAlpha = this.opacity;
+        // A standing glow round the frame (levels.js `enemyGlow`), pulsing gently.
+        if (this.glow) {
+            c.shadowColor = this.glow
+            c.shadowBlur = 14 + 6 * Math.sin(performance.now() / 180 + this.position.x / 50)
+        }
 
         // Tint off-screen: on the main canvas source-atop would tint every opaque
         // pixel under the frame (background, tiles), not just the character.
@@ -129,9 +134,18 @@ class Sprite {
             cropbox.width,
             cropbox.height
         )
-        tintCtx.globalCompositeOperation = 'source-atop'
+        // A blend mode such as 'color' (levels.js `boxTint`) keeps the frame's
+        // shading; it paints the clear pixels too, so the frame's shape is
+        // cut out again after.
+        const mode = this.tintMode ?? 'source-atop'
+        tintCtx.globalCompositeOperation = mode
         tintCtx.fillStyle = tint
         tintCtx.fillRect(0, 0, cropbox.width, cropbox.height)
+        if (mode !== 'source-atop') {
+            tintCtx.globalCompositeOperation = 'destination-in'
+            tintCtx.drawImage(this.image, cropbox.position.x, cropbox.position.y, cropbox.width, cropbox.height,
+                0, 0, cropbox.width, cropbox.height)
+        }
         tintCtx.globalCompositeOperation = 'source-over'
 
         return { image: canvas, x: 0, y: 0 }

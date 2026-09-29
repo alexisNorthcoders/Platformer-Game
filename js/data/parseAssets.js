@@ -40,6 +40,23 @@ function getRotatingPlatformPaths(obj, scale) {
     }))
 }
 
+/**
+ * A Helix Platform's path from its object in the "helix_platform" layer: an
+ * object whose (x, y) is the middle of the hub's top, with properties radius
+ * (map px, each blade's reach), period (seconds a turn at 60 fps), optional
+ * phase (0..1 of a turn) and direction (1 or -1).
+ */
+function getHelixPlatformPath(obj, scale) {
+    const props = Object.fromEntries((obj.properties ?? []).map(p => [p.name, p.value]))
+    return {
+        center: { x: scale * obj.x, y: scale * obj.y },
+        radius: scale * (props.radius ?? 64),
+        periodFrames: Math.round((props.period ?? 8) * 60),
+        phase: props.phase ?? 0,
+        direction: props.direction ?? 1,
+    }
+}
+
 async function loadAssets(level, scale) {
     try {
         const response = await fetch(`/kings-and-pigs/js/data/levels/Level_${level}.json`);
@@ -55,7 +72,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -75,6 +92,7 @@ async function loadAssets(level, scale) {
         const enemyMatchLayer = layers["enemy_match"];
         const movingPlatformLayer = layers["moving_platform"];
         const rotatingPlatformLayer = layers["rotating_platform"];
+        const helixPlatformLayer = layers["helix_platform"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -115,6 +133,7 @@ async function loadAssets(level, scale) {
                 ...(movingPlatformLayer ? movingPlatformLayer.objects.map(obj => getMovingPlatformPath(obj, scale)) : []),
                 ...(rotatingPlatformLayer ? rotatingPlatformLayer.objects.flatMap(obj => getRotatingPlatformPaths(obj, scale)) : []),
             ],
+            helixPlatforms: helixPlatformLayer ? helixPlatformLayer.objects.map(obj => getHelixPlatformPath(obj, scale)) : [],
         };
     } catch (error) {
         console.error(error.message);

@@ -68,6 +68,39 @@ for (const [i, platform] of movingPlatforms.entries()) {
     player.hitpoints = heartsBefore
 }
 
+// 3b. Each Helix Platform: the King stands on its hub for a whole turn, and
+//     one standing out at a blade's tip drops once the blades turn in.
+await play(N)
+report.helix = { ok: true, platforms: [] }
+for (const [i, platform] of helixPlatforms.entries()) {
+    const { center, periodFrames } = platform.state.path
+    const heartsBefore = player.hitpoints
+    player.setPosition({ x: center.x - 62, y: center.y - FEET - 0.01 })
+    player.velocity.x = 0
+    player.velocity.y = 0
+    let worstGap = 0
+    for (let f = 0; f < periodFrames; f++) {
+        step(1)
+        worstGap = Math.max(worstGap, Math.abs(player.position.y + FEET - center.y))
+    }
+    const onHub = worstGap < 1
+    // Out near the tip (clear of the landing) while the blades point across,
+    // then give them a quarter turn.
+    while (platform.state.width < 2 * platform.state.path.radius - 2) step(1)
+    player.setPosition({ x: platform.state.x + platform.state.width - 120, y: center.y - FEET - 0.01 })
+    player.velocity.y = 0
+    let dropped = false
+    for (let f = 0; f < periodFrames / 4 && !dropped; f++) {
+        step(1)
+        dropped = player.position.y + FEET > center.y + 20 || player.hitpoints < heartsBefore
+    }
+    const ok = onHub && dropped
+    report.helix.platforms.push({ i, ok, worstGap: +worstGap.toFixed(3), dropped })
+    if (!ok) report.helix.ok = false
+    player.hitpoints = heartsBefore
+    respawnKing()
+}
+
 // 4. The start and every checkpoint stand the King on solid ground.
 await play(N)
 report.standing = { ok: true, spots: [] }
@@ -97,5 +130,5 @@ for (const spot of [levels[N].playerPosition, ...(levels[N].checkpoints ?? [])])
     }
 }
 
-report.ok = ['fall', 'pigs', 'rides', 'standing', 'farEnd'].every(check => report[check].ok)
+report.ok = ['fall', 'pigs', 'rides', 'helix', 'standing', 'farEnd'].every(check => report[check].ok)
 return report

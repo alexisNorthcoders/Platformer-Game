@@ -82,4 +82,31 @@ const levels = {
             { x: 6882, y: 168 },
         ],
     },
+    // Caldera (built by tools/levels/level_21.py): a lava floor under a smoky
+    // sky and a volcano, two Rotating Platforms and two Helix Platforms.
+    21: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        lava: { top: 496 },
+        // `far` (smoky sky and the volcano) is drawn fixed to the view.
+        backdrop: {
+            far: './img/Level 21 far.png',
+            sky: './img/Level 21 sky.png',
+            terrain: './img/Level 21 terrain.png',
+            parallax: 0.3,
+        },
+        // Yellow Pigs, glowing hot; Boxes of grey iron ('color' blend keeps their shading).
+        enemyTint: 'rgba(255, 200, 0, 0.75)',
+        enemyGlow: 'rgba(255, 140, 20, 0.95)',
+        boxTint: 'rgb(150, 158, 170)',
+        checkpoints: [
+            { x: 1320, y: 168 },
+            { x: 1984, y: 168 },
+            { x: 2620, y: 168 },
+            { x: 3370, y: 168 },
+            { x: 4040, y: 168 },
+            { x: 4330, y: 104 },
+            { x: 4960, y: 104 },
+        ],
+    },
 };
