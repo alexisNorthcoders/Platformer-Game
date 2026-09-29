@@ -144,6 +144,7 @@ class Sprite {
     }
 
     updateFrames() {
+        if (Sprite.framesFrozen) return
         if (!this.autoplay) return
         this.elapsedFrames++
         if (this.elapsedFrames % this.frameBuffer === 0) {
@@ -179,3 +180,6 @@ class Sprite {
         }, 50);
     }
 }
+
+/** True once the level is over (game over): every animation holds its current frame. */
+Sprite.framesFrozen = false

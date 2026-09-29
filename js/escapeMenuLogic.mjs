@@ -3,6 +3,7 @@
  * - menu: Title Screen (not opened from pause): Escape ignored
  * - menu + Pause Menu (opened from playing): Escape resumes
  * - loading: Escape ignored (do not interrupt init)
+ * - playing + King dying (last heart lost, death still playing out): Escape ignored
  * - playing + game over overlay: Escape ignored (R restarts)
  * - playing + level transition (door → next level fade-in): Escape ignored
  * - playing + game over restart still loading the level: Escape ignored
@@ -36,11 +37,16 @@ export function reduceEscapeKey({
     gameState,
     pauseMenuFromPlaying,
     playerGameOver,
+    playerDying = false,
     levelTransitioning = false,
     restarting = false,
 }) {
     if (gameState === 'loading') {
         return { handled: false, reason: 'loading' }
+    }
+
+    if (gameState === 'playing' && playerDying) {
+        return { handled: false, reason: 'dying' }
     }
 
     if (gameState === 'playing' && playerGameOver) {
@@ -76,7 +82,11 @@ export function reduceEscapeKey({
  * A Pause Menu button: 'resume' | 'restart' | 'quit'. Anything else (e.g.
  * 'fullscreen', which changes no game state) is not a transition.
  */
-export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying, currentLevel }) {
+export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying, currentLevel, playerDying = false }) {
+    if (playerDying) {
+        return { handled: false, reason: 'dying' }
+    }
+
     if (gameState !== 'menu' || !pauseMenuFromPlaying) {
         return { handled: false, reason: 'noOverlay' }
     }
@@ -104,9 +114,24 @@ export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying,
  * The retry (R, or a tap) after the King loses his last heart: Restart Level,
  * the same transition as the Pause Menu button.
  */
-export function reduceGameOverRetry({ gameState, playerGameOver, restarting = false }) {
-    if (gameState !== 'playing' || !playerGameOver || restarting) {
+export function reduceGameOverRetry({ gameState, playerGameOver, playerDying = false, restarting = false }) {
+    if (gameState !== 'playing' || !playerGameOver || playerDying || restarting) {
         return { handled: false, reason: 'notGameOver' }
     }
     return { ...RESTART_LEVEL }
+}
+
+/**
+ * Dying → game over: the King has lost his last heart, and only once he is on
+ * the ground with his Dead animation finished does the level freeze and the
+ * restart prompt appear.
+ */
+export function reduceDeathProgress({ gameState, playerDying, playerGrounded, deathAnimationDone }) {
+    if (gameState !== 'playing' || !playerDying) {
+        return { handled: false, reason: 'notDying' }
+    }
+    if (!playerGrounded || !deathAnimationDone) {
+        return { handled: false, reason: 'stillDying' }
+    }
+    return { handled: true, gameOver: true }
 }

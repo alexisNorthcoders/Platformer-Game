@@ -14,6 +14,7 @@ class Player extends Sprite {
         this.hurtTint = null
         this.hurtTintStartTime = null
         this.gameOver = false
+        this.deathAnimationDone = false
         this.isShowingHello = false
         this.canJump = true
         this.attacking = false
@@ -59,6 +60,31 @@ class Player extends Sprite {
                 }
             }
         }
+    }
+
+    /** Lost the last heart but still playing out the death; not yet game over. */
+    get dying() {
+        return this.dead && !this.gameOver
+    }
+
+    /** Once on the ground, plays the Dead animation once, facing the way he was facing. */
+    playDeathAnimation() {
+        if (!this.isGrounded || this.deathStarted) return
+        this.deathStarted = true
+        this.switchSprite(this.lastDirection === 'left' ? 'deadLeft' : 'dead')
+        this.currentAnimation = {
+            onComplete: () => {
+                this.deathAnimationDone = true
+            },
+            isActive: false
+        }
+    }
+
+    /** The only way into game over: the Dead animation has finished while dying. */
+    finishDeath() {
+        if (!this.dying || !this.deathAnimationDone) return false
+        this.gameOver = true
+        return true
     }
 
     update() {
@@ -123,6 +149,7 @@ class Player extends Sprite {
         }
         this.checkForVerticalCollisions()
 
+        if (this.dying) this.playDeathAnimation()
     }
 
     jump() {
@@ -157,7 +184,7 @@ class Player extends Sprite {
 
     handleInput(keys) {
 
-        if (this.gameOver) return
+        if (this.dead) return
 
         if (!keys.a.pressed && !keys.d.pressed) this.running = false;
         if (!keys.space.pressed) this.canAttack = true;
@@ -213,7 +240,7 @@ class Player extends Sprite {
 
     switchSprite(name) {
         const anim = this.animations[name]
-        if (!this.hitCooldown) {
+        if (!this.hitCooldown || this.dead) {
             if (this.currentAnimation === anim) return
             this.currentFrame = 0
             this.image = anim.image
@@ -412,7 +439,8 @@ class Player extends Sprite {
         hearts.pop()
         if (!this.hitpoints) {
             this.dead = true
-            this.gameOver = true
+            this.deathAnimationDone = false
+            this.deathStarted = false
             playerContactHurtTint.clearPlayerHurtTint(this)
             levelTimer.stop(performance.now())
             this.preventInput = true
