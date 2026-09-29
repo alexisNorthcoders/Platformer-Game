@@ -19,6 +19,11 @@ export const MOVING_PLATFORM = {
     rideTolerancePx: 2,
 }
 
+/** A plank's surface length: its path's `width`, or the default 200 (Level 23's short planks are 128). */
+export function plankWidth(path) {
+    return path.width ?? MOVING_PLATFORM.width
+}
+
 /** Share of the way from `from` to `to` (0..1) at `frame`: a cosine ping-pong, starting at `from` when phase is 0. */
 export function pathShareAt(frame, periodFrames, phase = 0) {
     const turn = frame / periodFrames + phase
@@ -31,10 +36,10 @@ export function pathShareAt(frame, periodFrames, phase = 0) {
  * right of the hub (turned on by `phase` of a turn) and goes clockwise on
  * screen, or anticlockwise with `direction` -1.
  */
-function orbitPositionAt({ center, radius, periodFrames, phase = 0, direction = 1 }, frame) {
+function orbitPositionAt({ center, radius, periodFrames, phase = 0, direction = 1, width = MOVING_PLATFORM.width }, frame) {
     const angle = 2 * Math.PI * (direction * frame / periodFrames + phase)
     return {
-        x: center.x + radius * Math.cos(angle) - MOVING_PLATFORM.width / 2,
+        x: center.x + radius * Math.cos(angle) - width / 2,
         y: center.y + radius * Math.sin(angle),
     }
 }
@@ -69,13 +74,13 @@ export function stepMovingPlatform(state) {
  * Whether a body with `hitbox` ({ position, width, height }) stands on the
  * surface whose top-left is `surface` (the platform before this frame's move):
  * feet on the top, overlapping it sideways, and not rising (a King who just
- * jumped leaves it).
+ * jumped leaves it). `surface.width` is the plank's length (default 200).
  */
 export function isRiding(hitbox, velocityY, surface) {
     if (velocityY < 0) return false
     const feetY = hitbox.position.y + hitbox.height
     if (Math.abs(feetY - surface.y) > MOVING_PLATFORM.rideTolerancePx) return false
-    return hitbox.position.x <= surface.x + MOVING_PLATFORM.width &&
+    return hitbox.position.x <= surface.x + (surface.width ?? MOVING_PLATFORM.width) &&
         hitbox.position.x + hitbox.width >= surface.x
 }
 
@@ -105,5 +110,5 @@ export function carriedDrop(hitbox, dy, solidBlocks) {
 /** Whether a Bomb's base at (x, y) rests on `surface` (the platform before this frame's move). */
 export function isResting(x, y, surface) {
     return Math.abs(y - surface.y) <= MOVING_PLATFORM.rideTolerancePx &&
-        x >= surface.x && x <= surface.x + MOVING_PLATFORM.width
+        x >= surface.x && x <= surface.x + (surface.width ?? MOVING_PLATFORM.width)
 }

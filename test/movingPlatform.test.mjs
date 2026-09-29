@@ -8,6 +8,7 @@ import {
     carriedDrop,
     pathPositionAt,
     pathShareAt,
+    plankWidth,
     stepMovingPlatform,
 } from '../js/movingPlatform.mjs'
 
@@ -113,4 +114,22 @@ test('a ledge beside the King, or one he is already below, does not hold him', (
 
 test('a rising plank always carries the King up', () => {
     assert.equal(carriedDrop(standingHitbox(1180, 319.99), -1.5, [LEDGE]), -1.5)
+})
+
+// A short plank (`width`, Level 23) is shorter to stand on and to circle by.
+test('a plank is 200 wide unless its path gives a width', () => {
+    assert.equal(plankWidth(PATH), 200)
+    assert.equal(plankWidth({ ...PATH, width: 128 }), 128)
+})
+
+test('the King overhanging a short plank\'s end rides it; beyond that he does not', () => {
+    const short = { ...SURFACE, width: 128 }
+    assert.equal(isRiding(standingHitbox(1000 + 128 - 5), 0, short), true)
+    assert.equal(isRiding(standingHitbox(1000 + 128 + 5), 0, short), false)
+})
+
+test('a short plank on a hub still has the middle of its surface on the circle', () => {
+    const short = { ...ORBIT, width: 128 }
+    const position = pathPositionAt(short, 0)
+    assert.ok(near({ x: position.x + 64, y: position.y }, { x: 1128, y: 300 }))
 })

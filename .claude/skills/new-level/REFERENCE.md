@@ -28,8 +28,9 @@ Measured from the code while building Level 18. When the code changes, re-check 
 
 ## Moving Platforms [`movingPlatform.mjs`]
 
-- The surface is 200 × 16 world px and one-way (he can jump up through it). The sprite is `platform.png`, drawn at surface + (−4, −11).
+- The surface is 200 × 16 world px (or `width`: see below) and one-way (he can jump up through it). The sprite is `platform.png`, drawn at surface + (−4, −11).
 - The path is an eased ping-pong. `phase` 0 starts at (x, y); 0.5 starts at the far end. Give two ferries that hand over to each other opposite phases.
+- **Shorter planks:** a `width` option (map px; default 100, i.e. 200 world px) on a Moving or Rotating Platform in the layout, written as a `width` property. Level 23 uses 64 (128 world px). The plank keeps the sprite's two ends. A short plank narrows every dock: work each dock gap out from the width (a wheel crosses 2 × radius + width + both dock gaps).
 - Dock each end 8–18 world px from an island edge at the same height, so the King walks on and off.
 - Keep **2 tiles of clear air above every path.** A platform that carries the King into a wall pops him on top of it.
 - A lit Bomb resting on a platform rides along.
@@ -59,6 +60,13 @@ Measured from the code while building Level 18. When the code changes, re-check 
 - It fades back in where it was 3 s later, but not while the King stands on its spot. `respawnKing` and a level restart make it whole and still at once.
 - Treat a shelf as a one-tile island for reach: 1 tile of air between shelves in a row is an easy hop; staircases step 1 row (64 world px) at a time. Every shelf on a level crumbles. No sound: `sounds/` holds none that fits.
 
+## Weather and Puddles [`weather.mjs`, `index.js`]
+
+- `weather: 'rain'` in a level's `config/levels.js` entry switches on Rain (the only Weather with a value so far; others can add their own). It is purely for looks: nothing reads or changes the King, Pigs or Bombs, and nothing is slippery.
+- `weather.mjs` picks the drops: one per 80-px lane of the world, falling slantwise, landing on the first wall top under them (`wallTops` of the solid blocks) or vanishing at the pit's surface. Drops landing on a wall top splash; on a painted Puddle they ring instead. The rain is drawn over everything but the HUD (`drawRain`).
+- A layout with `puddles=True` paints Puddles on the brick tops (a flat 3-px lens, `island_puddles`) and lists them in a `puddle` layer (rectangles: x, y of the wall top, width, map px). Moving and Rotating Platform planks each get a small static Puddle in code (`drawPlankPuddle`), with ripples from `puddleRipples`. Helix Platforms get none.
+- No rain sound: `sounds/` holds none that fits.
+
 ## Map layers [`parseAssets.js`]
 
 Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest are optional.
@@ -71,10 +79,11 @@ Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest 
 | `boxes` | objects | bottom = 2y; row − 0.5 stacks one box on another |
 | `enemy`, `enemyKing` | objects | spawn at map y = ground − 16; they settle onto the ground |
 | `diamonds` | objects | centre (world) = (2x + 8, 2y − 8) |
-| `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase` |
-| `rotating_platform` | points at the hub | properties `radius` (map px), `period` (s a turn), `arms`, `phase` (share of a turn), `direction` |
+| `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase`, `width` (map px, default 100) |
+| `rotating_platform` | points at the hub | properties `radius` (map px), `period` (s a turn), `arms`, `phase` (share of a turn), `direction`, `width` (map px, default 100) |
 | `helix_platform` | points at the middle of the hub's top | properties `radius` (map px, each blade's reach), `period` (s a turn), `phase`, `direction` |
 | `crumbling_shelf` | points at the shelf's top-left | its surface is world (2x, 2y) |
+| `puddle` | rectangles | painted Puddles on wall tops: (x, y) top-left, `width` (map px); only the Rain's rings read it |
 | `platform` | objects | a static plank (solid, not one-way) |
 
 Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `levelgen.py` applies every offset above; list layout objects by tile or centre.
@@ -95,6 +104,7 @@ Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `leve
 - A 'cloud' pit is the Cloud Bank: a flat floor of cloud (crest, mid, deep) on the level image, and `drawCloudBank` in `index.js` redraws it over the King with soft lumps drifting along, never below the painted surface, so nothing painted shows through. Its colours (`CLOUD_BANK`) match `BANK_*` in `levelgen.py`. The level's sky is bluer (`DAY_SKY`) and the horizon has pale cloud mounds. A ground entry with a fourth number, `(first, last, top, bottom)`, is a floating island: the tile set's underside pieces close it, and cloud wisps are painted under it.
 - A 'lava' pit is molten rock with dark crust veins and far black crags on the horizon. `drawLava` in `index.js` heaves its crest, pops bubbles in it and sends embers up from it, keeping the embers off walls that stand in it. Its colours (`LAVA`) match `LAVA_*` in `levelgen.py`.
 - A 'smoke' sky paints soot-to-red bands and a smoking volcano (`VOLCANO_X`) on the far layer, and banks of smoke on the parallax layer. It multiplies the walls, banners and windows by `EMBERLIGHT` and warms the walls towards `LAVA_GLOW` over the last 48 px above the pit. Windows glow as if lit by candles.
+- An 'overcast' sky paints grey daytime bands on the far layer (no sun or moon), low heavy banks of cloud on the parallax layer, and multiplies the walls, banners and windows by `OVERCAST_LIGHT`. Its far pine forest is greyer than the moonlit one.
 - `enemyGlow` (a CSS colour) gives every enemy a pulsing glow (canvas shadow) round its frame. `boxTint` (a CSS colour) recolours the Boxes and their broken pieces with the 'color' blend, which keeps their shading; Level 21's grey iron is `rgb(150, 158, 170)`.
 - `enemyTint` (a CSS colour, washed over each frame source-atop) recolours Pigs, King Pigs and Match Pigs. Pigs are green, so a red tint needs an opacity of about 0.5 to read as red. The player's hurt flash still wins over it [`Sprite.draw`].
 

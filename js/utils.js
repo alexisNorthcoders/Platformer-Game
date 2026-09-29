@@ -329,7 +329,7 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, crumblingShelves } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, crumblingShelves, puddles } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)
@@ -346,6 +346,9 @@ async function createAssets(level, options = {}) {
         enemyMatch: createEnemiesWithMatch(enemyMatch, level),
         enemyKing: createEnemyKing(enemyKing, level),
         collisionBlocks,
+        // What Rain splashes on: the walls' tops, and the Puddles painted on them.
+        rainTops: globalThis.__weather.wallTops(collisionBlocks),
+        puddles,
         platformsBlocks,
         background: createBackground(level),
         far: createFar(level),
@@ -361,7 +364,7 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, helixPlatforms, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
     const enemyGlow = levels[level]?.enemyGlow ?? null
     enemies.concat(enemyKing, enemyMatch).forEach(enemy => {

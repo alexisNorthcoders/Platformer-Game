@@ -29,13 +29,15 @@ class Layout:
     ground: list
     # Single solid tiles on top of the ground, (col, row): battlements that pen Pigs in.
     battlements: list = field(default_factory=list)
-    # Moving Platforms: dict(x, y, dx, dy, period, phase). (x, y) is the surface's
-    # top-left at the start, map px; period in seconds; phase 0 starts at (x, y), 0.5 at the far end.
+    # Moving Platforms: dict(x, y, dx, dy, period, phase, width). (x, y) is the surface's
+    # top-left at the start, map px; period in seconds; phase 0 starts at (x, y), 0.5 at the far end;
+    # width is the plank's length in map px (default 100, i.e. 200 world px; 64 is a short plank).
     moving_platforms: list = field(default_factory=list)
-    # Rotating Platforms: dict(x, y, radius, period, arms, phase, direction). (x, y)
+    # Rotating Platforms: dict(x, y, radius, period, arms, phase, direction, width). (x, y)
     # is the hub, map px; each of `arms` planks circles it at `radius` (to the
     # middle of its surface), staying level. Clockwise, or anticlockwise with
-    # direction -1; phase turns every plank on by that share of a turn.
+    # direction -1; phase turns every plank on by that share of a turn; width is
+    # each plank's length in map px (default 100).
     rotating_platforms: list = field(default_factory=list)
     # Helix Platforms: dict(x, y, radius, period, phase, direction). (x, y) is the
     # middle of the hub's top, map px; two blades turn flat round it like a
@@ -71,15 +73,21 @@ class Layout:
     # the walls are shaded by moonlight and grass grows on them.
     # 'smoke': a smoky red sky with a volcano on the far layer and smoke on the
     # parallax layer; the walls glow with the lava's light.
+    # 'overcast': grey daytime bands on the far layer (no sun or moon), low heavy
+    # banks of cloud on the parallax layer; the walls are dimmed and cooled.
     sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
     seed: int = 0
+    # Paint Puddles into the brick tops (shallow spots on islands 2+ tiles wide)
+    # and list them in a `puddle` layer, so the game can ripple them under Rain.
+    puddles: bool = False
 
 
 # --- Tiled JSON -------------------------------------------------------------------
 
 COLLISION_GID = 292
+PLANK_WIDTH = 100  # a Moving Platform's default length, map px
 DOOR_GID, BOX_GID, DIAMOND_GID, PIG_GID, KING_PIG_GID = 290, 291, 293, 294, 295
 
 
@@ -120,16 +128,21 @@ def build_json(layout, cells):
         ('diamonds', tile_objects(DIAMOND_GID, 12, 10, [(cx - 4, cy + 4) for cx, cy in layout.diamonds])),
         ('moving_platform', [dict(x=p['x'], y=p['y'], width=100, height=8, name='', type='',
                                   rotation=0, visible=True, properties=[
-                                      dict(name=key, type='float', value=p.get(key, 0))
-                                      for key in ('dx', 'dy', 'period', 'phase')
+                                      dict(name=key, type='float', value=p.get(key, default))
+                                      for key, default in (('dx', 0), ('dy', 0), ('period', 0), ('phase', 0), ('width', PLANK_WIDTH))
                                   ]) for p in layout.moving_platforms]),
     ]
+    if layout.puddles:
+        # Rectangles on the island tops: (x, y) is the puddle's top-left in map px
+        # (see parseAssets.js).
+        groups.append(('puddle', [dict(x=x, y=y, width=w, height=3, name='', type='', rotation=0, visible=True)
+                                  for x, y, w in island_puddles(layout, cells)]))
     if layout.rotating_platforms:
         # A point object at the hub (see parseAssets.js getRotatingPlatformPaths).
         groups.append(('rotating_platform', [
             dict(x=p['x'], y=p['y'], width=0, height=0, point=True, name='', type='', rotation=0, visible=True,
                  properties=[dict(name=key, type='float', value=p.get(key, default))
-                             for key, default in (('radius', 64), ('period', 8), ('arms', 2), ('phase', 0), ('direction', 1))])
+                             for key, default in (('radius', 64), ('period', 8), ('arms', 2), ('phase', 0), ('direction', 1), ('width', PLANK_WIDTH))])
             for p in layout.rotating_platforms]))
     if layout.crumbling_shelves:
         # A point object at the shelf's top-left (see parseAssets.js getCrumblingShelf).
@@ -214,6 +227,14 @@ LAVA_GLOW = (255, 112, 40)
 # The Cloud Bank: kept equal to CLOUD_BANK in index.js. A bluer sky goes over it.
 BANK_DEEP, BANK_MID, BANK_CREST = (196, 222, 230), (226, 242, 244), (250, 253, 252)
 DAY_SKY = [(72, 128, 200), (94, 152, 214), (120, 176, 226), (148, 198, 234), (180, 218, 240), (208, 232, 244)]
+# The 'overcast' sky: grey daytime bands, dark at the top, a pale grey at the horizon.
+OVERCAST_SKY = [(112, 122, 134), (128, 138, 148), (144, 154, 162), (158, 168, 174), (172, 180, 184), (184, 190, 192)]
+OVERCAST_CLOUD, OVERCAST_SHADE = (150, 158, 166), (118, 128, 138)
+# Overcast light on the walls: every wall pixel is multiplied by this (dimmer, cooler).
+OVERCAST_LIGHT = (205, 215, 232)
+OVERCAST_PINE, OVERCAST_NEAR_PINE = (78, 98, 96), (52, 72, 72)
+# A Puddle painted on a brick top: dark water, a pale sky-grey glint along its top.
+PUDDLE, PUDDLE_GLINT = (86, 104, 126), (170, 188, 202)
 # A Crumbling Shelf, in map px (drawn at 2x in CrumblingShelf.js): a plank of brick
 # with cracks across it. Kept equal to SHELF in CrumblingShelf.js.
 SHELF_BRICK, SHELF_RIM, SHELF_CRACK, SHELF_SHADE = (203, 118, 106), (251, 202, 174), (63, 56, 81), (150, 82, 88)
@@ -315,10 +336,10 @@ def paint_pine(img, x, base, height, colour):
                 px[x + dx, y] = (*colour, 255)
 
 
-def paint_far_forest(img, rng, horizon):
+def paint_far_forest(img, rng, horizon, colours=(FAR_PINE, NEAR_PINE)):
     """Two ranks of pines on the horizon: a pale far rank and a dark near one."""
     px = img.load()
-    for colour, heights, step, floor in ((FAR_PINE, (26, 56), (10, 26), 6), (NEAR_PINE, (18, 40), (14, 34), 3)):
+    for colour, heights, step, floor in ((colours[0], (26, 56), (10, 26), 6), (colours[1], (18, 40), (14, 34), 3)):
         for y in range(horizon - floor, horizon):
             for x in range(img.width):
                 px[x, y] = (*colour, 255)
@@ -500,6 +521,46 @@ def paint_smoke(img, rng):
             paint_blob(img, x, y, r * 1.4, r * 0.4, SMOKE)
 
 
+def paint_overcast(img, rng):
+    """Low, heavy banks of cloud: long flat blobs sitting close to the horizon,
+    shaded underneath."""
+    for _ in range(max(3, img.width // 110)):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(70, 190)
+        puffs = [(cx + rng.uniform(-60, 60), cy + rng.uniform(-5, 5), rng.uniform(14, 28)) for _ in range(6)]
+        for x, y, r in puffs:
+            paint_blob(img, x, y + 5, r * 1.7, r * 0.55, OVERCAST_SHADE)
+        for x, y, r in puffs:
+            paint_blob(img, x, y, r * 1.5, r * 0.45, OVERCAST_CLOUD)
+
+
+def island_puddles(layout, cells):
+    """Puddles on the brick tops: (x, y, width) in map px, y the top of the
+    wall. One on some walls 3+ tiles wide (2 tiles: some), well clear of both
+    ends, chosen by the layout's seed. Battlements and lone columns get none."""
+    rng = random.Random(layout.seed + 4)
+    out = []
+    for first, last, top, *rest in layout.ground:
+        width = last - first + 1
+        if width < 2 or (first, top - 1) in cells and width < 3:
+            continue
+        if rng.random() < (0.55 if width == 2 else 0.85):
+            w = rng.choice((20, 24, 28)) if width == 2 else rng.choice((28, 36, 44))
+            x = first * TILE + rng.randint(6, width * TILE - w - 6)
+            out.append((x, top * TILE, w))
+    return out
+
+
+def paint_puddles(img, puddles):
+    """A shallow Puddle on a brick top: a flat, rounded 3-px lens of dark water
+    with a glint along its top. Ripples are drawn in code."""
+    px = img.load()
+    for x, y, w in puddles:
+        for dx in range(w):
+            inset = 1 if dx < 2 or dx >= w - 2 else 0
+            for dy in range(inset, 3):
+                px[x + dx, y + dy] = (*(PUDDLE_GLINT if dy == 0 else PUDDLE), 255)
+
+
 def paint_far_crags(img, rng, horizon):
     """Jagged black rock on the horizon: straight-sided peaks, overlapping."""
     px = img.load()
@@ -618,6 +679,8 @@ def paint_decorations(img, layout):
         window, banner = candlelit(window), moonlight(banner)
     elif layout.sky == 'smoke':
         window, banner = candlelit(window, EMBERLIGHT), moonlight(banner, EMBERLIGHT)
+    elif layout.sky == 'overcast':
+        window, banner = moonlight(window, OVERCAST_LIGHT), moonlight(banner, OVERCAST_LIGHT)
     for spot in layout.windows:
         img.alpha_composite(window, spot)
     for spot in layout.banners:
@@ -653,7 +716,9 @@ def build_far(layout, width, sun_x):
     """The far layer of a 'sun' or 'moon' sky: sky bands, stars and the sun or
     moon, fixed in the view. `sun_x` places the sun or moon."""
     img = Image.new('RGBA', (width, horizon(layout)))
-    if layout.sky == 'smoke':
+    if layout.sky == 'overcast':
+        paint_sky(img, horizon(layout), OVERCAST_SKY)
+    elif layout.sky == 'smoke':
         paint_sky(img, horizon(layout), SMOKE_SKY)
         paint_volcano(img, random.Random(layout.seed + 2), sun_x, horizon(layout))
     elif layout.sky == 'moon':
@@ -667,7 +732,7 @@ def build_far(layout, width, sun_x):
 
 
 def has_far(layout):
-    return layout.sky in ('sun', 'moon', 'smoke')
+    return layout.sky in ('sun', 'moon', 'smoke', 'overcast')
 
 
 def far_x(layout):
@@ -685,13 +750,18 @@ def build_sky(layout, width):
         paint_night_clouds(img, rng)
     elif layout.sky == 'smoke':
         paint_smoke(img, rng)
+    elif layout.sky == 'overcast':
+        paint_overcast(img, rng)
     else:
         paint_sky(img, horizon(layout), DAY_SKY if layout.pit == 'cloud' else SKY)
         paint_clouds(img, rng)
     if layout.pit == 'cloud':
         paint_far_isles(img, rng, horizon(layout), BANK_DEEP)
     elif layout.pit_top is not None:
-        {'sand': paint_far_dunes, 'grass': paint_far_forest, 'lava': paint_far_crags}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
+        if layout.pit == 'grass' and layout.sky == 'overcast':
+            paint_far_forest(img, rng, horizon(layout), (OVERCAST_PINE, OVERCAST_NEAR_PINE))
+        else:
+            {'sand': paint_far_dunes, 'grass': paint_far_forest, 'lava': paint_far_crags}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
     return img
 
 
@@ -700,9 +770,11 @@ def build_terrain(layout, cells):
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
     if layout.pit_top is not None:
         {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava, 'cloud': paint_cloud_bank}.get(layout.pit, paint_water)(img, layout.pit_top)
-    light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT}.get(layout.sky)
+    light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT, 'overcast': OVERCAST_LIGHT}.get(layout.sky)
     paint_walls(img, cells, light, layout.pit_top if layout.pit == 'lava' else None)
     paint_island_wisps(img, cells, random.Random(layout.seed + 3))
+    if layout.puddles:
+        paint_puddles(img, island_puddles(layout, cells))
     paint_decorations(img, layout)
     return img
 
