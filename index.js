@@ -46,6 +46,8 @@ const menuArt = globalThis.__menuArt
 
 let collisionBlocks = []
 let background = null
+/** The level's parallax sky (levels.js `backdrop`), or null. */
+let sky = null
 let boxes = []
 let platforms = []
 let movingPlatforms = []
@@ -586,7 +588,7 @@ function drawCheckpoints() {
 // Water along the bottom of levels with `water` in levels.js: painted on the
 // level image too (for the Level Preview); drawn again over the King here so
 // he sinks into it, with the waves moving.
-const WATER = { deep: 'rgba(52, 78, 116, 0.82)', crest: '#98cbd8', foam: '#dcf2ed', pixel: 4 }
+const WATER = { deep: 'rgba(52, 78, 116, 0.82)', crest: '#98cbd8', foam: '#dcf2ed', pixel: 4, glintSpacing: 90 }
 
 function drawWater() {
     const water = levels[level]?.water
@@ -608,14 +610,27 @@ function drawWater() {
             c.fillRect(x, water.top - lift - pixel, pixel, pixel)
         }
     }
-    // Glints drifting on the surface.
+    // Glints: one per stretch of water, fixed in the world (so they stay put
+    // as the camera scrolls), each twinkling on its own beat.
     c.fillStyle = WATER.foam
-    for (let i = 0; i < 12; i++) {
-        const gx = left + ((i * 331 + now / 30) % (right - left))
-        const gy = water.top + pixel * (3 + (i * 7) % 12)
-        c.fillRect(Math.round(gx / pixel) * pixel, gy, pixel * 3, pixel / 2)
+    const stretch = WATER.glintSpacing
+    for (let k = Math.floor(left / stretch); k * stretch < right; k++) {
+        const seed = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1
+        const twinkle = Math.sin(now / 500 + seed * 20)
+        if (twinkle < 0.2) continue
+        const gx = Math.round((k + seed) * stretch / pixel) * pixel
+        const gy = water.top + pixel * (3 + Math.floor(seed * 11))
+        c.fillRect(gx, gy, pixel * (twinkle > 0.7 ? 3 : 2), pixel / 2)
     }
     c.restore()
+}
+
+/** The parallax sky: pinned to the camera, shifted by `parallax` × its travel. */
+function drawSky() {
+    const backdrop = levels[level]?.backdrop
+    if (!sky || !backdrop) return
+    sky.position.x = camera.x - Math.round(camera.x * backdrop.parallax)
+    sky.draw(2)
 }
 
 function drawTitleScreen() {
@@ -997,13 +1012,16 @@ function animate() {
     let maxCameraX = mapWidth - canvas.width;
 
     // Clamp camera position
-    camera.x = Math.max(0, Math.min(playerCenterX, maxCameraX));
+    // Whole pixels only: a fractional camera (the King carried by a Moving
+    // Platform, say) resamples the pixel art every frame and it shimmers.
+    camera.x = Math.round(Math.max(0, Math.min(playerCenterX, maxCameraX)));
 
     // Apply camera transformation
     c.save();
     c.translate(-camera.x, 0);  // Move everything relative to camera
 
     // Draw background & UI elements
+    drawSky()
     background.draw(2);
 
     doors.forEach(door => {
