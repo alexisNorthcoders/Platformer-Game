@@ -44,6 +44,14 @@ Measured from the code while building Level 18. When the code changes, re-check 
 - Top of the turn is hub.y − radius, bottom hub.y + radius. Keep the bottom above the pit and the top low enough that the King's head (feet − 88 world px) stays on screen, and keep walls outside hub.x ± (radius + 50) between those heights.
 - Use 2 arms: planks opposite each other never pass over the rider. More arms can bring a plank down on top of him.
 
+## Helix Platforms [`helixPlatform.mjs`, `HelixPlatform.js`]
+
+- Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. The walkable surface is one-way and is what the blades cover: hub.x ± max(24, radius × |cos angle|) world px, at the hub's height. It reaches the full radius each side twice a turn and shrinks to the 48-px hub in between. The mast is drawn only; it has no collision.
+- The King is not carried. A blade shrinking out from under him drops him, so he waits on the hub and walks out as the blades reach across.
+- **A helix crosses a gap of 2 × radius + both dock gaps** (map px). Level 21: radius 92 over a 6-tile gap and radius 108 over a 7-tile gap, 4 map px from each landing.
+- With an 8 s turn the blades reach across every 4 s and the tips move at most about 2.4 world px/frame, slower than the King's 4. He walks 184 px from the hub to the landing in about 46 frames. The window to leave the hub is about 1 s either side of full reach.
+- Keep Pigs and walls off the blades' full span.
+
 ## Map layers [`parseAssets.js`]
 
 Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest are optional.
@@ -58,6 +66,7 @@ Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest 
 | `diamonds` | objects | centre (world) = (2x + 8, 2y − 8) |
 | `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase` |
 | `rotating_platform` | points at the hub | properties `radius` (map px), `period` (s a turn), `arms`, `phase` (share of a turn), `direction` |
+| `helix_platform` | points at the middle of the hub's top | properties `radius` (map px, each blade's reach), `period` (s a turn), `phase`, `direction` |
 | `platform` | objects | a static plank (solid, not one-way) |
 
 Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `levelgen.py` applies every offset above; list layout objects by tile or centre.
@@ -75,6 +84,9 @@ Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `leve
 - **A 'moon' sky** paints night bands, stars and the moon on the far layer (`MOON_ABOVE_HORIZON` 150, clear of every wall), dim clouds on the parallax layer, and multiplies the walls, banners and windows by `MOONLIGHT`. Grass grows on every wall top and windows glow with candlelight.
 - The 'grass' pit is a thicket of tall grass, 2-px blades whose tips stand 0–6 px over its surface (`grass_blade_height`, mirrored in `index.js` `grassBladeHeight`), with a pine forest on the horizon.
 - The pit is drawn again in code over the King (`drawWater`, `drawSand`, `drawGrass` in `index.js`), so he sinks into it. Keep its colours equal to the painted ones in `levelgen.py`; `drawGrass` redraws the painted strip of the terrain image instead, so it always matches. Don't draw effects above the pit's surface: they speckle the walls that stand in it.
+- A 'lava' pit is molten rock with dark crust veins and far black crags on the horizon. `drawLava` in `index.js` heaves its crest, pops bubbles in it and sends embers up from it, keeping the embers off walls that stand in it. Its colours (`LAVA`) match `LAVA_*` in `levelgen.py`.
+- A 'smoke' sky paints soot-to-red bands and a smoking volcano (`VOLCANO_X`) on the far layer, and banks of smoke on the parallax layer. It multiplies the walls, banners and windows by `EMBERLIGHT` and warms the walls towards `LAVA_GLOW` over the last 48 px above the pit. Windows glow as if lit by candles.
+- `enemyGlow` (a CSS colour) gives every enemy a pulsing glow (canvas shadow) round its frame. `boxTint` (a CSS colour) recolours the Boxes and their broken pieces with the 'color' blend, which keeps their shading; Level 21's grey iron is `rgb(150, 158, 170)`.
 - `enemyTint` (a CSS colour, washed over each frame source-atop) recolours Pigs, King Pigs and Match Pigs. Pigs are green, so a red tint needs an opacity of about 0.5 to read as red. The player's hurt flash still wins over it [`Sprite.draw`].
 
 ## Playing it in the browser
@@ -90,7 +102,7 @@ node tools/play.mjs --level 20 --eval 'player.setPosition({ x: 1570, y: 232 }); 
 - `--shot` saves the canvas as last drawn. Read the PNG to look at it.
 - `tools/level-checks.js` runs the skill's step 6 checks for any open-air level (fall and respawn first, then Pigs, rides, checkpoints and start, the far end) and reports `ok` per check.
 - Script a real crossing for anything new: keys only, from a checkpoint to the next island, checking hearts. The ride check puts the King on a plank; it does not prove he can get on and off.
-- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`; a plank on a hub has `.state.path.center`), `enemies`, `enemyKing`, `diamonds` (`.diamondHit`), `respawnPoint`, `sky`, `far`, `collisionBlocks`, `keys`, `mapWidth`.
+- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`; a plank on a hub has `.state.path.center`), `helixPlatforms` (`.state`: surface `x`, `y`, `width` and `path`), `enemies`, `enemyKing`, `diamonds` (`.diamondHit`), `respawnPoint`, `sky`, `far`, `collisionBlocks`, `keys`, `mapWidth`.
 - Riding: the King's feet gap, `player.position.y + 87 − platform.state.y`, should be about 0.
 - Checking each checkpoint by placing the King on it also moves `respawnPoint` on to the last one. `play(N)` again resets it.
 - Use this driver on every machine, including ones with a browser extension such as Claude in Chrome: a whole check suite is one command, and stepped frames give the same result every run. Fall back to the extension only where no Chromium can be installed: serve the repo the same way (`python3 -m http.server` from a directory with a `kings-and-pigs` symlink to the repo), run `await startGame(N)`, and step with `for (let i = 0; i < n; i++) animate()`. The tab's own animation loop also runs once it is in front, so the game keeps moving between calls.

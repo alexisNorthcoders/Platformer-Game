@@ -53,6 +53,7 @@ let far = null
 let boxes = []
 let platforms = []
 let movingPlatforms = []
+let helixPlatforms = []
 /** Where the King comes back after falling into the water: the level start or the furthest Checkpoint reached. */
 let respawnPoint = null
 let doors = []
@@ -693,19 +694,19 @@ function grassBladeHeight(column) {
     return ((h ^ (h >>> 13)) >>> 0) % 7
 }
 
-/** Walls standing in the thicket, as [left, right] world x: no rustling or fireflies over them. */
-let grassWalls = { blocks: null, spans: [] }
+/** Walls standing in the pit (grass or lava), as [left, right] world x: no effects drawn over them. */
+let pitWalls = { blocks: null, spans: [] }
 
-function wallsInGrass(top) {
-    if (grassWalls.blocks !== collisionBlocks) {
-        grassWalls = {
+function wallsInPit(top) {
+    if (pitWalls.blocks !== collisionBlocks) {
+        pitWalls = {
             blocks: collisionBlocks,
             spans: collisionBlocks
                 .filter(block => block.type !== 'platform' && block.position.y <= top && block.position.y + block.height > top)
                 .map(block => [block.position.x, block.position.x + block.width]),
         }
     }
-    return grassWalls.spans
+    return pitWalls.spans
 }
 
 function drawGrass() {
@@ -716,7 +717,7 @@ function drawGrass() {
     const left = Math.floor(camera.x / pixel) * pixel
     const right = camera.x + canvas.width
     const top = grass.top - tallestTip
-    const walls = wallsInGrass(grass.top)
+    const walls = wallsInPit(grass.top)
     const inWall = (x, margin = 0) => walls.some(([a, b]) => x + margin > a && x - margin < b)
     c.save()
     c.drawImage(background.image, left / 2, top / 2, (right - left) / 2, (canvas.height - top) / 2,
@@ -742,6 +743,79 @@ function drawGrass() {
         c.fillRect(fx - 4, fy - 4, 12, 12)
         c.fillStyle = GRASS.firefly
         c.fillRect(fx, fy, 4, 4)
+    }
+    c.restore()
+}
+
+// Lava along the bottom of levels with `lava` in levels.js: like the water,
+// painted on the level image and drawn again over the King so he sinks into
+// it. The crust heaves and glows, bubbles swell and pop, and embers drift up
+// from it. Colours match tools/levelgen.py LAVA_*.
+const LAVA = {
+    deep: '#9a2a12', mid: '#d2481a', crest: '#f58a2a', hot: '#ffd060', crust: '#5a1c14',
+    ember: '#ffc048', emberGlow: 'rgba(255, 140, 40, 0.35)', pixel: 4, bubbleSpacing: 110, emberSpacing: 90,
+}
+
+function drawLava() {
+    const lava = levels[level]?.lava
+    if (!lava) return
+    const { pixel } = LAVA
+    const now = performance.now()
+    const left = Math.floor(camera.x / pixel) * pixel
+    const right = camera.x + canvas.width
+    const walls = wallsInPit(lava.top)
+    const inWall = (x, margin = 0) => walls.some(([a, b]) => x + margin > a && x - margin < b)
+    c.save()
+    c.fillStyle = LAVA.mid
+    c.fillRect(left, lava.top + pixel, right - left, canvas.height - lava.top)
+    c.fillStyle = LAVA.deep
+    c.fillRect(left, lava.top + pixel * 8, right - left, canvas.height - lava.top)
+    // Veins of crust, fixed in the world, drifting slowly apart and together.
+    c.fillStyle = LAVA.crust
+    for (let row = 0; row < 4; row++) {
+        const y = lava.top + pixel * (4 + row * 4)
+        const step = 96 + row * 22
+        const drift = Math.round(Math.sin(now / 1800 + row) * 3) * pixel
+        for (let k = Math.floor((left - row * 41) / step) - 1; k * step + row * 41 < right; k++) {
+            c.fillRect(k * step + row * 41 + drift, y, pixel * (5 + (k + row) % 3 * 2), pixel)
+        }
+    }
+    // The surface: a hot crest heaving slowly, brightest where it rises.
+    for (let x = left; x < right; x += pixel) {
+        const heave = Math.sin(x / 70 + now / 900) + Math.sin(x / 29 - now / 1300) * 0.5
+        const lift = Math.round(heave) * pixel
+        c.fillStyle = LAVA.crest
+        c.fillRect(x, lava.top - lift, pixel, pixel * 2 + lift)
+        if (heave > 1.1) {
+            c.fillStyle = LAVA.hot
+            c.fillRect(x, lava.top - lift, pixel, pixel)
+        }
+    }
+    // Bubbles: one per stretch of the world, swelling in the lava and popping.
+    const stretch = LAVA.bubbleSpacing
+    for (let k = Math.floor(left / stretch) - 1; k * stretch < right; k++) {
+        const seed = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1
+        const t = (now / 2200 + seed) % 1
+        const bx = Math.round((k + seed) * stretch / pixel) * pixel
+        const by = lava.top + pixel * (3 + Math.floor(seed * 5))
+        const size = Math.round(t * 3) * pixel
+        if (!size) continue
+        c.fillStyle = t > 0.9 ? LAVA.hot : LAVA.crest
+        c.fillRect(bx - size / 2, by - size / 2, size, size)
+    }
+    // Embers: rising from the lava in slow wavering columns, fading out as
+    // they climb, never in front of a wall.
+    const emberStretch = LAVA.emberSpacing
+    for (let k = Math.floor(left / emberStretch) - 1; k * emberStretch < right + emberStretch; k++) {
+        const seed = Math.abs(Math.sin(k * 78.233) * 43758.5453) % 1
+        const t = (now / 3000 + seed) % 1
+        const ex = Math.round((k * emberStretch + seed * emberStretch + Math.sin(t * 6 + seed * 9) * 10) / 2) * 2
+        const ey = Math.round((lava.top - 8 - t * 140) / 2) * 2
+        if (t > 0.85 || inWall(ex, 10)) continue
+        c.fillStyle = LAVA.emberGlow
+        c.fillRect(ex - 4, ey - 4, 10, 10)
+        c.fillStyle = LAVA.ember
+        c.fillRect(ex, ey, 2 + (seed > 0.5 ? 2 : 0), 2 + (seed > 0.5 ? 2 : 0))
     }
     c.restore()
 }
@@ -1185,7 +1259,11 @@ function animate() {
             platform.draw(2);
         });
     }
-    if (!player.gameOver) stepMovingPlatforms()
+    if (!player.gameOver) {
+        stepMovingPlatforms()
+        helixPlatforms.forEach(platform => platform.step())
+    }
+    helixPlatforms.forEach(platform => platform.draw())
     movingPlatforms.forEach(platform => platform.draw(2))
     drawCheckpoints()
     if (enemies) {
@@ -1229,6 +1307,7 @@ function animate() {
     drawWater()
     drawSand()
     drawGrass()
+    drawLava()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);

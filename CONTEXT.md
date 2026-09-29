@@ -71,6 +71,10 @@ _Avoid_: Wheel (except when describing one), Ferris wheel, spinning platform
 
 ### Places
 
+**Helix Platform**:
+Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. As they turn across the view they stretch out to bridge a gap, then shrink back to the hub. The hub is always safe to stand on. The blades do not carry the King: one shrinking out from under him drops him, so he waits on the hub and walks out as they reach across.
+_Avoid_: Rotor, propeller, helicopter platform
+
 **Water**:
 The moat along the bottom of an open-air level. Falling in costs the King a heart and puts him back at his last Checkpoint.
 _Avoid_: Sea, pit

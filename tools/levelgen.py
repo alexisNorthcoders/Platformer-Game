@@ -35,6 +35,10 @@ class Layout:
     # middle of its surface), staying level. Clockwise, or anticlockwise with
     # direction -1; phase turns every plank on by that share of a turn.
     rotating_platforms: list = field(default_factory=list)
+    # Helix Platforms: dict(x, y, radius, period, phase, direction). (x, y) is the
+    # middle of the hub's top, map px; two blades turn flat round it like a
+    # rotor, reaching `radius` each side as they point across the view.
+    helix_platforms: list = field(default_factory=list)
     # (col, top row of the ground they stand on).
     pigs: list = field(default_factory=list)
     king_pigs: list = field(default_factory=list)
@@ -49,14 +53,17 @@ class Layout:
     # The deadly pit along the bottom: its surface in map px (levels.js
     # `water.top` or `sand.top` is twice this), or None for no pit.
     pit_top: int = None
-    # 'water' (waves, far isles), 'sand' (dunes, far dunes) or 'grass' (a
-    # night thicket of tall grass, a far pine forest).
+    # 'water' (waves, far isles), 'sand' (dunes, far dunes), 'grass' (a
+    # night thicket of tall grass, a far pine forest) or 'lava' (a molten
+    # floor, far black crags).
     pit: str = 'water'
     # 'clouds': a blue sky with clouds, all on the parallax layer.
     # 'sun': a hot sky with a low sun and rare clouds. The sky colour and the sun
     # go on a far layer that stays fixed in the view (levels.js `backdrop.far`).
     # 'moon': a night sky with stars and a moon, on the far layer as for 'sun';
     # the walls are shaded by moonlight and grass grows on them.
+    # 'smoke': a smoky red sky with a volcano on the far layer and smoke on the
+    # parallax layer; the walls glow with the lava's light.
     sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
@@ -117,6 +124,13 @@ def build_json(layout, cells):
                  properties=[dict(name=key, type='float', value=p.get(key, default))
                              for key, default in (('radius', 64), ('period', 8), ('arms', 2), ('phase', 0), ('direction', 1))])
             for p in layout.rotating_platforms]))
+    if layout.helix_platforms:
+        # A point object at the middle of the hub's top (see parseAssets.js getHelixPlatformPath).
+        groups.append(('helix_platform', [
+            dict(x=p['x'], y=p['y'], width=0, height=0, point=True, name='', type='', rotation=0, visible=True,
+                 properties=[dict(name=key, type='float', value=p.get(key, default))
+                             for key, default in (('radius', 64), ('period', 8), ('phase', 0), ('direction', 1))])
+            for p in layout.helix_platforms]))
     next_id = 1
     for name, objects in groups:
         for obj in objects:
@@ -175,6 +189,16 @@ NIGHT_CLOUD = (56, 66, 100)
 GRASS_DEEP, GRASS_MID, GRASS_CREST, GRASS_BLADE = (18, 36, 32), (30, 58, 44), (58, 98, 62), (92, 138, 80)
 # Moonlight on the walls: every wall pixel is multiplied by this.
 MOONLIGHT = (150, 160, 205)
+# The 'smoke' sky: soot overhead to a red glow at the horizon.
+SMOKE_SKY = [(26, 20, 24), (38, 28, 32), (54, 36, 38), (78, 44, 40), (108, 52, 38), (140, 62, 36), (170, 74, 36)]
+SMOKE, SMOKE_SHADE = (70, 60, 64), (52, 44, 50)
+VOLCANO, VOLCANO_SHADE, CRAG = (44, 30, 34), (34, 24, 28), (30, 22, 26)
+# Lava: kept equal to LAVA in index.js.
+LAVA_DEEP, LAVA_MID, LAVA_CREST, LAVA_HOT, LAVA_CRUST = (154, 42, 18), (210, 72, 26), (245, 138, 42), (255, 208, 96), (90, 28, 20)
+# Lava light on the walls: every wall pixel is multiplied by this, and warmed
+# near the lava.
+EMBERLIGHT = (205, 160, 150)
+LAVA_GLOW = (255, 112, 40)
 
 
 def lerp(a, b, t):
@@ -361,6 +385,82 @@ def paint_sand(img, top):
             px[x, y] = (*colour, 255)
 
 
+def paint_lava(img, top):
+    """Molten rock: a hot crest, veins of dark crust in the deep."""
+    px = img.load()
+    for y in range(top, img.height):
+        for x in range(img.width):
+            depth = y - top
+            colour = LAVA_CREST if depth < 2 else LAVA_MID if depth < 16 else LAVA_DEEP
+            # Crust: short dark veins, 2 px tall, in staggered rows (as in index.js).
+            if depth >= 4 and (depth // 2) % 4 == 0 and (x // 12 + depth // 8) % 6 == 0:
+                colour = LAVA_CRUST
+            px[x, y] = (*colour, 255)
+
+
+def paint_volcano(img, rng, cx, horizon):
+    """A cone on the horizon, lit on its left, with a glowing crater and lava
+    running down it, and a plume of smoke billowing up from it."""
+    px = img.load()
+    height, half_base, half_top = 110, 170, 18
+    peak = horizon - height
+    for y in range(peak, horizon):
+        t = (y - peak) / height
+        half = round(half_top + (half_base - half_top) * t ** 1.15)
+        for x in range(cx - half, cx + half + 1):
+            if 0 <= x < img.width:
+                px[x, y] = (*(VOLCANO if x < cx - half // 3 else VOLCANO_SHADE), 255)
+    # The crater's glow, and runs of lava down the slope, wandering as they go.
+    for x in range(cx - half_top + 3, cx + half_top - 2):
+        for y in range(peak - 1, peak + 3):
+            px[x, y] = (*(LAVA_HOT if y < peak + 1 else LAVA_CREST), 255)
+    for start, lean, length in ((cx - 8, -1, 58), (cx + 2, 0, 36), (cx + 10, 1, 44)):
+        x = start
+        for y in range(peak + 3, peak + 3 + length):
+            colour = LAVA_HOT if y - peak < 8 else LAVA_CREST if y - peak < length * 0.6 else LAVA_MID
+            for dx in range(3):
+                px[x + dx, y] = (*colour, 255)
+            if y % 4 == 0:
+                x += lean + rng.choice((-1, 0, 0, 1))
+    # The plume: clusters of puffs, growing as they climb and lean downwind.
+    for i in range(8):
+        r = 7 + i * 2.6
+        y = peak - 8 - i * 15
+        x = cx + i * i * 1.2
+        puffs = [(x + rng.uniform(-r, r), y + rng.uniform(-r * 0.4, r * 0.4), r * rng.uniform(0.7, 1.1)) for _ in range(3)]
+        for bx, by, br in puffs:
+            paint_blob(img, bx, by + 3, br, br * 0.8, SMOKE_SHADE)
+        for bx, by, br in puffs:
+            paint_blob(img, bx - 2, by, br * 0.85, br * 0.65, SMOKE)
+
+
+def paint_smoke(img, rng):
+    """Drifting banks of smoke: long flat blobs, shaded underneath."""
+    for _ in range(max(2, img.width // 160)):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(14, 150)
+        puffs = [(cx + rng.uniform(-50, 50), cy + rng.uniform(-6, 6), rng.uniform(12, 26)) for _ in range(6)]
+        for x, y, r in puffs:
+            paint_blob(img, x, y + 4, r * 1.6, r * 0.5, SMOKE_SHADE)
+        for x, y, r in puffs:
+            paint_blob(img, x, y, r * 1.4, r * 0.4, SMOKE)
+
+
+def paint_far_crags(img, rng, horizon):
+    """Jagged black rock on the horizon: straight-sided peaks, overlapping."""
+    px = img.load()
+    x = -30
+    while x < img.width:
+        width, height = rng.randint(40, 110), rng.randint(10, 34)
+        peak = rng.uniform(0.3, 0.7)
+        for dx in range(width):
+            t = dx / width
+            h = round(height * (t / peak if t < peak else (1 - t) / (1 - peak)))
+            for y in range(horizon - h, horizon):
+                if 0 <= x + dx < img.width:
+                    px[x + dx, y] = (*CRAG, 255)
+        x += width - rng.randint(10, 40)
+
+
 # Terrain (32x32).png gids (1-based, 19 columns): the orange-rimmed wall pieces.
 FRAME = {'tl': 21, 't': 22, 'tr': 23, 'l': 40, 'c': 41, 'r': 42}  # walls 2+ tiles wide
 COLUMN = {'top': 25, 'mid': 44}  # walls one tile wide
@@ -382,21 +482,38 @@ def wall_gid(cells, col, row):
     return FRAME['l'] if not left else FRAME['r'] if not right else FRAME['c']
 
 
-def paint_walls(img, cells, moonlit=False):
+def paint_walls(img, cells, light=None, pit_top=None):
+    """Walls from the tile set; multiplied by `light` if given (moonlight or
+    lava light). Moonlit walls grow grass; lava-lit ones glow near the lava."""
     sheet = Image.open('Sprites/14-TileSets/Terrain (32x32).png').convert('RGBA')
     for col, row in sorted(cells):
         tile = terrain_tile(sheet, wall_gid(cells, col, row))
-        if moonlit:
-            tile = moonlight(tile)
+        if light:
+            tile = moonlight(tile, light)
         img.alpha_composite(tile, (col * TILE, row * TILE))
-    if moonlit:
+    if light == MOONLIGHT:
         paint_wall_grass(img, cells)
+    if light == EMBERLIGHT and pit_top is not None:
+        paint_lava_glow(img, cells, pit_top)
 
 
-def moonlight(tile):
-    """The tile's colours multiplied by MOONLIGHT; alpha kept."""
+def moonlight(tile, light=MOONLIGHT):
+    """The tile's colours multiplied by `light`; alpha kept."""
     *rgb, alpha = tile.split()
-    return Image.merge('RGBA', [band.point(lambda v, m=m: v * m // 255) for band, m in zip(rgb, MOONLIGHT)] + [alpha])
+    return Image.merge('RGBA', [band.point(lambda v, m=m: v * m // 255) for band, m in zip(rgb, light)] + [alpha])
+
+
+def paint_lava_glow(img, cells, pit_top):
+    """Walls warm towards LAVA_GLOW over the last 48 px above the lava, in flat
+    8-px bands."""
+    px = img.load()
+    for col, row in cells:
+        for y in range(max(row * TILE, pit_top - 48), min(row * TILE + TILE, pit_top)):
+            share = 0.5 * (1 - (pit_top - y) // 8 * 8 / 48)
+            for x in range(col * TILE, col * TILE + TILE):
+                r, g, b, a = px[x, y]
+                if a:
+                    px[x, y] = (*lerp((r, g, b), LAVA_GLOW, share), a)
 
 
 def paint_wall_grass(img, cells):
@@ -417,15 +534,15 @@ def paint_wall_grass(img, cells):
 CANDLE_DIM, CANDLE, CANDLE_BRIGHT = (214, 128, 72), (246, 180, 96), (255, 226, 150)
 
 
-def candlelit(window):
-    """The window arch moonlit, with its painted sky (the bluish pixels) turned
-    to a warm glow instead."""
+def candlelit(window, light=MOONLIGHT):
+    """The window arch lit by `light`, with its painted sky (the bluish pixels)
+    turned to a warm glow instead."""
     def glow(p, dim):
         r, g, b, a = p
         if b <= r:
             return dim
         return (*(CANDLE_BRIGHT if r > 200 else CANDLE if r > 130 else CANDLE_DIM), a)
-    lit = moonlight(window)
+    lit = moonlight(window, light)
     lit.putdata([glow(p, dim) for p, dim in zip(window.getdata(), lit.getdata())])
     return lit
 
@@ -440,6 +557,8 @@ def paint_decorations(img, layout):
     banner = sheet.crop((34, 32, 62, 152)).resize((14, 60), Image.NEAREST)
     if layout.sky == 'moon':
         window, banner = candlelit(window), moonlight(banner)
+    elif layout.sky == 'smoke':
+        window, banner = candlelit(window, EMBERLIGHT), moonlight(banner, EMBERLIGHT)
     for spot in layout.windows:
         img.alpha_composite(window, spot)
     for spot in layout.banners:
@@ -467,12 +586,18 @@ SUN_X, SUN_ABOVE_HORIZON = 360, 76
 # behind the King at the start.
 MOON_X, MOON_ABOVE_HORIZON = 340, 150
 
+# The volcano's peak, right of centre in the view like the sun.
+VOLCANO_X = 330
+
 
 def build_far(layout, width, sun_x):
     """The far layer of a 'sun' or 'moon' sky: sky bands, stars and the sun or
     moon, fixed in the view. `sun_x` places the sun or moon."""
     img = Image.new('RGBA', (width, horizon(layout)))
-    if layout.sky == 'moon':
+    if layout.sky == 'smoke':
+        paint_sky(img, horizon(layout), SMOKE_SKY)
+        paint_volcano(img, random.Random(layout.seed + 2), sun_x, horizon(layout))
+    elif layout.sky == 'moon':
         paint_sky(img, horizon(layout), NIGHT_SKY)
         paint_stars(img, random.Random(layout.seed + 1), horizon(layout))
         paint_moon(img, sun_x, horizon(layout) - MOON_ABOVE_HORIZON)
@@ -483,11 +608,11 @@ def build_far(layout, width, sun_x):
 
 
 def has_far(layout):
-    return layout.sky in ('sun', 'moon')
+    return layout.sky in ('sun', 'moon', 'smoke')
 
 
 def far_x(layout):
-    return MOON_X if layout.sky == 'moon' else SUN_X
+    return {'moon': MOON_X, 'smoke': VOLCANO_X}.get(layout.sky, SUN_X)
 
 
 def build_sky(layout, width):
@@ -499,11 +624,13 @@ def build_sky(layout, width):
         paint_haze(img, rng)
     elif layout.sky == 'moon':
         paint_night_clouds(img, rng)
+    elif layout.sky == 'smoke':
+        paint_smoke(img, rng)
     else:
         paint_sky(img, horizon(layout))
         paint_clouds(img, rng)
     if layout.pit_top is not None:
-        {'sand': paint_far_dunes, 'grass': paint_far_forest}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
+        {'sand': paint_far_dunes, 'grass': paint_far_forest, 'lava': paint_far_crags}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
     return img
 
 
@@ -511,8 +638,9 @@ def build_terrain(layout, cells):
     """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
     if layout.pit_top is not None:
-        {'sand': paint_sand, 'grass': paint_grass}.get(layout.pit, paint_water)(img, layout.pit_top)
-    paint_walls(img, cells, moonlit=layout.sky == 'moon')
+        {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava}.get(layout.pit, paint_water)(img, layout.pit_top)
+    light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT}.get(layout.sky)
+    paint_walls(img, cells, light, layout.pit_top if layout.pit == 'lava' else None)
     paint_decorations(img, layout)
     return img
 

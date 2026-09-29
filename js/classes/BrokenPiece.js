@@ -25,8 +25,10 @@ class BrokenPiece extends Sprite {
             c.imageSmoothingEnabled = false;
             c.translate(this.position.x + 5 * scale, this.position.y + 5 * scale);
             c.rotate((this.rotation * Math.PI) / 180);
+            // A tinted Box (levels.js `boxTint`) breaks into tinted pieces.
             c.drawImage(
-                this.image,
+                this.tint ? this.tintedFrame({ position: { x: 0, y: 0 }, width: 10, height: 10 }, this.tint).image : this.image,
+                0, 0, 10, 10,
                 -5 * scale,
                 -5 * scale,
                 10 * scale,

@@ -39,6 +39,8 @@ class Box extends Sprite {
                 rotation: Math.random() * 360
             }));
             this.breakPieces[i].collisionBlocks = collisionBlocks
+            this.breakPieces[i].tint = this.tint
+            this.breakPieces[i].tintMode = this.tintMode
         }
         diamonds.push(...createDiamonds([[this.position.x, this.position.y]]))
         setTimeout(() => {
