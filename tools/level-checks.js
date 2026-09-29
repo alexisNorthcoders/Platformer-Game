@@ -168,6 +168,7 @@ for (const [i, shelf] of crumblingShelves.entries()) {
 //     keys-only crossing from the ledge before it to the ledge after works.
 await play(N)
 report.tumbling = { ok: true, planks: [] }
+const savedTumblingFrame = tumblingFrame
 for (const [i, plank] of tumblingPlanks.entries()) {
     const { center } = plank.state.path
     const heartsBefore = player.hitpoints
@@ -235,6 +236,8 @@ for (const [i, plank] of tumblingPlanks.entries()) {
     player.hitpoints = heartsBefore
     respawnKing()
 }
+tumblingFrame = savedTumblingFrame // leave the plank phase as this block found it
+tumblingPlanks.forEach(p => p.step(tumblingFrame))
 
 // 4. The start and every checkpoint stand the King on solid ground.
 await play(N)

@@ -1013,7 +1013,7 @@ const STORM_LOOK = { bolt: '#e8f0ff', glow: 'rgba(190, 210, 255, 0.35)', flash: 
 let skylineRim = { src: null, image: null }
 
 function weatherIsStorm() {
-    return levels[level]?.weather === 'storm'
+    return levels[level]?.weather === 'storm' && !!globalThis.__storm // the module bootstrap may not have run yet
 }
 
 function drawBolt() {
