@@ -80,6 +80,13 @@ class Player extends Sprite {
         }
     }
 
+    /** The only way into game over: the Dead animation has finished while dying. */
+    finishDeath() {
+        if (!this.dying || !this.deathAnimationDone) return false
+        this.gameOver = true
+        return true
+    }
+
     update() {
 
         if (this.isGrounded && this.running) playStepSound()

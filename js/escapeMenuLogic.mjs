@@ -82,7 +82,11 @@ export function reduceEscapeKey({
  * A Pause Menu button: 'resume' | 'restart' | 'quit'. Anything else (e.g.
  * 'fullscreen', which changes no game state) is not a transition.
  */
-export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying, currentLevel }) {
+export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying, currentLevel, playerDying = false }) {
+    if (playerDying) {
+        return { handled: false, reason: 'dying' }
+    }
+
     if (gameState !== 'menu' || !pauseMenuFromPlaying) {
         return { handled: false, reason: 'noOverlay' }
     }

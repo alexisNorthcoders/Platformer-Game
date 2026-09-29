@@ -206,8 +206,12 @@ test('Enter/Space (Pause Menu choices) do nothing while the King is dying', () =
             gameState: 'playing',
             pauseMenuFromPlaying: false,
             currentLevel: 1,
+            playerDying: true,
         })
         assert.equal(r.handled, false)
+        assert.equal(r.reason, 'dying')
+        // Even with the Pause Menu open, a dying King blocks the choice.
+        assert.equal(reducePauseMenuChoice({ choice, gameState: 'menu', pauseMenuFromPlaying: true, currentLevel: 1, playerDying: true }).handled, false)
     }
 })
 

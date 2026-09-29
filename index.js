@@ -705,6 +705,7 @@ function handlePauseMenuTarget(target) {
         choice: target,
         gameState,
         pauseMenuFromPlaying,
+        playerDying: player.dying,
         currentLevel: level,
     }))
 }
@@ -1067,7 +1068,7 @@ function advanceDeath() {
         playerGrounded: player.isGrounded,
         deathAnimationDone: player.deathAnimationDone,
     })
-    if (result.handled && result.gameOver) player.gameOver = true
+    if (result.handled && result.gameOver) player.finishDeath()
 }
 
 // Starts from 0; if Escape opened the menu mid-transition, start paused.
