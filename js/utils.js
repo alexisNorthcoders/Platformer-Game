@@ -370,6 +370,7 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
         }, 500);
     }
 }
+/** Builds the level as on entry: every diamond and Pig spawns. Used for entering a level and Restart Level only. */
 async function initLevel(levelNumber, options = {}) {
     const level = levels[levelNumber];
     if (!level) {
