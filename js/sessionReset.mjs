@@ -40,6 +40,7 @@ export function resetPlayerForNewLevelRun(player) {
     player.canJump = true
     player.dead = false
     player.gameOver = false
+    player.gameOverAt = null
     player.deathAnimationDone = false
     player.isShowingHello = false
     player._restarting = false

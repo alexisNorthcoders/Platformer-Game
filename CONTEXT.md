@@ -15,7 +15,7 @@ The overlay opened during play (Escape or the touch pause button), drawn over th
 _Avoid_: Escape menu, in-game menu
 
 **Game Over Screen**:
-The overlay shown after the King loses his last heart and his death plays out, drawn over the dimmed, frozen level. It names the level and offers Try Again (Restart Level under another label) and Quit to Title. Losing the last heart is the only way to reach it; a game over costs only the level's progress, never the session.
+The overlay shown after the King loses his last heart and his death plays out. The frozen level first dims over about half a second; only then do the panel and buttons appear, and until then the screen accepts no input (so a mashed attack key cannot choose a button), and a key held through the reveal does nothing until pressed afresh. Drawn over the dimmed, frozen level. It names the level and offers Try Again (Restart Level under another label) and Quit to Title. Losing the last heart is the only way to reach it; a game over costs only the level's progress, never the session.
 _Avoid_: Death screen, game over overlay, game over menu
 
 **Level Preview**:
