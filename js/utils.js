@@ -275,6 +275,11 @@ function createSky(level) {
     const backdrop = levels[level]?.backdrop
     return backdrop ? new Sprite({ position: { x: 0, y: 0 }, imageSrc: backdrop.sky }) : null
 }
+/** The view-fixed layer behind the parallax sky (levels.js `backdrop.far`: sky colour and sun), or null. */
+function createFar(level) {
+    const far = levels[level]?.backdrop?.far
+    return far ? new Sprite({ position: { x: 0, y: 0 }, imageSrc: far }) : null
+}
 function createDiamonds(positions, levelNum) {
     return positions.map(position => new Diamond({
         position: { x: position[0] - 10, y: position[1] + 10 },
@@ -333,6 +338,7 @@ async function createAssets(level, options = {}) {
         collisionBlocks,
         platformsBlocks,
         background: createBackground(level),
+        far: createFar(level),
         sky: createSky(level),
         diamonds: createDiamonds(diamonds, level),
         levelWidth
@@ -345,7 +351,9 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, doors, enemies, collisionBlocks, enemyKing, background, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    const enemyTint = levels[level]?.enemyTint ?? null
+    enemies.concat(enemyKing, enemyMatch).forEach(enemy => enemy.tint = enemyTint)
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
         boxes.flatMap(box => box.collisionBlocks),

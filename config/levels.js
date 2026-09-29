@@ -34,4 +34,29 @@ const levels = {
             { x: 5730, y: 40 },
         ],
     },
+    // Sinking Sands (built by tools/levels/level_19.py): quicksand instead of
+    // water, a low sun that stays put in the view, and red-tinted Pigs.
+    19: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        sand: { top: 496 },
+        // `far` is drawn fixed to the view, behind the parallax sky.
+        backdrop: {
+            far: './img/Level 19 far.png',
+            sky: './img/Level 19 sky.png',
+            terrain: './img/Level 19 terrain.png',
+            parallax: 0.3,
+        },
+        // A colour washed over every enemy sprite (source-atop), CSS syntax.
+        enemyTint: 'rgba(230, 30, 20, 0.5)',
+        checkpoints: [
+            { x: 1250, y: 232 },
+            { x: 2082, y: 232 },
+            { x: 2790, y: 104 },
+            { x: 3938, y: 168 },
+            { x: 5300, y: 168 },
+            { x: 5490, y: 104 },
+            { x: 6178, y: 168 },
+        ],
+    },
 };

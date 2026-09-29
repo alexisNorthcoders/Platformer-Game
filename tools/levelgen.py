@@ -41,8 +41,15 @@ class Layout:
     # Decorations: window arches and banners, top-left in map px.
     windows: list = field(default_factory=list)
     banners: list = field(default_factory=list)
-    # Water surface in map px (levels.js water.top is twice this); None for no water.
-    water_top: int = None
+    # The deadly pit along the bottom: its surface in map px (levels.js
+    # `water.top` or `sand.top` is twice this), or None for no pit.
+    pit_top: int = None
+    # 'water' (waves, far isles) or 'sand' (dunes, far dunes).
+    pit: str = 'water'
+    # 'clouds': a blue sky with clouds, all on the parallax layer.
+    # 'sun': a hot sky with a low sun and rare clouds. The sky colour and the sun
+    # go on a far layer that stays fixed in the view (levels.js `backdrop.far`).
+    sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
     seed: int = 0
@@ -133,23 +140,42 @@ SKY = [(96, 128, 170), (118, 142, 161), (140, 169, 181), (152, 203, 216), (165, 
 CLOUD, CLOUD_SHADE = (220, 242, 237), (165, 194, 199)
 FAR_ISLE = (140, 169, 181)
 WATER_DEEP, WATER_MID, WATER_CREST = (52, 78, 116), (63, 86, 120), (152, 203, 216)
+# The 'sun' sky: pale blue overhead to a hot glow at the horizon.
+HOT_SKY = [(120, 158, 190), (150, 182, 204), (182, 204, 210), (214, 218, 200), (238, 222, 180),
+           (250, 208, 158), (252, 196, 140)]
+HAZE = (250, 236, 214)
+# Sun rings, outside in: (radius, colour, opacity over the sky bands).
+SUN = [(46, (255, 236, 190), 0.25), (36, (255, 236, 190), 0.5), (27, (255, 228, 160), 1),
+       (21, (255, 246, 214), 1), (15, (255, 253, 240), 1)]
+FAR_DUNE, FAR_DUNE_SHADE = (228, 190, 146), (214, 170, 128)
+SAND_DEEP, SAND_MID, SAND_CREST, SAND_RIPPLE = (206, 150, 92), (232, 184, 120), (250, 224, 170), (214, 162, 100)
 
 
 def lerp(a, b, t):
     return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
-def paint_sky(img, horizon):
-    """Flat colour bands, deep blue overhead to a warm glow at the horizon."""
+def paint_sky(img, horizon, palette=SKY):
+    """Flat colour bands, deep overhead to a warm glow at the horizon."""
     px = img.load()
     bands = 16
     for y in range(img.height):
         band = min(bands - 1, y * bands // horizon)
-        t = band / (bands - 1) * (len(SKY) - 1)
+        t = band / (bands - 1) * (len(palette) - 1)
         i, f = int(t), t - int(t)
-        colour = lerp(SKY[i], SKY[min(i + 1, len(SKY) - 1)], f)
+        colour = lerp(palette[i], palette[min(i + 1, len(palette) - 1)], f)
         for x in range(img.width):
             px[x, y] = (*colour, 255)
+
+
+def paint_sun(img, cx, cy):
+    """Concentric flat rings; the outer ones blend into the sky bands under them."""
+    px = img.load()
+    for radius, colour, opacity in SUN:
+        for y in range(cy - radius, cy + radius + 1):
+            for x in range(cx - radius, cx + radius + 1):
+                if 0 <= x < img.width and 0 <= y < img.height and (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2:
+                    px[x, y] = (*lerp(px[x, y], colour, opacity), 255)
 
 
 def paint_blob(img, cx, cy, rx, ry, colour):
@@ -171,6 +197,14 @@ def paint_clouds(img, rng):
             paint_blob(img, x, y, r, r * 0.55, CLOUD)
 
 
+def paint_haze(img, rng):
+    """Rare, thin streaks of high cloud."""
+    for _ in range(max(1, img.width // 450)):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(16, 80)
+        paint_blob(img, cx, cy, rng.uniform(30, 60), 3, HAZE)
+        paint_blob(img, cx + rng.uniform(-20, 20), cy + 6, rng.uniform(16, 30), 2, HAZE)
+
+
 def paint_far_isles(img, rng, horizon):
     """Low, pale islands on the horizon."""
     px = img.load()
@@ -185,6 +219,24 @@ def paint_far_isles(img, rng, horizon):
         x += width + rng.randint(40, 200)
 
 
+def paint_far_dunes(img, rng, horizon):
+    """Rolling dunes on the horizon, overlapping into a range; each has a shaded lee side."""
+    px = img.load()
+    x = -40
+    while x < img.width:
+        width, height = rng.randint(120, 260), rng.randint(10, 30)
+        crest = rng.uniform(0.35, 0.6)  # off-centre: wind-blown
+        for dx in range(width):
+            t = dx / width
+            h = round(height * (math.sin(math.pi * t / crest / 2) if t < crest
+                                else math.cos(math.pi * (t - crest) / (1 - crest) / 2)))
+            colour = FAR_DUNE if t < crest else FAR_DUNE_SHADE
+            for y in range(horizon - h, horizon):
+                if 0 <= x + dx < img.width:
+                    px[x + dx, y] = (*colour, 255)
+        x += width - rng.randint(20, 60)
+
+
 def paint_water(img, top):
     px = img.load()
     for y in range(top, img.height):
@@ -193,6 +245,18 @@ def paint_water(img, top):
             colour = WATER_CREST if depth < 2 else WATER_MID if depth < 8 else WATER_DEEP
             if depth >= 2 and (x // 6 + y // 3) % 11 == 0 and depth % 5 == 0:
                 colour = WATER_CREST
+            px[x, y] = (*colour, 255)
+
+
+def paint_sand(img, top):
+    px = img.load()
+    for y in range(top, img.height):
+        for x in range(img.width):
+            depth = y - top
+            colour = SAND_CREST if depth < 2 else SAND_MID if depth < 12 else SAND_DEEP
+            # Wind ripples: short dashes, 2 px tall, in staggered rows.
+            if depth >= 4 and (depth // 2) % 3 == 0 and (x // 8 + depth // 6) % 5 == 0:
+                colour = SAND_RIPPLE
             px[x, y] = (*colour, 255)
 
 
@@ -239,7 +303,7 @@ def paint_decorations(img, layout):
 # --- Images -----------------------------------------------------------------------
 
 def horizon(layout):
-    return layout.water_top if layout.water_top is not None else ROWS * TILE
+    return layout.pit_top if layout.pit_top is not None else ROWS * TILE
 
 
 def sky_width(layout):
@@ -247,42 +311,65 @@ def sky_width(layout):
     return math.ceil(VIEW_WIDTH + (layout.cols * TILE - VIEW_WIDTH) * layout.parallax)
 
 
+# Where the sun's centre sits in the view, map px: right of centre, ahead of the
+# King. At 76 above a horizon of 248 (y 172) it clears walls topped at row 6
+# and half sets behind row 5; at 22 the walls and far dunes hid it entirely.
+SUN_X, SUN_ABOVE_HORIZON = 360, 76
+
+
+def build_far(layout, width, sun_x):
+    """The 'sun' sky's far layer: sky bands and the sun, fixed in the view."""
+    img = Image.new('RGBA', (width, horizon(layout)))
+    paint_sky(img, horizon(layout), HOT_SKY)
+    paint_sun(img, sun_x, horizon(layout) - SUN_ABOVE_HORIZON)
+    return img
+
+
 def build_sky(layout, width):
-    """Sky, clouds and far isles: the parallax layer."""
+    """The parallax layer: clouds and the far horizon. Over sky bands for a
+    'clouds' sky; clear for a 'sun' sky, whose far layer shows through."""
     img = Image.new('RGBA', (width, horizon(layout)))
     rng = random.Random(layout.seed)
-    paint_sky(img, horizon(layout))
-    paint_clouds(img, rng)
-    if layout.water_top is not None:
-        paint_far_isles(img, rng, horizon(layout))
+    if layout.sky == 'sun':
+        paint_haze(img, rng)
+    else:
+        paint_sky(img, horizon(layout))
+        paint_clouds(img, rng)
+    if layout.pit_top is not None:
+        (paint_far_dunes if layout.pit == 'sand' else paint_far_isles)(img, rng, horizon(layout))
     return img
 
 
 def build_terrain(layout, cells):
-    """Water, walls and decorations over a clear sky: drawn over the parallax sky."""
+    """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
-    if layout.water_top is not None:
-        paint_water(img, layout.water_top)
+    if layout.pit_top is not None:
+        (paint_sand if layout.pit == 'sand' else paint_water)(img, layout.pit_top)
     paint_walls(img, cells)
     paint_decorations(img, layout)
     return img
 
 
 def build_preview(layout, terrain):
-    """A map-wide sky under the terrain: the Title Screen's Level Preview."""
+    """A map-wide sky under the terrain: the Title Screen's Level Preview. The
+    preview shows the middle of the map, so a sun goes there."""
     img = Image.new('RGBA', terrain.size)
+    if layout.sky == 'sun':
+        img.alpha_composite(build_far(layout, terrain.width, terrain.width // 2 + SUN_X - VIEW_WIDTH // 2))
     img.alpha_composite(build_sky(layout, terrain.width))
     img.alpha_composite(terrain)
     return img
 
 
 def build(number, layout):
-    """Writes js/data/levels/Level_<n>.json and img/Level <n>{, sky, terrain}.png."""
+    """Writes js/data/levels/Level_<n>.json and img/Level <n>{, sky, far, terrain}.png."""
     cells = solid_cells(layout)
     with open(f'js/data/levels/Level_{number}.json', 'w') as f:
         json.dump(build_json(layout, cells), f, indent=1)
     terrain = build_terrain(layout, cells)
     build_sky(layout, sky_width(layout)).save(f'img/Level {number} sky.png')
+    if layout.sky == 'sun':
+        build_far(layout, VIEW_WIDTH, SUN_X).save(f'img/Level {number} far.png')
     terrain.save(f'img/Level {number} terrain.png')
     build_preview(layout, terrain).save(f'img/Level {number}.png')
     print(f'Wrote Level_{number}.json and the Level {number} images '

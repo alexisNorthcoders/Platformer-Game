@@ -59,11 +59,17 @@ Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `leve
 - **Paint flat colours.** A 1-px dither or checkerboard shimmers and tears as the camera scrolls.
 - **Put the sky on the parallax layer** (`backdrop` in `levels.js`, `parallax` in the layout); it scrolls slower than the ground. The layout's `parallax` sets the sky image's width, so it must match `levels.js`.
 - Anything drawn in code (water, flags, effects) is positioned in world px, fixed in the level. A position built from `camera.x` travels with the view.
+- **Anything that should not scroll at all** (a sun, a moon) goes on the far layer: `img/Level N far.png`, one view wide (512 map px), drawn at `camera.x` behind the parallax sky (`backdrop.far`). A `sky='sun'` layout paints the sky bands and the sun there, and leaves its parallax sky clear except for haze and the far horizon.
+- **Keep the sun above the walls.** A sun 22 px above the horizon sat behind the forts and the far dunes, so it could not be seen. At 76 px (`SUN_ABOVE_HORIZON`) it clears walls topped at row 6 and half sets behind row 5 walls.
+- The pit is drawn again in code over the King (`drawWater`, `drawSand` in `index.js`), so he sinks into it. Keep its colours equal to the painted ones in `levelgen.py`. Don't draw effects above the pit's surface: they speckle the walls that stand in it.
+- `enemyTint` (a CSS colour, washed over each frame source-atop) recolours Pigs, King Pigs and Match Pigs. Pigs are green, so a red tint needs an opacity of about 0.5 to read as red. The player's hurt flash still wins over it [`Sprite.draw`].
 
 ## Playing it in the browser
 
 - The game fetches `/kings-and-pigs/js/data/...` (an absolute path), so serve the repo under that name:
   `mkdir -p $SCRATCH/www && ln -sfn "$PWD" $SCRATCH/www/kings-and-pigs && cd $SCRATCH/www && python3 -m http.server 8765`, then open `http://localhost:8765/kings-and-pigs/index.html`.
 - In the page, run `await startGame(N)`. The automation tab is a background tab, so `requestAnimationFrame` stays paused there. Step frames yourself instead: `for (let i = 0; i < n; i++) animate()`.
-- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`), `enemies`, `enemyKing`, `diamonds`, `respawnPoint`, `sky`, `overlay` (set `overlay.opacity = 0` to skip the fade-in).
+- Once you take a screenshot the tab comes to the front and `requestAnimationFrame` runs as well, alongside your stepped frames. Stepped checks still work, but the game keeps moving between calls.
+- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`), `enemies`, `enemyKing`, `diamonds`, `respawnPoint`, `sky`, `far`, `overlay` (set `overlay.opacity = 0` to skip the fade-in).
+- Checking each checkpoint by placing the King on it also moves `respawnPoint` on to the last one. Run the fall-and-respawn check first, or expect him to respawn at the furthest checkpoint.
 - Riding check: put the King on a platform surface, step about 100 frames, and compare how far the King moved with how far the platform moved. His feet gap, `player.position.y + 87 − platform.state.y`, should be about 0.

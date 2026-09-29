@@ -48,6 +48,8 @@ let collisionBlocks = []
 let background = null
 /** The level's parallax sky (levels.js `backdrop`), or null. */
 let sky = null
+/** The level's view-fixed layer behind the sky (levels.js `backdrop.far`), or null. */
+let far = null
 let boxes = []
 let platforms = []
 let movingPlatforms = []
@@ -630,10 +632,64 @@ function drawWater() {
     c.restore()
 }
 
-/** The parallax sky: pinned to the camera, shifted by `parallax` × its travel. */
+// Quicksand along the bottom of levels with `sand` in levels.js: like the
+// water, painted on the level image and drawn again over the King so he sinks
+// into it. The surface heaves slowly; grains blow along it on the wind.
+const SAND = { mid: '#e8b878', deep: '#ce965c', crest: '#fae0aa', ripple: '#d6a264', pixel: 4, grainSpacing: 70 }
+
+function drawSand() {
+    const sand = levels[level]?.sand
+    if (!sand) return
+    const { pixel } = SAND
+    const now = performance.now()
+    const left = Math.floor(camera.x / pixel) * pixel
+    const right = camera.x + canvas.width
+    c.save()
+    c.fillStyle = SAND.mid
+    c.fillRect(left, sand.top + pixel, right - left, canvas.height - sand.top)
+    c.fillStyle = SAND.deep
+    c.fillRect(left, sand.top + pixel * 6, right - left, canvas.height - sand.top)
+    for (let x = left; x < right; x += pixel) {
+        const heave = Math.sin(x / 90 + now / 1400) + Math.sin(x / 41 - now / 2300) * 0.5
+        const lift = Math.round(heave) * pixel
+        c.fillStyle = SAND.crest
+        c.fillRect(x, sand.top - lift, pixel, pixel * 2 + lift)
+    }
+    // Ripples: dashes fixed in the world, in staggered rows (as on the image).
+    c.fillStyle = SAND.ripple
+    for (let row = 0; row < 4; row++) {
+        const y = sand.top + pixel * (3 + row * 3)
+        const step = 80 + row * 16
+        for (let k = Math.floor((left - row * 37) / step); k * step + row * 37 < right; k++) {
+            c.fillRect(k * step + row * 37, y, pixel * 4, pixel / 2)
+        }
+    }
+    // Drifting grains: one per stretch, sliding left through the top of the
+    // sand (above it they would speckle the walls), each wrapping within its
+    // own stretch of the world.
+    c.fillStyle = SAND.crest
+    const stretch = SAND.grainSpacing
+    for (let k = Math.floor(left / stretch) - 1; k * stretch < right; k++) {
+        const seed = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1
+        const drift = ((now / 30 + seed * stretch) % stretch)
+        const gx = Math.round((k * stretch + stretch - drift) / pixel) * pixel
+        const gy = sand.top + pixel * (3 + Math.floor(seed * 4))
+        c.fillRect(gx, gy, pixel, pixel / 2)
+    }
+    c.restore()
+}
+
+/**
+ * The parallax sky: pinned to the camera, shifted by `parallax` × its travel.
+ * A far layer (the sun) sits behind it, pinned to the camera and not shifted.
+ */
 function drawSky() {
     const backdrop = levels[level]?.backdrop
     if (!sky || !backdrop) return
+    if (far) {
+        far.position.x = camera.x
+        far.draw(2)
+    }
     sky.position.x = camera.x - Math.round(camera.x * backdrop.parallax)
     sky.draw(2)
 }
@@ -1104,6 +1160,7 @@ function animate() {
     advanceDeath()
     reachCheckpoints()
     drawWater()
+    drawSand()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);
