@@ -83,6 +83,10 @@ _Avoid_: Crumbling ledge, breaking platform, falling platform
 Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. As they turn across the view they stretch out to bridge a gap, then shrink back to the hub. The hub is always safe to stand on. The blades do not carry the King: one shrinking out from under him drops him, so he waits on the hub and walks out as they reach across.
 _Avoid_: Rotor, propeller, helicopter platform
 
+**Quicksand**:
+The sand along the bottom of an open-air level. The King is caught the moment he touches it, sinks slowly out of sight, then loses a heart and comes back at his last Checkpoint.
+_Avoid_: Pit, sand trap
+
 **Water**:
 The moat along the bottom of an open-air level. Falling in costs the King a heart and puts him back at his last Checkpoint.
 _Avoid_: Sea, pit
@@ -96,7 +100,7 @@ A ditch cut down into the ground, with spikes along its bottom. Falling in costs
 _Avoid_: Spike pit, trench
 
 **Checkpoint**:
-A flag on a long level marking where the King comes back after falling into the Water or the Cloud Bank. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
+A flag on a long level marking where the King comes back after falling into the Water, Quicksand or the Cloud Bank. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
 _Avoid_: Save point, respawn point
 
 ### Weather
