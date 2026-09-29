@@ -1,6 +1,6 @@
 /**
  * Menu layouts in logical canvas px (1024×576; CSS scaling keeps the
- * proportions). The Title Screen and Pause Menu each own theirs, so one can
+ * proportions). The Title Screen, Pause Menu and Game Over Screen each own theirs, so one can
  * change without moving the other (#61).
  *
  * Buttons are plank 9-slices at 2× (#63), so each must be at least the plank's
@@ -33,4 +33,15 @@ export const PAUSE_MENU = {
     // landscape touch controller (pause button included) overlays the bottom
     // of the canvas, so a button under the others would sit beneath it.
     fullscreenBtn: { x: 684, y: 12, w: 320, h: 52 },
+}
+
+// Game Over Screen (#89): the Pause Menu's brick panel and planks over the
+// dimmed, frozen level, with the "GAME OVER" heading, the level's name and the
+// two buttons stacked in keyboard order. No Fullscreen button.
+export const GAME_OVER_SCREEN = {
+    panel: { x: 288, y: 120, w: 448, h: 300 },
+    caption: { x: 512, y: 190 },
+    levelName: { x: 512, y: 226 },
+    retryBtn: { x: 360, y: 258, w: 304, h: 52 },
+    quitBtn: { x: 360, y: 318, w: 304, h: 52 },
 }

@@ -3,6 +3,9 @@ import test from 'node:test'
 import {
     canvasLogicalCoords,
     coverSourceRect,
+    gameOverHitTarget,
+    gameOverItems,
+    gameOverKeyAction,
     pauseMenuHitTarget,
     pauseMenuItems,
     pauseMenuKeyAction,
@@ -225,4 +228,56 @@ test('stepMenuFocus: a focus not in the list (e.g. Fullscreen hidden) restarts f
     const items = ['resume', 'restart', 'quit']
     assert.equal(stepMenuFocus(items, 'fullscreen', 1), 'resume')
     assert.equal(stepMenuFocus(items, null, -1), 'resume')
+})
+
+const GAME_OVER_SCREEN = {
+    retryBtn: { x: 392, y: 240, w: 240, h: 52 },
+    quitBtn: { x: 392, y: 300, w: 240, h: 52 },
+}
+
+test('gameOverItems: Try Again then Quit to Title, no Fullscreen', () => {
+    assert.deepEqual(gameOverItems(), ['retry', 'quit'])
+})
+
+test('game over default focus: opening on the first item, Try Again', () => {
+    assert.equal(gameOverItems()[0], 'retry')
+})
+
+test('gameOverHitTarget: Try Again and Quit to Title hit their buttons', () => {
+    assert.equal(gameOverHitTarget(500, 265, GAME_OVER_SCREEN), 'retry')
+    assert.equal(gameOverHitTarget(500, 325, GAME_OVER_SCREEN), 'quit')
+})
+
+test('gameOverHitTarget: edges are inclusive for every button', () => {
+    for (const [name, target] of [['retryBtn', 'retry'], ['quitBtn', 'quit']]) {
+        const r = GAME_OVER_SCREEN[name]
+        assert.equal(gameOverHitTarget(r.x, r.y, GAME_OVER_SCREEN), target)
+        assert.equal(gameOverHitTarget(r.x + r.w, r.y + r.h, GAME_OVER_SCREEN), target)
+        assert.equal(gameOverHitTarget(r.x - 0.5, r.y + r.h / 2, GAME_OVER_SCREEN), null)
+        assert.equal(gameOverHitTarget(r.x + r.w / 2, r.y - 0.5, GAME_OVER_SCREEN), null)
+    }
+})
+
+test('gameOverHitTarget: misses return null (gap, dimmed level, Fullscreen spot)', () => {
+    assert.equal(gameOverHitTarget(10, 10, GAME_OVER_SCREEN), null)
+    assert.equal(gameOverHitTarget(500, 296, GAME_OVER_SCREEN), null)
+    assert.equal(gameOverHitTarget(500, 500, GAME_OVER_SCREEN), null)
+    assert.equal(gameOverHitTarget(900, 40, GAME_OVER_SCREEN), null)
+})
+
+test('gameOverKeyAction: ↑/↓ move, Enter/Space choose, R is Try Again, Escape ignored', () => {
+    assert.equal(gameOverKeyAction('ArrowUp'), 'up')
+    assert.equal(gameOverKeyAction('ArrowDown'), 'down')
+    assert.equal(gameOverKeyAction('Enter'), 'choose')
+    assert.equal(gameOverKeyAction(' '), 'choose')
+    assert.equal(gameOverKeyAction('r'), 'retry')
+    assert.equal(gameOverKeyAction('R'), 'retry')
+    assert.equal(gameOverKeyAction('Escape'), null)
+})
+
+test('game over focus stepping: wraps between the two buttons', () => {
+    const items = gameOverItems()
+    assert.equal(stepMenuFocus(items, 'retry', 1), 'quit')
+    assert.equal(stepMenuFocus(items, 'quit', 1), 'retry')
+    assert.equal(stepMenuFocus(items, 'retry', -1), 'quit')
 })

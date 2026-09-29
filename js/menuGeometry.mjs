@@ -5,7 +5,7 @@
  * Manual check (no automated browser harness here): resize the window so the
  * canvas letterboxes, click just inside each button edge on both axes, and
  * confirm ◀ / ▶ / PLAY (Title Screen) and Resume / Restart Level / Quit to
- * Title (Pause Menu) still
+ * Title (Pause Menu) and Try Again / Quit to Title (Game Over Screen) still
  * register; clicks a few px outside should not.
  */
 export function pointInRect(px, py, rect) {
@@ -85,4 +85,28 @@ export function stepMenuFocus(items, current, delta) {
     const i = items.indexOf(current)
     if (i < 0) return items[0]
     return items[(((i + delta) % items.length) + items.length) % items.length]
+}
+
+/** Which Game Over Screen button a logical point hits: 'retry' (Try Again) | 'quit' | null. */
+export function gameOverHitTarget(px, py, layout) {
+    if (layout.retryBtn && pointInRect(px, py, layout.retryBtn)) return 'retry'
+    if (layout.quitBtn && pointInRect(px, py, layout.quitBtn)) return 'quit'
+    return null
+}
+
+/** The Game Over Screen buttons in keyboard order; Try Again is focused when it opens. */
+export function gameOverItems() {
+    return ['retry', 'quit']
+}
+
+/**
+ * Game Over Screen keyboard: ↑/↓ move the focus, Enter/Space choose it, R is
+ * always Try Again. Escape is ignored.
+ */
+export function gameOverKeyAction(key) {
+    if (key === 'ArrowUp') return 'up'
+    if (key === 'ArrowDown') return 'down'
+    if (key === 'Enter' || key === ' ') return 'choose'
+    if (key === 'r' || key === 'R') return 'retry'
+    return null
 }

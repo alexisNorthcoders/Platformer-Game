@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { reduceDeathProgress, reduceEscapeKey, reduceGameOverRetry, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
+import { reduceDeathProgress, reduceEscapeKey, reduceGameOverChoice, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
 
 test('Escape during loading is ignored', () => {
     const r = reduceEscapeKey({
@@ -168,17 +168,30 @@ test('Escape while a game over restart is still loading the level is ignored', (
     assert.equal(r.reason, 'restarting')
 })
 
-test('game over retry is the same transition as the Pause Menu Restart Level', () => {
-    const retry = reduceGameOverRetry({ gameState: 'playing', playerGameOver: true })
+const GAME_OVER = { gameState: 'playing', playerGameOver: true, currentLevel: 3 }
+
+test('Try Again is the same transition as the Pause Menu Restart Level', () => {
+    const retry = reduceGameOverChoice({ ...GAME_OVER, choice: 'retry' })
     const restart = reducePauseMenuChoice({ ...PAUSED, choice: 'restart' })
     assert.deepEqual(retry, restart)
     assert.equal(retry.restartLevel, true)
 })
 
-test('game over retry only applies during game over, once', () => {
-    assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: false }).handled, false)
-    assert.equal(reduceGameOverRetry({ gameState: 'menu', playerGameOver: true }).handled, false)
-    assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: true, restarting: true }).handled, false)
+test('Quit to Title on the Game Over Screen is the same transition as the Pause Menu one', () => {
+    const quit = reduceGameOverChoice({ ...GAME_OVER, choice: 'quit' })
+    const paused = reducePauseMenuChoice({ ...PAUSED, choice: 'quit', currentLevel: 3 })
+    assert.deepEqual(quit, paused)
+    assert.equal(quit.resetSession, true)
+    assert.equal(quit.selectedLevel, 3)
+})
+
+test('Game Over Screen choices are not handled outside game over, or twice', () => {
+    for (const choice of ['retry', 'quit']) {
+        assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice, playerGameOver: false }).handled, false)
+        assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice, gameState: 'menu' }).handled, false)
+        assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice, restarting: true }).handled, false)
+    }
+    assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice: 'resume' }).handled, false)
 })
 
 test('Escape while the King is dying is ignored', () => {
@@ -192,10 +205,10 @@ test('Escape while the King is dying is ignored', () => {
     assert.equal(r.reason, 'dying')
 })
 
-test('R and taps (the game over retry) do nothing while the King is dying', () => {
-    const r = reduceGameOverRetry({ gameState: 'playing', playerGameOver: false, playerDying: true })
+test('Game Over Screen choices do nothing while the King is dying', () => {
+    const r = reduceGameOverChoice({ choice: 'retry', gameState: 'playing', playerGameOver: false, playerDying: true })
     assert.equal(r.handled, false)
-    const both = reduceGameOverRetry({ gameState: 'playing', playerGameOver: true, playerDying: true })
+    const both = reduceGameOverChoice({ choice: 'retry', gameState: 'playing', playerGameOver: true, playerDying: true })
     assert.equal(both.handled, false)
 })
 

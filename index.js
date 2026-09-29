@@ -41,7 +41,7 @@ function recordLevelEntry() {
 
 // Layouts live in menuLayout.mjs (menuGeometry-bootstrap.mjs, loaded before
 // this script).
-const { TITLE_SCREEN, PAUSE_MENU } = globalThis.__menuLayout
+const { TITLE_SCREEN, PAUSE_MENU, GAME_OVER_SCREEN } = globalThis.__menuLayout
 const menuArt = globalThis.__menuArt
 
 let collisionBlocks = []
@@ -292,11 +292,18 @@ let menuPressed = null
 let menuKeyboardFocus = false
 /** The Pause Menu button ↑/↓ have moved to; Resume each time it opens. */
 let pauseMenuFocus = 'resume'
+/** The Game Over Screen button ↑/↓ have moved to; Try Again each time it opens. */
+let gameOverFocus = 'retry'
+
+/** True while the Game Over Screen is up: the death sequence has played out. */
+function gameOverScreenShowing() {
+    return gameState === 'playing' && player.gameOver
+}
 
 function menuButtonState(target) {
     if (menuPressed === target) return 'pressed'
     if (menuHover === target) return 'hover'
-    const focused = pauseMenuFromPlaying ? pauseMenuFocus : 'play'
+    const focused = gameOverScreenShowing() ? gameOverFocus : pauseMenuFromPlaying ? pauseMenuFocus : 'play'
     if (menuKeyboardFocus && target === focused) return 'hover'
     return 'idle'
 }
@@ -663,9 +670,22 @@ function drawPauseMenu() {
     c.restore()
 }
 
-// fullscreen-bootstrap.mjs and gameOverRestart-bootstrap.mjs load before this
-// script in index.html.
-const isTouch = gameOverRestart.isTouchDevice()
+/** The Game Over Screen: the Pause Menu's panel and planks over the dimmed, frozen level. */
+function drawGameOverScreen() {
+    const layout = GAME_OVER_SCREEN
+    c.save()
+    c.fillStyle = 'rgba(0, 0, 0, 0.6)'
+    c.fillRect(0, 0, canvas.width, canvas.height)
+    drawBrickPanel(layout.panel)
+    drawMenuText('GAME OVER', layout.caption.x, layout.caption.y, 24)
+    drawMenuText(`LEVEL ${level}`, layout.levelName.x, layout.levelName.y, 16)
+    drawPlankButtonWithLabel(layout.retryBtn, 'retry', 'TRY AGAIN')
+    drawPlankButtonWithLabel(layout.quitBtn, 'quit', 'QUIT TO TITLE')
+    c.restore()
+}
+
+// fullscreen-bootstrap.mjs loads before this script in index.html.
+const isTouch = Boolean(globalThis.matchMedia?.('(pointer: coarse)').matches)
 const fullscreenAvailable = Boolean(globalThis.__fullscreen?.isFullscreenAvailable(document, isTouch))
 
 function titleScreenHitTarget(x, y) {
@@ -706,6 +726,22 @@ function handlePauseMenuTarget(target) {
         gameState,
         pauseMenuFromPlaying,
         playerDying: player.dying,
+        currentLevel: level,
+    }))
+}
+
+function gameOverHitTarget(x, y) {
+    return globalThis.__menuGeom.gameOverHitTarget(x, y, GAME_OVER_SCREEN)
+}
+
+/** Act on a Game Over Screen button: 'retry' (Try Again) or 'quit'. */
+function handleGameOverTarget(choice) {
+    applyGameFlowResult(globalThis.__gameFlow.reduceGameOverChoice({
+        choice,
+        gameState,
+        playerGameOver: player.gameOver,
+        playerDying: player.dying,
+        restarting: Boolean(player._restarting),
         currentLevel: level,
     }))
 }
@@ -807,9 +843,15 @@ function resetSession() {
 }
 
 // The only input route for the menu buttons, on touch too: taps synthesise a
-// click (mobile-bootstrap.mjs never cancels touchstart), and tap-to-restart
-// below only acts on game over.
+// click (mobile-bootstrap.mjs never cancels touchstart). On the Game Over
+// Screen only its buttons act; a tap anywhere else does nothing.
 canvas.addEventListener('click', (e) => {
+    if (gameOverScreenShowing()) {
+        const { x, y } = canvasClickCoords(e)
+        const target = gameOverHitTarget(x, y)
+        if (target) handleGameOverTarget(target)
+        return
+    }
     if (gameState !== 'menu') return
     const { x, y } = canvasClickCoords(e)
     if (!pauseMenuFromPlaying) {
@@ -824,6 +866,10 @@ canvas.addEventListener('click', (e) => {
 // is off (preventInput) while on the Title Screen, so eventListeners.js
 // ignores these keys there.
 window.addEventListener('keydown', (e) => {
+    if (gameOverScreenShowing()) {
+        handleGameOverKey(e)
+        return
+    }
     if (gameState !== 'menu') return
     if (pauseMenuFromPlaying) {
         handlePauseMenuKey(e)
@@ -859,11 +905,36 @@ function handlePauseMenuKey(e) {
     pauseMenuFocus = g.stepMenuFocus(items, pauseMenuFocus, action === 'down' ? 1 : -1)
 }
 
+// Game Over Screen keyboard (#89): ↑/↓ move the focus, Enter/Space choose it,
+// R is always Try Again. Escape is ignored (reduceEscapeKey).
+function handleGameOverKey(e) {
+    const g = globalThis.__menuGeom
+    const action = g.gameOverKeyAction(e.key)
+    if (!action) return
+    e.preventDefault()
+    menuKeyboardFocus = true
+    if (action === 'retry') {
+        if (e.repeat) return
+        menuPressed = 'retry'
+        handleGameOverTarget('retry')
+        return
+    }
+    if (action === 'choose') {
+        // Holding Enter/Space must not choose twice.
+        if (e.repeat) return
+        menuPressed = gameOverFocus
+        handleGameOverTarget(gameOverFocus)
+        return
+    }
+    gameOverFocus = g.stepMenuFocus(g.gameOverItems(), gameOverFocus, action === 'down' ? 1 : -1)
+}
+
 // Button highlights (#63): lit under the mouse, pressed while a pointer or
 // key holds it. Purely visual; the click and keydown handlers above act.
 function menuHitTarget(e) {
-    if (gameState !== 'menu') return null
     const { x, y } = canvasClickCoords(e)
+    if (gameOverScreenShowing()) return gameOverHitTarget(x, y)
+    if (gameState !== 'menu') return null
     return pauseMenuFromPlaying ? pauseMenuHitTarget(x, y) : titleScreenHitTarget(x, y)
 }
 
@@ -877,16 +948,8 @@ window.addEventListener('pointerup', () => { menuPressed = null })
 window.addEventListener('pointercancel', () => { menuPressed = null })
 window.addEventListener('keyup', (e) => {
     const g = globalThis.__menuGeom
-    if (g.titleScreenKeyTarget(e.key) === menuPressed || g.pauseMenuKeyAction(e.key) === 'choose') menuPressed = null
+    if (g.titleScreenKeyTarget(e.key) === menuPressed || g.pauseMenuKeyAction(e.key) === 'choose' || g.gameOverKeyAction(e.key) === 'retry') menuPressed = null
 })
-
-if (isTouch) {
-    gameOverRestart.bindTapToRestart(canvas, {
-        isGameOver: () => player.gameOver,
-        // Late-bound: restartFromGameOver is assigned further down this file.
-        restart: () => window.restartFromGameOver(),
-    })
-}
 
 function animate() {
 
@@ -1047,17 +1110,7 @@ function animate() {
     c.fillRect(0, 0, canvas.width, canvas.height);
     c.restore();
 
-    if (player.gameOver) {
-        c.save()
-        c.fillStyle = 'rgba(0, 0, 0, 0.45)'
-        c.fillRect(0, 0, canvas.width, canvas.height)
-        c.fillStyle = '#f5f0e6'
-        c.font = 'bold 28px sans-serif'
-        c.textAlign = 'center'
-        c.textBaseline = 'middle'
-        c.fillText(gameOverRestart.gameOverPrompt(isTouch), canvas.width / 2, canvas.height / 2)
-        c.restore()
-    }
+    if (player.gameOver) drawGameOverScreen()
 }
 
 /** Dying → game over once the King is on the ground and his Dead animation has finished. */
@@ -1068,7 +1121,10 @@ function advanceDeath() {
         playerGrounded: player.isGrounded,
         deathAnimationDone: player.deathAnimationDone,
     })
-    if (result.handled && result.gameOver) player.finishDeath()
+    if (result.handled && result.gameOver && player.finishDeath()) {
+        gameOverFocus = 'retry'
+        clearMenuHighlights()
+    }
 }
 
 // Starts from 0; if Escape opened the menu mid-transition, start paused.
@@ -1093,7 +1149,7 @@ function drawLevelTimer() {
 }
 
 /**
- * Restart Level (#65), from the Pause Menu or the retry after game over: the level as it was on entering it, with its diamonds
+ * Restart Level (#65), from the Pause Menu or Try Again after game over: the level as it was on entering it, with its diamonds
  * and Pigs back and the counts rolled back. The black loading screen shows
  * until it is rebuilt; if that fails, back to the Title Screen.
  */
@@ -1139,17 +1195,6 @@ async function restartLevel() {
     startLevelTimer()
 }
 
-// The retry after game over (R, or a tap) is Restart Level.
-window.restartFromGameOver = () => {
-    const flow = globalThis.__gameFlow
-    applyGameFlowResult(flow.reduceGameOverRetry({
-        gameState,
-        playerGameOver: player.gameOver,
-        playerDying: player.dying,
-        restarting: Boolean(player._restarting),
-    }))
-}
-
 // Escape (and the touch pause button, #45) opens/closes the Pause Menu
 // (returns true if handled).
 function handleEscapeMenu() {
@@ -1174,6 +1219,7 @@ function applyGameFlowResult(result) {
     const flow = globalThis.__gameFlow
     const wasPaused = pauseMenuFromPlaying
     if (result.clearKeys) flow.clearHeldInputKeys(keys)
+    if (gameOverScreenShowing()) clearMenuHighlights()
     if (result.pauseMenuFromPlaying && !wasPaused) {
         // The canvas still holds the last level frame: keep it as the frozen level.
         capturePauseSnapshot()

@@ -10,7 +10,7 @@ import {
     plankFaceCentre,
     waitForPixelFont,
 } from '../js/menuArt.mjs'
-import { PAUSE_MENU, TITLE_SCREEN } from '../js/menuLayout.mjs'
+import { GAME_OVER_SCREEN, PAUSE_MENU, TITLE_SCREEN } from '../js/menuLayout.mjs'
 import { minNineSliceSize, nineSlice } from '../js/nineSlice.mjs'
 
 const BUTTONS = [
@@ -21,6 +21,8 @@ const BUTTONS = [
     ['Pause Menu Restart Level', PAUSE_MENU.restartBtn],
     ['Pause Menu Quit to Title', PAUSE_MENU.quitBtn],
     ['Pause Menu Fullscreen', PAUSE_MENU.fullscreenBtn],
+    ['Game Over Screen Try Again', GAME_OVER_SCREEN.retryBtn],
+    ['Game Over Screen Quit to Title', GAME_OVER_SCREEN.quitBtn],
 ]
 
 test('plank: the copied columns make up the 9-slice source, with a one-column middle', () => {
@@ -51,7 +53,7 @@ for (const [name, rect] of BUTTONS) {
 
 test('brick panel and Level Preview frames fit the brick corners', () => {
     const min = minNineSliceSize(BRICK_FRAME, MENU_ART_SCALE)
-    for (const rect of [TITLE_SCREEN.panel, frameAround(TITLE_SCREEN.preview), PAUSE_MENU.panel]) {
+    for (const rect of [TITLE_SCREEN.panel, frameAround(TITLE_SCREEN.preview), PAUSE_MENU.panel, GAME_OVER_SCREEN.panel]) {
         assert.ok(rect.w >= min.w && rect.h >= min.h)
         const pieces = nineSlice(BRICK_FRAME, rect, MENU_ART_SCALE, { tileEdges: true })
         for (const p of pieces) {
