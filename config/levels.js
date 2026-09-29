@@ -161,4 +161,30 @@ const levels = {
             { x: 10402, y: 168 },
         ],
     },
+    // Thunderholm (built by tools/levels/level_24.py): a Viking village under a
+    // Storm. The ground runs on and the gaps are Spike Ditches; three Tumbling
+    // Planks cross them. Every enemy is tinted dark green.
+    24: {
+        playerPosition: { x: 100, y: 296 },
+        lastDirection: 'right',
+        spikes: { top: 512 },
+        weather: 'storm',
+        enemyTint: 'rgba(31, 77, 42, 0.5)', // #1f4d2a at 0.5
+        backdrop: {
+            far: './img/Level 24 far.png',
+            sky: './img/Level 24 sky.png',
+            rim: './img/Level 24 rim.png',
+            terrain: './img/Level 24 terrain.png',
+            parallax: 0.3,
+        },
+        checkpoints: [
+            { x: 738, y: 296 },
+            { x: 1698, y: 232 },
+            { x: 3490, y: 168 },
+            { x: 4066, y: 40 },
+            { x: 4450, y: 296 },
+            { x: 5474, y: 232 },
+            { x: 6114, y: 296 },
+        ],
+    },
 };

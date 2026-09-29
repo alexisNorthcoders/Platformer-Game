@@ -43,6 +43,11 @@ class Layout:
     # middle of the hub's top, map px; two blades turn flat round it like a
     # rotor, reaching `radius` each side as they point across the view.
     helix_platforms: list = field(default_factory=list)
+    # Tumbling Planks: dict(x, y, period, phase, direction). (x, y) is the middle of the
+    # plank's surface top, map px: the point it turns round, end over end, in the plane
+    # of the screen. It is flat twice a turn and standable within +-25 degrees of flat
+    # (js/tumblingPlank.mjs). Drawn in code, so not on the level image.
+    tumbling_planks: list = field(default_factory=list)
     # Crumbling Shelves: (col, row) tiles; the shelf's surface is the top of the tile
     # and it is one tile wide. Drawn in code (they shake and fall), so they are
     # not on the level image, only on the Level Preview.
@@ -64,7 +69,9 @@ class Layout:
     # 'water' (waves, far isles), 'sand' (dunes, far dunes), 'grass' (a
     # night thicket of tall grass, a far pine forest), 'lava' (a molten
     # floor, far black crags) or 'cloud' (the Cloud Bank: a drifting floor of
-    # cloud, with a bluer daytime sky over it).
+    # cloud, with a bluer daytime sky over it) or 'spike' (Spike Ditches: the ground
+    # runs on like a street and the gaps are ditches cut down into it, spikes along
+    # the bottom; give `pit_top` at row 8, 256, so a ditch is 2-3 tiles deep).
     pit: str = 'water'
     # 'clouds': a blue sky with clouds, all on the parallax layer.
     # 'sun': a hot sky with a low sun and rare clouds. The sky colour and the sun
@@ -75,6 +82,9 @@ class Layout:
     # parallax layer; the walls glow with the lava's light.
     # 'overcast': grey daytime bands on the far layer (no sun or moon), low heavy
     # banks of cloud on the parallax layer; the walls are dimmed and cooled.
+    # 'storm': a deeper steel blue on the far layer, dark heavy storm clouds and a
+    # Viking village silhouette (two ranks) on the parallax layer, and a `rim` image of
+    # the village's outline that a Storm's flash lights; the walls are cooled.
     sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
@@ -149,6 +159,13 @@ def build_json(layout, cells):
         groups.append(('crumbling_shelf', [
             dict(x=col * TILE, y=row * TILE, width=0, height=0, point=True, name='', type='',
                  rotation=0, visible=True) for col, row in layout.crumbling_shelves]))
+    if layout.tumbling_planks:
+        # A point object at the middle of the plank's surface top (see parseAssets.js getTumblingPlankPath).
+        groups.append(('tumbling_plank', [
+            dict(x=p['x'], y=p['y'], width=0, height=0, point=True, name='', type='', rotation=0, visible=True,
+                 properties=[dict(name=key, type='float', value=p.get(key, default))
+                             for key, default in (('period', 8), ('phase', 0), ('direction', 1))])
+            for p in layout.tumbling_planks]))
     if layout.helix_platforms:
         # A point object at the middle of the hub's top (see parseAssets.js getHelixPlatformPath).
         groups.append(('helix_platform', [
@@ -238,6 +255,19 @@ PUDDLE, PUDDLE_GLINT = (86, 104, 126), (170, 188, 202)
 # A Crumbling Shelf, in map px (drawn at 2x in CrumblingShelf.js): a plank of brick
 # with cracks across it. Kept equal to SHELF in CrumblingShelf.js.
 SHELF_BRICK, SHELF_RIM, SHELF_CRACK, SHELF_SHADE = (203, 118, 106), (251, 202, 174), (63, 56, 81), (150, 82, 88)
+
+# The 'storm' sky: a steel blue, deeper than SKY, with dark heavy clouds; the village on
+# the horizon is dark blue-grey in two ranks (far paler, near darker), lit at its edge
+# by a flash (`rim`).
+STORM_SKY = [(34, 58, 100), (46, 74, 118), (60, 92, 136), (74, 108, 150), (90, 124, 162), (108, 142, 176)]
+STORM_CLOUD, STORM_SHADE = (62, 74, 98), (42, 52, 74)
+STORM_LIGHT = (200, 212, 236)
+VILLAGE_FAR, VILLAGE_NEAR, VILLAGE_SMOKE, VILLAGE_RIM = (70, 88, 116), (38, 50, 72), (96, 112, 138), (206, 222, 250)
+VILLAGE_BASE = 200  # map px: where the houses stand on the hill
+# Spikes: simple grey iron points over dark stone (in the tile sets' palette). Kept
+# equal to the drawn tips in index.js (SPIKES.tallestTip is 16).
+SPIKE_IRON, SPIKE_EDGE, SPIKE_BASE, SPIKE_STONE = (150, 158, 170), (220, 242, 237), (63, 56, 81), (44, 40, 62)
+SPIKE_HEIGHT, SPIKE_WIDTH = 12, 8
 
 
 def lerp(a, b, t):
@@ -533,6 +563,129 @@ def paint_overcast(img, rng):
             paint_blob(img, x, y, r * 1.5, r * 0.45, OVERCAST_CLOUD)
 
 
+def paint_storm_clouds(img, rng):
+    """Dark, heavy banks of storm cloud across the top of the sky, where the bolts start."""
+    for _ in range(max(4, img.width // 90)):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(10, 90)
+        puffs = [(cx + rng.uniform(-70, 70), cy + rng.uniform(-8, 8), rng.uniform(16, 32)) for _ in range(7)]
+        for x, y, r in puffs:
+            paint_blob(img, x, y + 6, r * 1.7, r * 0.6, STORM_SHADE)
+        for x, y, r in puffs:
+            paint_blob(img, x, y, r * 1.5, r * 0.5, STORM_CLOUD)
+
+
+def paint_longhouse(img, x, base, width, wall, colour):
+    """A longhouse: a low wall under a steep gabled roof, with a crossed pair of
+    dragon-head beams at each end of the ridge (a tiny head on each beam's tip)."""
+    px = img.load()
+    roof = width // 3
+    for dy in range(wall):
+        for dx in range(width):
+            put(px, img, x + dx, base - 1 - dy, colour)
+    for dy in range(roof):
+        inset = round(dy * (width / 2) / roof)
+        for dx in range(inset, width - inset):
+            put(px, img, x + dx, base - wall - 1 - dy, colour)
+    top = base - wall - roof
+    mid = x + width // 2
+    for k in range(9):  # two crossed beams at the ridge, 2 px thick, with a knob for a dragon's head at each tip
+        for dx in (0, 1):
+            put(px, img, mid - 5 + k + dx, top - 9 + k, colour)
+            put(px, img, mid + 5 - k + dx, top - 9 + k, colour)
+    for hx in (mid - 7, mid + 6):
+        for ddx in range(3):
+            for ddy in range(3):
+                put(px, img, hx + ddx, top - 12 + ddy, colour)
+    return top
+
+
+def put(px, img, x, y, colour):
+    if 0 <= x < img.width and 0 <= y < img.height:
+        px[x, y] = (*colour, 255)
+
+
+def paint_palisade(img, x, base, length, colour, height=20):
+    """A wall of pointed stakes, 6 px wide, a little uneven."""
+    px = img.load()
+    for sx in range(x, x + length, 6):
+        h = height - (sx // 6 * 7 % 4)
+        for dx in range(5):
+            for dy in range(h):
+                put(px, img, sx + dx, base - 1 - dy, colour)
+        for dy in range(3):  # the point
+            for dx in range(dy, 5 - dy):
+                put(px, img, sx + dx, base - h - 1 - dy, colour)
+
+
+def village_rank(img, rng, base, colour, sizes, gap, smoke=False):
+    """A rank of the village along the base line: longhouses and stretches of palisade."""
+    px = img.load()
+    for y in range(base - 1, min(img.height, base + 60)):  # the hill under it
+        for x in range(img.width):
+            px[x, y] = (*colour, 255)
+    x = rng.randint(0, 30)
+    smokes = []
+    while x < img.width:
+        if rng.random() < 0.3:
+            length = rng.randint(3, 8) * 6
+            paint_palisade(img, x, base, length, colour)
+            x += length + rng.randint(*gap)
+            continue
+        width = rng.randint(*sizes)
+        top = paint_longhouse(img, x, base, width, rng.randint(14, 24), colour)
+        if smoke and rng.random() < 0.6:
+            smokes.append((x + width // 2 + rng.randint(-8, 8), top))
+        x += width + rng.randint(*gap)
+    return smokes
+
+
+def paint_smoke_trail(img, x, top, rng):
+    """A thin wavering trail of smoke rising from a roof, 2 px wide, fading upwards."""
+    px = img.load()
+    for i in range(34):
+        alpha = round(200 * (1 - i / 34))
+        sx = x + round(math.sin(i / 5 + rng.random() * 0.3) * 3)
+        for dx in (0, 1):
+            if 0 <= sx + dx < img.width and 0 <= top - i < img.height:
+                px[sx + dx, top - i] = (*VILLAGE_SMOKE, alpha)
+
+
+def build_village(layout, width):
+    """The Viking village silhouette on the horizon, and its rim: two ranks (a
+    paler far one, a darker near one) of longhouses and palisade, with a few
+    thin smoke trails. Returns (village, rim): the outline pixels lit by a flash."""
+    village = Image.new('RGBA', (width, horizon(layout)))
+    rng = random.Random(layout.seed + 6)
+    village_rank(village, rng, VILLAGE_BASE - 10, VILLAGE_FAR, (70, 110), (14, 50))
+    smokes = village_rank(village, rng, VILLAGE_BASE, VILLAGE_NEAR, (60, 100), (24, 80), smoke=True)
+    rim = Image.new('RGBA', village.size)
+    vpx, rpx = village.load(), rim.load()
+    for y in range(village.height - 1):
+        for x in range(village.width):
+            if vpx[x, y][3] and (y == 0 or not vpx[x, y - 1][3] or x == 0 or not vpx[x - 1, y][3]
+                                or x + 1 >= village.width or not vpx[x + 1, y][3]):
+                if y < VILLAGE_BASE:
+                    rpx[x, y] = (*VILLAGE_RIM, 255)
+    for x, top in smokes:
+        paint_smoke_trail(village, x, top - 12, rng)
+    return village, rim
+
+
+def paint_spikes(img, top):
+    """A Spike Ditch's floor: dark stone from `top` down, an iron bar along it, and
+    grey iron points standing 12 px above it, as wide as SPIKE_WIDTH. Flat colours."""
+    px = img.load()
+    for y in range(top, img.height):
+        for x in range(img.width):
+            px[x, y] = (*(SPIKE_BASE if y < top + 3 else SPIKE_STONE), 255)
+    for start in range(0, img.width, SPIKE_WIDTH):
+        for dy in range(SPIKE_HEIGHT):
+            half = (SPIKE_WIDTH / 2) * (1 - dy / SPIKE_HEIGHT)
+            for dx in range(SPIKE_WIDTH):
+                if abs(dx + 0.5 - SPIKE_WIDTH / 2) < half:
+                    px[start + dx, top - 1 - dy] = (*(SPIKE_EDGE if dx < SPIKE_WIDTH // 2 - 1 and dy > 2 else SPIKE_IRON), 255)
+
+
 def island_puddles(layout, cells):
     """Puddles on the brick tops: (x, y, width) in map px, y the top of the
     wall. One on some walls 3+ tiles wide (2 tiles: some), well clear of both
@@ -681,6 +834,8 @@ def paint_decorations(img, layout):
         window, banner = candlelit(window, EMBERLIGHT), moonlight(banner, EMBERLIGHT)
     elif layout.sky == 'overcast':
         window, banner = moonlight(window, OVERCAST_LIGHT), moonlight(banner, OVERCAST_LIGHT)
+    elif layout.sky == 'storm':
+        window, banner = moonlight(window, STORM_LIGHT), moonlight(banner, STORM_LIGHT)
     for spot in layout.windows:
         img.alpha_composite(window, spot)
     for spot in layout.banners:
@@ -716,7 +871,9 @@ def build_far(layout, width, sun_x):
     """The far layer of a 'sun' or 'moon' sky: sky bands, stars and the sun or
     moon, fixed in the view. `sun_x` places the sun or moon."""
     img = Image.new('RGBA', (width, horizon(layout)))
-    if layout.sky == 'overcast':
+    if layout.sky == 'storm':
+        paint_sky(img, horizon(layout), STORM_SKY)
+    elif layout.sky == 'overcast':
         paint_sky(img, horizon(layout), OVERCAST_SKY)
     elif layout.sky == 'smoke':
         paint_sky(img, horizon(layout), SMOKE_SKY)
@@ -732,7 +889,7 @@ def build_far(layout, width, sun_x):
 
 
 def has_far(layout):
-    return layout.sky in ('sun', 'moon', 'smoke', 'overcast')
+    return layout.sky in ('sun', 'moon', 'smoke', 'overcast', 'storm')
 
 
 def far_x(layout):
@@ -752,10 +909,14 @@ def build_sky(layout, width):
         paint_smoke(img, rng)
     elif layout.sky == 'overcast':
         paint_overcast(img, rng)
+    elif layout.sky == 'storm':
+        paint_storm_clouds(img, rng)
     else:
         paint_sky(img, horizon(layout), DAY_SKY if layout.pit == 'cloud' else SKY)
         paint_clouds(img, rng)
-    if layout.pit == 'cloud':
+    if layout.sky == 'storm':
+        img.alpha_composite(build_village(layout, width)[0])
+    elif layout.pit == 'cloud':
         paint_far_isles(img, rng, horizon(layout), BANK_DEEP)
     elif layout.pit_top is not None:
         if layout.pit == 'grass' and layout.sky == 'overcast':
@@ -769,8 +930,8 @@ def build_terrain(layout, cells):
     """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
     if layout.pit_top is not None:
-        {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava, 'cloud': paint_cloud_bank}.get(layout.pit, paint_water)(img, layout.pit_top)
-    light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT, 'overcast': OVERCAST_LIGHT}.get(layout.sky)
+        {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava, 'cloud': paint_cloud_bank, 'spike': paint_spikes}.get(layout.pit, paint_water)(img, layout.pit_top)
+    light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT, 'overcast': OVERCAST_LIGHT, 'storm': STORM_LIGHT}.get(layout.sky)
     paint_walls(img, cells, light, layout.pit_top if layout.pit == 'lava' else None)
     paint_island_wisps(img, cells, random.Random(layout.seed + 3))
     if layout.puddles:
@@ -801,6 +962,8 @@ def build(number, layout):
     build_sky(layout, sky_width(layout)).save(f'img/Level {number} sky.png')
     if has_far(layout):
         build_far(layout, VIEW_WIDTH, far_x(layout)).save(f'img/Level {number} far.png')
+    if layout.sky == 'storm':
+        build_village(layout, sky_width(layout))[1].save(f'img/Level {number} rim.png')
     terrain.save(f'img/Level {number} terrain.png')
     build_preview(layout, terrain).save(f'img/Level {number}.png')
     print(f'Wrote Level_{number}.json and the Level {number} images '

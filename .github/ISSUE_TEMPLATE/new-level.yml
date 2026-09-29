@@ -32,6 +32,7 @@ body:
         - grass
         - lava
         - cloud bank
+        - spike ditch (ditches cut down into the ground, spikes along the bottom)
         - something new (describe it under Anything else)
     validations:
       required: true
@@ -45,6 +46,7 @@ body:
         - moon (night, stars)
         - smoke (soot and a red glow, a volcano)
         - overcast (grey daytime, low heavy clouds)
+        - storm (deep steel blue, dark heavy clouds, a Viking village on the horizon)
         - something new (describe it under Anything else)
     validations:
       required: true
@@ -59,6 +61,7 @@ body:
         - label: Diagonal ride (Moving Platform)
         - label: Rotating Platform (planks turning round a hub)
         - label: Helix Platform (blades turning flat like a rotor)
+        - label: Tumbling Plank (a plank turning end over end; standable only near flat)
   - type: textarea
     id: mechanics
     attributes:

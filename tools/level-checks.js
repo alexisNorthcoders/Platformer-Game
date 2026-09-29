@@ -163,6 +163,79 @@ for (const [i, shelf] of crumblingShelves.entries()) {
     respawnKing()
 }
 
+// 3d. Each Tumbling Plank: it holds the King while within its window of flat,
+//     drops him as it tips past, lets him through when it is on end, and a
+//     keys-only crossing from the ledge before it to the ledge after works.
+await play(N)
+report.tumbling = { ok: true, planks: [] }
+for (const [i, plank] of tumblingPlanks.entries()) {
+    const { center } = plank.state.path
+    const heartsBefore = player.hitpoints
+    const standableAt = f => globalThis.__tumblingPlank.tumbleSurfaceAt(plank.state.path, f).standable
+    const seek = (from, want) => { let f = from; while (standableAt(f) !== want) f++; return f }
+    const settle = f => { tumblingFrame = f - 1; step(1) }
+    // The ledges each side of the ditch, at the plank's height.
+    const ledges = solid().filter(b => Math.abs(b.position.y - center.y) < 2)
+    const left = Math.max(...ledges.filter(b => b.position.x + b.width <= center.x).map(b => b.position.x + b.width))
+    const right = Math.min(...ledges.filter(b => b.position.x >= center.x).map(b => b.position.x))
+    // (a) Carried while flat: stands on it, feet gap about 0, for a whole window (from its start).
+    const windowStart = seek(seek(tumblingFrame, false), true)
+    settle(windowStart)
+    player.setPosition({ x: center.x - 35 - 20, y: center.y - FEET - 0.01 })
+    player.velocity.x = 0
+    player.velocity.y = 0
+    let worstGap = 0, windowFrames = 0
+    while (plank.state.standable && windowFrames < 200) {
+        step(1)
+        windowFrames++
+        if (plank.state.standable) worstGap = Math.max(worstGap, Math.abs(player.position.y + FEET - center.y))
+    }
+    // (b) Dropped as it tips past the window: he falls clear of it.
+    step(10)
+    const dropped = player.position.y + FEET > center.y + 20
+    respawnKing()
+    // (c) On end: he passes through it, falling from above to below with no push sideways.
+    settle(seek(windowStart + 20, false))
+    let steepFrame = tumblingFrame
+    while (Math.abs(Math.cos(globalThis.__tumblingPlank.tumbleAngleAt(plank.state.path, steepFrame))) > 0.1) steepFrame++
+    settle(steepFrame)
+    player.setPosition({ x: center.x - 35, y: center.y - 90 - FEET })
+    player.velocity.x = 0
+    player.velocity.y = 0
+    const x0 = player.position.x
+    step(30)
+    const passedThrough = player.position.y + FEET > center.y + 20 && Math.abs(player.position.x - x0) < 1
+    respawnKing()
+    // (d) Keys only: walk from the ledge as the window opens, hold right to the far ledge.
+    settle(seek(seek(tumblingFrame, true), false)) // just as it stops being standable
+    player.setPosition({ x: left - 100, y: center.y - FEET - 0.01 })
+    player.velocity.x = 0
+    player.velocity.y = 0
+    step(4)
+    keys.d.pressed = false
+    let crossed = false, walked = 0
+    const hearts1 = player.hitpoints
+    for (let f = 0; f < 700 && !crossed; f++) {
+        // Creep to the ledge's very end (12 px of hitbox still on it), wait, and go the moment the window opens.
+        const atEdge = player.hitbox.position.x >= left - 12
+        keys.d.pressed = !atEdge || plank.state.standable || walked > 0
+        // The far ledge may carry a battlement (a fort's end): jump as the plank runs out.
+        keys.w.pressed = walked > 0 && player.hitbox.position.x + player.hitbox.width >= right - 40 && Math.abs(player.velocity.y) < 0.6
+        if (keys.d.pressed && atEdge) walked++
+        step(1)
+        crossed = player.hitbox.position.x > right - 10 && player.position.y + FEET <= center.y + 3 && Math.abs(player.velocity.y) < 0.6
+        if (player.hitpoints < hearts1) break
+    }
+    keys.d.pressed = false
+    keys.w.pressed = false
+    const keysOnly = crossed && player.hitpoints === hearts1
+    const ok = worstGap < 1 && windowFrames >= 55 && dropped && passedThrough && keysOnly
+    report.tumbling.planks.push({ i, ok, worstGap: +worstGap.toFixed(3), windowFrames, dropped, passedThrough, keysOnly, walked })
+    if (!ok) report.tumbling.ok = false
+    player.hitpoints = heartsBefore
+    respawnKing()
+}
+
 // 4. The start and every checkpoint stand the King on solid ground.
 await play(N)
 report.standing = { ok: true, spots: [] }
@@ -208,12 +281,16 @@ if (levels[N].weather) {
     }
     const withWeather = await run(levels[N].weather)
     const without = await run(null)
+    // A Storm's flashes stay soft: at most 35% white however long it runs.
+    let peak = 0
+    if (levels[N].weather === 'storm') for (let t = 0; t < 300; t += 1 / 30) peak = Math.max(peak, globalThis.__storm.flashAt(t, 24))
     const drops = globalThis.__weather.rainAt(performance.now() / 1000, { left: 0, right: 1024 }, { tops: rainTops, bottom: 496 })
     report.weather = {
-        ok: withWeather.x === without.x && withWeather.y === without.y && withWeather.hearts === without.hearts,
+        ok: withWeather.x === without.x && withWeather.y === without.y && withWeather.hearts === without.hearts && peak <= 0.35,
+        stormPeakWhite: peak,
         withWeather, without, streaksInView: drops.streaks.length, splashesInView: drops.splashes.length,
     }
 }
 
-report.ok = ['fall', 'pigs', 'rides', 'helix', 'crumbling', 'standing', 'farEnd', 'weather'].every(check => !report[check] || report[check].ok)
+report.ok = ['fall', 'pigs', 'rides', 'helix', 'tumbling', 'crumbling', 'standing', 'farEnd', 'weather'].every(check => !report[check] || report[check].ok)
 return report
