@@ -39,10 +39,14 @@ class MovingPlatform extends Sprite {
     drawPlank(scale) {
         const surface = this.collisionBlocks[0].width
         if (surface >= globalThis.__movingPlatform.MOVING_PLATFORM.width || !this.loaded) return super.draw(scale)
-        const half = Math.floor((surface / scale + 4) / 2) // art px of each end
+        const { spriteOffsetX } = globalThis.__movingPlatform.MOVING_PLATFORM
+        // Art px across the whole plank (surface plus the sprite's margin each side), cut from the sprite's two ends.
+        const total = Math.min(this.width, Math.round((surface - 2 * spriteOffsetX) / scale))
+        const left = Math.floor(total / 2)
+        const right = total - left
         c.save()
-        c.drawImage(this.image, 0, 0, half, this.height, this.position.x, this.position.y, half * scale, this.height * scale)
-        c.drawImage(this.image, this.width - half, 0, half, this.height, this.position.x + half * scale, this.position.y, half * scale, this.height * scale)
+        c.drawImage(this.image, 0, 0, left, this.height, this.position.x, this.position.y, left * scale, this.height * scale)
+        c.drawImage(this.image, this.width - right, 0, right, this.height, this.position.x + left * scale, this.position.y, right * scale, this.height * scale)
         c.restore()
     }
 
