@@ -90,3 +90,16 @@ _Avoid_: Cloud sea, sky pit
 **Checkpoint**:
 A flag on a long level marking where the King comes back after falling into the Water or the Cloud Bank. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
 _Avoid_: Save point, respawn point
+
+### Weather
+
+**Weather**:
+An effect falling across an open-air level for looks alone, such as Rain. A level has at most one. It never touches the King, the Pigs or Bombs.
+
+**Rain**:
+Weather of drops falling slantwise across the level, splashing where they land on walls and platforms. Purely for looks.
+_Avoid_: Storm, drizzle (except in a level's name)
+
+**Puddle**:
+Standing rainwater on an island's bricks or a Moving Platform's plank, rippling where drops land. Purely for looks: it is never slippery.
+_Avoid_: Pool, pond

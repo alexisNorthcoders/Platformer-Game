@@ -17,3 +17,5 @@ To create or change a level, follow `.claude/skills/new-level/SKILL.md`. It cove
 ### Domain docs
 
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+Glossary changes go straight to `main`. If you change `CONTEXT.md` while writing an issue, commit it on `main` (`docs: Add <terms> to the glossary`) and push it before you raise the issue, so the agent who picks it up finds the terms it refers to. Don't ask first.
