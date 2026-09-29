@@ -297,9 +297,14 @@ let pauseMenuFocus = 'resume'
 /** The Game Over Screen button ↑/↓ have moved to; Try Again each time it opens. */
 let gameOverFocus = 'retry'
 
-/** True while the Game Over Screen is up: the death sequence has played out. */
+/** True from the moment the death sequence has played out: the level dims, then the menu appears. */
 function gameOverScreenShowing() {
     return gameState === 'playing' && player.gameOver
+}
+
+/** True once the Game Over Screen's menu is revealed and takes input (after its dim-in lockout). */
+function gameOverMenuReady() {
+    return gameOverScreenShowing() && globalThis.__gameFlow.gameOverMenuReady({ gameOverAt: player.gameOverAt, now: performance.now() })
 }
 
 function menuButtonState(target) {
@@ -688,9 +693,15 @@ function drawPauseMenu() {
 /** The Game Over Screen: the Pause Menu's panel and planks over the dimmed, frozen level. */
 function drawGameOverScreen() {
     const layout = GAME_OVER_SCREEN
+    const flow = globalThis.__gameFlow
+    const now = performance.now()
     c.save()
-    c.fillStyle = 'rgba(0, 0, 0, 0.6)'
+    c.fillStyle = `rgba(0, 0, 0, ${flow.gameOverDimAlpha({ gameOverAt: player.gameOverAt, now })})`
     c.fillRect(0, 0, canvas.width, canvas.height)
+    if (!flow.gameOverMenuReady({ gameOverAt: player.gameOverAt, now })) {
+        c.restore()
+        return
+    }
     drawBrickPanel(layout.panel)
     drawMenuText('GAME OVER', layout.caption.x, layout.caption.y, 24)
     drawMenuText(`LEVEL ${level}`, layout.levelName.x, layout.levelName.y, 16)
@@ -758,6 +769,8 @@ function handleGameOverTarget(choice) {
         playerDying: player.dying,
         restarting: Boolean(player._restarting),
         currentLevel: level,
+        gameOverAt: player.gameOverAt,
+        now: performance.now(),
     }))
 }
 
@@ -862,6 +875,7 @@ function resetSession() {
 // Screen only its buttons act; a tap anywhere else does nothing.
 canvas.addEventListener('click', (e) => {
     if (gameOverScreenShowing()) {
+        if (!gameOverMenuReady()) return
         const { x, y } = canvasClickCoords(e)
         const target = gameOverHitTarget(x, y)
         if (target) handleGameOverTarget(target)
@@ -882,7 +896,11 @@ canvas.addEventListener('click', (e) => {
 // ignores these keys there.
 window.addEventListener('keydown', (e) => {
     if (gameOverScreenShowing()) {
-        handleGameOverKey(e)
+        // Locked out while the level dims: swallow the key (an attack mash must
+        // not choose a button). Repeats of a key held through the reveal are
+        // ignored in handleGameOverKey, so only a fresh keydown acts.
+        if (gameOverMenuReady()) handleGameOverKey(e)
+        else if (globalThis.__menuGeom.gameOverKeyAction(e.key)) e.preventDefault()
         return
     }
     if (gameState !== 'menu') return
@@ -948,7 +966,7 @@ function handleGameOverKey(e) {
 // key holds it. Purely visual; the click and keydown handlers above act.
 function menuHitTarget(e) {
     const { x, y } = canvasClickCoords(e)
-    if (gameOverScreenShowing()) return gameOverHitTarget(x, y)
+    if (gameOverScreenShowing()) return gameOverMenuReady() ? gameOverHitTarget(x, y) : null
     if (gameState !== 'menu') return null
     return pauseMenuFromPlaying ? pauseMenuHitTarget(x, y) : titleScreenHitTarget(x, y)
 }
@@ -1141,6 +1159,7 @@ function advanceDeath() {
     })
     if (result.handled && result.gameOver && player.finishDeath()) {
         gameOverFocus = 'retry'
+        player.gameOverAt = performance.now()
         clearMenuHighlights()
     }
 }
@@ -1181,6 +1200,7 @@ async function restartLevel() {
         bombLib.clearBombs(bombs)
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
+        player.gameOverAt = null
         player.dead = false
         player.deathAnimationDone = false
         player.hitpoints = 3

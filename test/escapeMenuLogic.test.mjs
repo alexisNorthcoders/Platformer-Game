@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { reduceDeathProgress, reduceEscapeKey, reduceGameOverChoice, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
+import { GAME_OVER_DIM_ALPHA, GAME_OVER_MENU_DELAY_MS, gameOverDimAlpha, gameOverMenuReady, reduceDeathProgress, reduceEscapeKey, reduceGameOverChoice, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
 
 test('Escape during loading is ignored', () => {
     const r = reduceEscapeKey({
@@ -168,7 +168,7 @@ test('Escape while a game over restart is still loading the level is ignored', (
     assert.equal(r.reason, 'restarting')
 })
 
-const GAME_OVER = { gameState: 'playing', playerGameOver: true, currentLevel: 3 }
+const GAME_OVER = { gameState: 'playing', playerGameOver: true, currentLevel: 3, gameOverAt: 1000, now: 1000 + GAME_OVER_MENU_DELAY_MS }
 
 test('Try Again is the same transition as the Pause Menu Restart Level', () => {
     const retry = reduceGameOverChoice({ ...GAME_OVER, choice: 'retry' })
@@ -263,4 +263,30 @@ test('a grounded King stays dying while the Dead animation is still playing', ()
 test('death progress only applies while playing and dying', () => {
     assert.equal(reduceDeathProgress({ gameState: 'playing', playerDying: false, playerGrounded: true, deathAnimationDone: true }).handled, false)
     assert.equal(reduceDeathProgress({ gameState: 'menu', playerDying: true, playerGrounded: true, deathAnimationDone: true }).handled, false)
+})
+
+test('Game Over Screen choices are refused until the menu is revealed', () => {
+    for (const choice of ['retry', 'quit']) {
+        const locked = reduceGameOverChoice({ ...GAME_OVER, choice, now: 1000 + GAME_OVER_MENU_DELAY_MS - 1 })
+        assert.equal(locked.handled, false)
+        assert.equal(locked.reason, 'menuLocked')
+        assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice, gameOverAt: null }).handled, false)
+        assert.equal(reduceGameOverChoice({ ...GAME_OVER, choice }).handled, true)
+    }
+})
+
+test('The menu delay is exactly GAME_OVER_MENU_DELAY_MS', () => {
+    assert.equal(GAME_OVER_MENU_DELAY_MS, 500)
+    assert.equal(gameOverMenuReady({ gameOverAt: 200, now: 200 + GAME_OVER_MENU_DELAY_MS - 1 }), false)
+    assert.equal(gameOverMenuReady({ gameOverAt: 200, now: 200 + GAME_OVER_MENU_DELAY_MS }), true)
+    assert.equal(gameOverMenuReady({ gameOverAt: 200, now: 9999 }), true)
+    assert.equal(gameOverMenuReady({ gameOverAt: null, now: 9999 }), false)
+})
+
+test('The dim eases linearly from 0 to the overlay darkness across the delay', () => {
+    assert.equal(gameOverDimAlpha({ gameOverAt: null, now: 500 }), 0)
+    assert.equal(gameOverDimAlpha({ gameOverAt: 100, now: 100 }), 0)
+    assert.equal(gameOverDimAlpha({ gameOverAt: 100, now: 100 + GAME_OVER_MENU_DELAY_MS / 2 }), GAME_OVER_DIM_ALPHA / 2)
+    assert.equal(gameOverDimAlpha({ gameOverAt: 100, now: 100 + GAME_OVER_MENU_DELAY_MS }), GAME_OVER_DIM_ALPHA)
+    assert.equal(gameOverDimAlpha({ gameOverAt: 100, now: 99999 }), GAME_OVER_DIM_ALPHA)
 })

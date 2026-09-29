@@ -1,4 +1,4 @@
-import { reduceEscapeKey, reducePauseMenuChoice, reduceGameOverChoice, reduceDeathProgress } from './escapeMenuLogic.mjs'
+import { reduceEscapeKey, reducePauseMenuChoice, reduceGameOverChoice, reduceDeathProgress, gameOverMenuReady, gameOverDimAlpha } from './escapeMenuLogic.mjs'
 import { clearHeldInputKeys, resetPlayerForNewLevelRun } from './sessionReset.mjs'
 
 globalThis.__gameFlow = {
@@ -6,6 +6,8 @@ globalThis.__gameFlow = {
     reducePauseMenuChoice,
     reduceGameOverChoice,
     reduceDeathProgress,
+    gameOverMenuReady,
+    gameOverDimAlpha,
     clearHeldInputKeys,
     resetPlayerForNewLevelRun,
 }

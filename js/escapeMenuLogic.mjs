@@ -115,14 +115,40 @@ export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying,
     return { handled: false, reason: 'notATransition' }
 }
 
+/** How long the level dims before the Game Over Screen's menu appears and takes input. */
+export const GAME_OVER_MENU_DELAY_MS = 500
+
+/** The level's dim overlay alpha when the Game Over Screen is fully up. */
+export const GAME_OVER_DIM_ALPHA = 0.6
+
+/**
+ * True once GAME_OVER_MENU_DELAY_MS has elapsed since game over began
+ * (`gameOverAt`, a performance.now() timestamp; null = not begun).
+ */
+export function gameOverMenuReady({ gameOverAt, now }) {
+    if (gameOverAt == null) return false
+    return now - gameOverAt >= GAME_OVER_MENU_DELAY_MS
+}
+
+/** Linear dim from 0 to GAME_OVER_DIM_ALPHA across the delay. */
+export function gameOverDimAlpha({ gameOverAt, now }) {
+    if (gameOverAt == null) return 0
+    const t = Math.min(1, Math.max(0, (now - gameOverAt) / GAME_OVER_MENU_DELAY_MS))
+    return t * GAME_OVER_DIM_ALPHA
+}
+
 /**
  * A Game Over Screen button: 'retry' (Try Again) | 'quit'. Only handled while
  * the game over screen is up: the King lost his last heart, his death has
- * played out, and no restart is already loading the level.
+ * played out, the menu has been revealed (input lockout over), and no restart
+ * is already loading the level.
  */
-export function reduceGameOverChoice({ choice, gameState, playerGameOver, playerDying = false, restarting = false, currentLevel }) {
+export function reduceGameOverChoice({ choice, gameState, playerGameOver, playerDying = false, restarting = false, currentLevel, gameOverAt = null, now = 0 }) {
     if (gameState !== 'playing' || !playerGameOver || playerDying || restarting) {
         return { handled: false, reason: 'notGameOver' }
+    }
+    if (!gameOverMenuReady({ gameOverAt, now })) {
+        return { handled: false, reason: 'menuLocked' }
     }
     if (choice === 'retry') return { ...RESTART_LEVEL }
     if (choice === 'quit') return quitToTitle(currentLevel)

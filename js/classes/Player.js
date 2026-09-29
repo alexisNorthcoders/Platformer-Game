@@ -14,6 +14,8 @@ class Player extends Sprite {
         this.hurtTint = null
         this.hurtTintStartTime = null
         this.gameOver = false
+        /** performance.now() when game over began; the Game Over Screen's menu waits GAME_OVER_MENU_DELAY_MS after it. */
+        this.gameOverAt = null
         this.deathAnimationDone = false
         this.isShowingHello = false
         this.canJump = true
