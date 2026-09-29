@@ -82,7 +82,8 @@ class Sprite {
 
         // Tint off-screen: on the main canvas source-atop would tint every opaque
         // pixel under the frame (background, tiles), not just the character.
-        const tint = this.activeHurtTint()
+        // A hurt flash wins over a standing tint (levels.js `enemyTint`).
+        const tint = this.activeHurtTint() || this.tint
         const source = tint
             ? this.tintedFrame(cropbox, tint)
             : { image: this.image, x: cropbox.position.x, y: cropbox.position.y }

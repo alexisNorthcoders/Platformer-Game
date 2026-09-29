@@ -237,3 +237,37 @@ test('Sprite.draw draws normally while activeHurtTint() is off (flash off phase)
     assert.equal(doc.canvases.length, 0)
     assert.deepEqual(mockC.drawImageCalls, [[s.image, 0, 0, 40, 64, 10, 20, 80, 128]])
 })
+
+function tintFillStyles(doc) {
+    return doc.canvases[0].ctx.calls.filter(([k]) => k === 'fillRect').map(call => call[2])
+}
+
+test('Sprite.draw applies a standing tint (levels.js enemyTint) with no hurt tint', () => {
+    const mockC = createCanvas2dLikeMock()
+    const doc = createDocumentMock()
+    const Sprite = loadSpriteWithCanvas(mockC, doc)
+    const s = makeSprite(Sprite, {
+        naturalWidth: 320, naturalHeight: 64, frameRate: 8, position: { x: 0, y: 0 }, hurtTint: null, flip: false,
+    })
+    s.tint = 'rgba(230, 30, 20, 0.5)'
+
+    Sprite.prototype.draw.call(s, 2)
+
+    assert.deepEqual(tintFillStyles(doc), ['rgba(230, 30, 20, 0.5)'])
+    assert.deepEqual(mockC.fillRectCalls, [])
+})
+
+test('Sprite.draw: a hurt tint wins over a standing tint', () => {
+    const mockC = createCanvas2dLikeMock()
+    const doc = createDocumentMock()
+    const Sprite = loadSpriteWithCanvas(mockC, doc)
+    const s = makeSprite(Sprite, {
+        naturalWidth: 320, naturalHeight: 64, frameRate: 8, position: { x: 0, y: 0 },
+        hurtTint: PLAYER_CONTACT_HURT_TINT, flip: false,
+    })
+    s.tint = 'rgba(230, 30, 20, 0.5)'
+
+    Sprite.prototype.draw.call(s, 2)
+
+    assert.deepEqual(tintFillStyles(doc), [PLAYER_CONTACT_HURT_TINT])
+})

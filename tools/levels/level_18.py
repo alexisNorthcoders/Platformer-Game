@@ -12,7 +12,7 @@ from levelgen import Layout, build  # noqa: E402
 
 LAYOUT = Layout(
     cols=100,
-    water_top=248,
+    pit_top=248,
     parallax=0.3,
     seed=18,
     ground=[
