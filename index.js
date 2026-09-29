@@ -54,6 +54,9 @@ let boxes = []
 let platforms = []
 let movingPlatforms = []
 let helixPlatforms = []
+let tumblingPlanks = []
+/** Frames the Tumbling Planks have turned: never reset, so a respawn or restart leaves them turning where they are. */
+let tumblingFrame = 0
 let crumblingShelves = []
 let rainTops = []
 let puddles = []
@@ -732,7 +735,7 @@ function weatherIsRain() {
 /** The pit's surface (world y): where a drop that lands on nothing vanishes. */
 function pitSurface() {
     const cfg = levels[level]
-    return (cfg.grass ?? cfg.water ?? cfg.sand ?? cfg.lava ?? cfg.cloudBank)?.top ?? canvas.height
+    return (cfg.grass ?? cfg.water ?? cfg.sand ?? cfg.lava ?? cfg.cloudBank ?? cfg.spikes)?.top ?? canvas.height
 }
 
 /** A ring on a Puddle: a flat ellipse widening and fading as it ages. */
@@ -866,6 +869,24 @@ function drawGrass() {
     c.restore()
 }
 
+// The Spike Ditches: `spikes` in levels.js is where the ditch floor's spikes
+// begin. The painted floor and spikes (terrain image) are drawn again over the
+// King, so he drops into the ditch and the spikes stand over his feet. No
+// blood: he gets the usual hurt flash, then respawns like any pit.
+const SPIKES = { tallestTip: 16 }
+
+function drawSpikes() {
+    const spikes = levels[level]?.spikes
+    if (!spikes || !background?.loaded) return
+    const left = Math.floor(camera.x / 2) * 2
+    const right = camera.x + canvas.width
+    const top = spikes.top - SPIKES.tallestTip * 2
+    c.save()
+    c.drawImage(background.image, left / 2, top / 2, (right - left) / 2, (canvas.height - top) / 2,
+        left, top, right - left, canvas.height - top)
+    c.restore()
+}
+
 // The Cloud Bank along the bottom of levels with `cloudBank` in levels.js: a
 // floor of cloud painted on the level image too, drawn again over the King so
 // he sinks out of sight into it. Its soft lumps drift slowly along. Colours
@@ -978,8 +999,66 @@ function drawSky() {
         far.position.x = camera.x
         far.draw(2)
     }
+    // A Storm's bolt comes down in the sky behind the clouds and the skyline, in front of the far layer only.
+    drawBolt()
     sky.position.x = camera.x - Math.round(camera.x * backdrop.parallax)
     sky.draw(2)
+    drawSkylineRim(sky.position.x)
+}
+
+// The Storm (levels.js `weather: 'storm'`): looks only, silent, and it never
+// touches the King, the Pigs or Bombs. storm.mjs times it; a flash washes the
+// view at most 35% white, and lights the village skyline's outline.
+const STORM_LOOK = { bolt: '#e8f0ff', glow: 'rgba(190, 210, 255, 0.35)', flash: '255, 255, 255', seed: 24 }
+let skylineRim = { src: null, image: null }
+
+function weatherIsStorm() {
+    return levels[level]?.weather === 'storm' && !!globalThis.__storm // the module bootstrap may not have run yet
+}
+
+function drawBolt() {
+    if (!weatherIsStorm()) return
+    const strike = globalThis.__storm.boltAt(performance.now() / 1000, STORM_LOOK.seed)
+    if (!strike) return
+    const x = camera.x + strike.x * canvas.width
+    const points = globalThis.__storm.boltPoints(strike, x, 30, pitSurface() - 150)
+    const fade = 1 - strike.age / globalThis.__storm.STORM.boltSeconds
+    c.save()
+    c.globalAlpha = fade
+    c.lineJoin = 'miter'
+    for (const [colour, width] of [[STORM_LOOK.glow, 10], [STORM_LOOK.bolt, 4]]) {
+        c.strokeStyle = colour
+        c.lineWidth = width
+        c.beginPath()
+        points.forEach((p, i) => (i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)))
+        c.stroke()
+    }
+    c.restore()
+}
+
+/** The lit outline of the village skyline (levels.js `backdrop.rim`), shown while a flash lasts. */
+function drawSkylineRim(skyX) {
+    const src = levels[level]?.backdrop?.rim
+    if (!src || !weatherIsStorm()) return
+    if (skylineRim.src !== src) skylineRim = { src, image: Object.assign(new Image(), { src }) }
+    const flash = globalThis.__storm.flashAt(performance.now() / 1000, STORM_LOOK.seed)
+    if (!flash || !skylineRim.image.complete || !skylineRim.image.naturalWidth) return
+    c.save()
+    c.globalAlpha = Math.min(1, flash / globalThis.__storm.STORM.maxWhite)
+    c.imageSmoothingEnabled = false
+    c.drawImage(skylineRim.image, skyX, 0, skylineRim.image.width * 2, skylineRim.image.height * 2)
+    c.restore()
+}
+
+/** The soft flash: the whole view washed white, at most 35%, drawn over everything but the HUD. */
+function drawFlash() {
+    if (!weatherIsStorm()) return
+    const flash = globalThis.__storm.flashAt(performance.now() / 1000, STORM_LOOK.seed)
+    if (flash <= 0) return
+    c.save()
+    c.fillStyle = `rgba(${STORM_LOOK.flash}, ${flash})`
+    c.fillRect(camera.x, 0, canvas.width, canvas.height)
+    c.restore()
 }
 
 function drawTitleScreen() {
@@ -1409,10 +1488,13 @@ function animate() {
     if (!player.gameOver) {
         stepMovingPlatforms()
         helixPlatforms.forEach(platform => platform.step())
+        tumblingFrame++
+        tumblingPlanks.forEach(platform => platform.step(tumblingFrame))
         stepCrumblingShelves()
     }
     crumblingShelves.forEach(shelf => shelf.draw())
     helixPlatforms.forEach(platform => platform.draw())
+    tumblingPlanks.forEach(platform => platform.draw())
     movingPlatforms.forEach((platform, index) => {
         platform.draw(2)
         drawPlankPuddle(platform, index)
@@ -1461,7 +1543,9 @@ function animate() {
     drawGrass()
     drawLava()
     drawCloudBank()
+    drawSpikes()
     drawRain()
+    drawFlash()
 
     if (player.isShowingHello) {
         helloDialogue.draw(2);

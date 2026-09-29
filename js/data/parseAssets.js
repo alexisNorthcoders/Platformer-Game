@@ -64,6 +64,22 @@ function getHelixPlatformPath(obj, scale) {
     }
 }
 
+/**
+ * A Tumbling Plank's path from its object in the "tumbling_plank" layer: a
+ * point at the middle of the plank's surface top (map px, where it turns
+ * round), with properties period (seconds a turn at 60 fps), optional phase
+ * (0..1 of a turn) and direction (1 or -1).
+ */
+function getTumblingPlankPath(obj, scale) {
+    const props = Object.fromEntries((obj.properties ?? []).map(p => [p.name, p.value]))
+    return {
+        center: { x: scale * obj.x, y: scale * obj.y },
+        periodFrames: Math.round((props.period ?? 8) * 60),
+        phase: props.phase ?? 0,
+        direction: props.direction ?? 1,
+    }
+}
+
 async function loadAssets(level, scale) {
     try {
         const response = await fetch(`/kings-and-pigs/js/data/levels/Level_${level}.json`);
@@ -79,7 +95,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "crumbling_shelf", "puddle"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "tumbling_plank", "crumbling_shelf", "puddle"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -100,6 +116,7 @@ async function loadAssets(level, scale) {
         const movingPlatformLayer = layers["moving_platform"];
         const rotatingPlatformLayer = layers["rotating_platform"];
         const helixPlatformLayer = layers["helix_platform"];
+        const tumblingPlankLayer = layers["tumbling_plank"];
         const crumblingShelfLayer = layers["crumbling_shelf"];
         const puddleLayer = layers["puddle"];
 
@@ -143,6 +160,7 @@ async function loadAssets(level, scale) {
                 ...(rotatingPlatformLayer ? rotatingPlatformLayer.objects.flatMap(obj => getRotatingPlatformPaths(obj, scale)) : []),
             ],
             helixPlatforms: helixPlatformLayer ? helixPlatformLayer.objects.map(obj => getHelixPlatformPath(obj, scale)) : [],
+            tumblingPlanks: tumblingPlankLayer ? tumblingPlankLayer.objects.map(obj => getTumblingPlankPath(obj, scale)) : [],
             // Puddles painted on the island tops: (x, y) the top-left, width, all world px.
             puddles: puddleLayer ? puddleLayer.objects.map(obj => ({ x: scale * obj.x, y: scale * obj.y, width: scale * obj.width })) : [],
             // A point at each shelf's top-left, map px: its surface in world px.

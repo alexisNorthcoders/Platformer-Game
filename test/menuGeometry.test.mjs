@@ -142,7 +142,7 @@ function assertCropInsideImage(crop, sw, sh) {
 test('coverSourceRect: crop keeps the frame aspect ratio, so it fills the frame exactly', () => {
     const frame = { w: 512, h: 288 }
     // Every Level Preview image size shipped in img/.
-    for (const [sw, sh] of [[512, 288], [513, 289], [1025, 289], [1537, 289], [3200, 288], [3168, 288], [3520, 288], [3584, 288], [3936, 288], [5344, 288]]) {
+    for (const [sw, sh] of [[512, 288], [513, 289], [1025, 289], [1537, 289], [3200, 288], [3168, 288], [3520, 288], [3584, 288], [3648, 288], [3936, 288], [5344, 288]]) {
         const crop = coverSourceRect(sw, sh, frame.w, frame.h)
         assertCropInsideImage(crop, sw, sh)
         assert.ok(Math.abs(crop.sw / crop.sh - frame.w / frame.h) < 1e-9, `${sw}x${sh} aspect`)

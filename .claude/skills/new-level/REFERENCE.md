@@ -53,6 +53,14 @@ Measured from the code while building Level 18. When the code changes, re-check 
 - With an 8 s turn the blades reach across every 4 s and the tips move at most about 2.4 world px/frame, slower than the King's 4. He walks 184 px from the hub to the landing in about 46 frames. The window to leave the hub is about 1 s either side of full reach.
 - Keep Pigs and walls off the blades' full span.
 
+## Tumbling Planks [`tumblingPlank.mjs`, `TumblingPlank.js`]
+
+- `platform.png` (200 world px) turning end over end round its own middle in the plane of the screen, like a clock hand: one full turn every 8 s (`period`). It never moves from its spot. Written in the layout as `tumbling_planks: [dict(x, y, period, phase, direction)]`, (x, y) the middle of the surface's top, map px, and read from a `tumbling_plank` layer of points. Drawn in code, so not on the level image.
+- It is flat twice a turn (both faces are usable). The surface is one-way and exists only within **25°** of flat: a window of 50° in every 180°, **about 1.1 s (67 frames) every 4 s** at 8 s a turn. Its width is 200 × cos(tilt). Past the window the block is parked out of the world: it drops the King, as a Helix blade shrinking from under him does, and a resting Bomb falls off. While steep or on end he passes through it. It never pushes, knocks back or hurts him.
+- The turn is counted by one frame clock (`tumblingFrame` in `index.js`) that is never reset: a respawn or Restart Level leaves the plank turning where it is, so its timing stays predictable.
+- **Design routes round the window:** put the plank level with the streets each side, in a ditch **4 tiles (128 map px) wide**: the plank leaves 14 map px (28 world px) each side. He waits with 12 px of hitbox still on the ledge and walks the moment the window opens: 200 px plus the docks in about 54 frames at 4 px/frame, inside the 67-frame window. Hopping across also works. A far ledge with a battlement means a jump as the plank runs out. Plank 3 of Level 24 has phase 0.25 and direction −1 (on end at the start), so the three do not turn in step.
+- Keep Pigs and walls clear of the plank's span (100 world px each side of its middle).
+
 ## Crumbling Shelves [`crumblingShelf.mjs`, `CrumblingShelf.js`]
 
 - A short, thin, cracked shelf, one tile (64 world px) wide with a 5-px one-way surface at the top of its tile, like a `platform_2` strip. It is drawn in code (it shakes and falls), so it is not on the level image, only on the Level Preview (`crumbling_shelves` in the layout).
@@ -62,10 +70,17 @@ Measured from the code while building Level 18. When the code changes, re-check 
 
 ## Weather and Puddles [`weather.mjs`, `index.js`]
 
-- `weather: 'rain'` in a level's `config/levels.js` entry switches on Rain (the only Weather with a value so far; others can add their own). It is purely for looks: nothing reads or changes the King, Pigs or Bombs, and nothing is slippery.
+- `weather: 'rain'` in a level's `config/levels.js` entry switches on Rain, `weather: 'storm'` a Storm (the values so far; others can add their own). It is purely for looks: nothing reads or changes the King, Pigs or Bombs, and nothing is slippery.
 - `weather.mjs` picks the drops: one per 80-px lane of the world, falling slantwise, landing on the first wall top under them (`wallTops` of the solid blocks) or vanishing at the pit's surface. Drops landing on a wall top splash; on a painted Puddle they ring instead. The rain is drawn over everything but the HUD (`drawRain`).
 - A layout with `puddles=True` paints Puddles on the brick tops (a flat 3-px lens, `island_puddles`) and lists them in a `puddle` layer (rectangles: x, y of the wall top, width, map px). Moving and Rotating Platform planks each get a small static Puddle in code (`drawPlankPuddle`), with ripples from `puddleRipples`. Helix Platforms get none.
 - No rain sound: `sounds/` holds none that fits.
+
+## Storm [`storm.mjs`, `index.js`]
+
+- `weather: 'storm'`: lightning, no rain. Purely for looks and silent (no thunder in `sounds/`, add none): nothing reads or changes the King, Pigs or Bombs.
+- `storm.mjs` times it from a fixed seed. Strikes come at random **5 to 10 s** apart; a strike is one flash, or one time in three a double flicker (0.35 s between the two). A flash rises in 0.06 s and fades over 0.5 s, **at most 35% white** (peak 0.32); never more than 3 flashes begin in any second (a test proves it); no sustained strobing.
+- The **bolt** is a jagged line drawn in `drawSky`, after the far layer and **before the parallax sky**, so it comes down behind the clouds and the village skyline and never in front of walls, the King or the Pigs. That needs the sky's steel-blue bands on the far layer and only clouds and the village on the parallax layer (a `'storm'` sky does this).
+- The **flash** washes the whole view (`drawFlash`, over everything but the HUD) and lights the village's outline: `backdrop.rim` is `img/Level N rim.png`, the village's edge pixels, drawn at the sky's offset with the flash's strength.
 
 ## Map layers [`parseAssets.js`]
 
@@ -82,6 +97,7 @@ Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest 
 | `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase`, `width` (map px, default 100) |
 | `rotating_platform` | points at the hub | properties `radius` (map px), `period` (s a turn), `arms`, `phase` (share of a turn), `direction`, `width` (map px, default 100) |
 | `helix_platform` | points at the middle of the hub's top | properties `radius` (map px, each blade's reach), `period` (s a turn), `phase`, `direction` |
+| `tumbling_plank` | points at the middle of the plank's surface top | `period` (s a turn), `phase`, `direction` |
 | `crumbling_shelf` | points at the shelf's top-left | its surface is world (2x, 2y) |
 | `puddle` | rectangles | painted Puddles on wall tops: (x, y) top-left, `width` (map px); only the Rain's rings read it |
 | `platform` | objects | a static plank (solid, not one-way) |
@@ -108,6 +124,9 @@ Tile objects land at world (2x, 2y − 32), with y at the object's bottom. `leve
 - `enemyGlow` (a CSS colour) gives every enemy a pulsing glow (canvas shadow) round its frame. `boxTint` (a CSS colour) recolours the Boxes and their broken pieces with the 'color' blend, which keeps their shading; Level 21's grey iron is `rgb(150, 158, 170)`.
 - `enemyTint` (a CSS colour, washed over each frame source-atop) recolours Pigs, King Pigs and Match Pigs. Pigs are green, so a red tint needs an opacity of about 0.5 to read as red. The player's hurt flash still wins over it [`Sprite.draw`].
 
+- A **'spike'** pit is Spike Ditches: the ground runs on like a village street and the gaps are ditches cut down into it, spikes along the bottom. Use `pit_top=256` (row 8), so a ditch beside a row-6 street is 2 tiles deep and beside a row-5 one 3. `paint_spikes` paints dark stone with an iron bar and grey iron points 12 map px tall; `drawSpikes` in `index.js` (levels.js `spikes: { top }`, twice `pit_top`) redraws that strip of the terrain image over the King, so he drops in and the spikes stand over his feet, then gets the usual hurt flash and respawns. No blood, no red.
+- A **'storm'** sky paints steel-blue bands (`STORM_SKY`) on the far layer; dark heavy clouds (`paint_storm_clouds`) and a Viking village on the parallax layer: two ranks (a paler far one, a darker near one) of longhouses with crossed dragon-head beams at the ridge, palisade and a few thin smoke trails (`build_village`). Walls, banners and windows are cooled by `STORM_LIGHT`. `build_village` also gives the village's outline, saved as `Level N rim.png`.
+
 ## Playing it in the browser
 
 `tools/play.mjs` drives the game in headless Chromium (Node 22+, `chromium` on the PATH or `CHROMIUM=...`; no npm packages, no browser extension). It serves the repo under `/kings-and-pigs/`, which the game's absolute fetch path needs, and runs its steps in order:
@@ -121,7 +140,7 @@ node tools/play.mjs --level 20 --eval 'player.setPosition({ x: 1570, y: 232 }); 
 - `--shot` saves the canvas as last drawn. Read the PNG to look at it.
 - `tools/level-checks.js` runs the skill's step 6 checks for any open-air level (fall and respawn first, then Pigs, rides, checkpoints and start, the far end) and reports `ok` per check.
 - Script a real crossing for anything new: keys only, from a checkpoint to the next island, checking hearts. The ride check puts the King on a plank; it does not prove he can get on and off.
-- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`; a plank on a hub has `.state.path.center`), `helixPlatforms` (`.state`: surface `x`, `y`, `width` and `path`), `enemies`, `enemyKing`, `diamonds` (`.diamondHit`), `respawnPoint`, `sky`, `far`, `collisionBlocks`, `keys`, `mapWidth`.
+- Useful globals: `player`, `camera`, `movingPlatforms` (`.state`, `.surface()`; a plank on a hub has `.state.path.center`), `helixPlatforms` (`.state`: surface `x`, `y`, `width` and `path`), `tumblingPlanks` (`.state.standable`; assign `tumblingFrame` to jump the turn), `enemies`, `enemyKing`, `diamonds` (`.diamondHit`), `respawnPoint`, `sky`, `far`, `collisionBlocks`, `keys`, `mapWidth`.
 - Riding: the King's feet gap, `player.position.y + 87 − platform.state.y`, should be about 0.
 - Checking each checkpoint by placing the King on it also moves `respawnPoint` on to the last one. `play(N)` again resets it.
 - Use this driver on every machine, including ones with a browser extension such as Claude in Chrome: a whole check suite is one command, and stepped frames give the same result every run. Fall back to the extension only where no Chromium can be installed: serve the repo the same way (`python3 -m http.server` from a directory with a `kings-and-pigs` symlink to the repo), run `await startGame(N)`, and step with `for (let i = 0; i < n; i++) animate()`. The tab's own animation loop also runs once it is in front, so the game keeps moving between calls.
