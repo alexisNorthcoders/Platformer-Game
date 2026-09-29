@@ -1,0 +1,81 @@
+name: New level
+description: Ask for a new open-air level, built by an agent with the new-level skill.
+title: "Level N: "
+labels: [ready-for-agent]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The agent builds the level with the new-level skill (`.claude/skills/new-level/`). Only the choices below are yours; it decides the rest (route, platform positions, checkpoints) and lists them in the PR.
+
+        **Done when** (the same for every level, no need to repeat it):
+        - `node tools/play.mjs --level N --file tools/level-checks.js` passes: every ride, every checkpoint, the fall and respawn, Pigs staying in their pens, and the camera at the far end.
+        - Anything new (a mechanic, a pit, a ride) has a scripted crossing, using keys only, and screenshots along the route have been checked.
+        - `npm test` passes and the earlier levels are unchanged.
+        - The PR lists the route and leaves "played by hand" for a human.
+  - type: input
+    id: theme
+    attributes:
+      label: Name and theme
+      description: What the level looks like and feels like.
+      placeholder: e.g. "Frozen Lake", an icy lake at dusk
+    validations:
+      required: true
+  - type: dropdown
+    id: pit
+    attributes:
+      label: Pit
+      description: The deadly strip along the bottom. Falling in costs a heart and respawns the King at the last Checkpoint.
+      options:
+        - water
+        - sand
+        - grass
+        - something new (describe it under Anything else)
+    validations:
+      required: true
+  - type: dropdown
+    id: sky
+    attributes:
+      label: Sky
+      options:
+        - clouds (blue daytime sky)
+        - sun (low desert sun)
+        - moon (night, stars)
+        - something new (describe it under Anything else)
+    validations:
+      required: true
+  - type: checkboxes
+    id: rides
+    attributes:
+      label: Rides
+      description: Existing rides the level should use. Leave all unticked to let the agent choose.
+      options:
+        - label: Ferry (Moving Platform, sideways)
+        - label: Elevator (Moving Platform, up and down)
+        - label: Diagonal ride (Moving Platform)
+        - label: Rotating Platform (planks turning round a hub)
+  - type: textarea
+    id: mechanics
+    attributes:
+      label: New mechanics
+      description: Anything the game can't do yet. Say how it should behave, from the player's side, so the agent doesn't have to guess.
+      placeholder: e.g. a plank that tips the King off after he has stood on it for two seconds, then swings back up
+  - type: textarea
+    id: enemies
+    attributes:
+      label: Enemies
+      description: Forts and Pigs, a King Pig, an enemy tint colour. Leave blank for a Level 19-like mix.
+      placeholder: e.g. three forts, a King Pig in the last one, Pigs tinted blue
+  - type: dropdown
+    id: length
+    attributes:
+      label: Length and difficulty
+      options:
+        - like Level 19 (about 110 tiles, 7 checkpoints)
+        - shorter and easier
+        - longer and harder
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else
+      description: New pits or skies, must-haves, things to avoid, levels to take after.
