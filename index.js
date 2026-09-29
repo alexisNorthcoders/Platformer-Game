@@ -1059,15 +1059,17 @@ function drawLevelTimer() {
 }
 
 /**
- * Rebuild the current level with the King back at its start and full hearts
- * (game over restart, and Restart Level on the Pause Menu). Diamonds taken and
- * Pigs beaten stay gone unless `beforeLoad` forgets them. `beforeLoad` runs
- * first, before the HUD counts are redrawn and the level loads.
+ * Restart Level (#65), from the Pause Menu or the retry after game over: the level as it was on entering it, with its diamonds
+ * and Pigs back and the counts rolled back. The black loading screen shows
+ * until it is rebuilt; if that fails, back to the Title Screen.
  */
-async function restartCurrentLevel(beforeLoad) {
+async function restartLevel() {
+    cancelOverlayFade()
+    levelTimer.reset()
     player._restarting = true
     try {
-        beforeLoad?.()
+        diamondCount = levelEntryCounts.diamonds
+        EnemyTracker.setEnemyCount(levelEntryCounts.pigs)
         bombLib.clearBombs(bombs)
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
@@ -1085,44 +1087,31 @@ async function restartCurrentLevel(beforeLoad) {
         player.velocity.y = 0
         numberSprites = createNumberSprites(diamondCount)
         enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
-        await initLevel(level, { preserveCollectedProgress: true, skipLevelIntro: true })
+        await initLevel(level, { skipLevelIntro: true })
         if (player.lastDirection === 'left') player.switchSprite('idleLeft')
         else player.switchSprite('idleRight')
-    } finally {
-        player._restarting = false
-    }
-}
-
-window.restartFromGameOver = async () => {
-    if (!player.gameOver || player._restarting) return
-    await restartCurrentLevel(() => { player.preventInput = false })
-    startLevelTimer()
-}
-
-/**
- * Restart Level (#65): the level as it was on entering it, with its diamonds
- * and Pigs back and the counts rolled back. The black loading screen shows
- * until it is rebuilt; if that fails, back to the Title Screen.
- */
-async function restartLevelFromPauseMenu() {
-    cancelOverlayFade()
-    levelTimer.reset()
-    try {
-        await restartCurrentLevel(() => {
-            LevelProgressKeys.clearLevel(level)
-            diamondCount = levelEntryCounts.diamonds
-            EnemyTracker.setEnemyCount(levelEntryCounts.pigs)
-        })
     } catch (err) {
         console.error('initLevel failed', err)
         gameState = 'menu'
         resetSession()
         return
+    } finally {
+        player._restarting = false
     }
     // Quit to Title can't happen while loading, so the run is still ours.
     gameState = 'playing'
     player.preventInput = false
     startLevelTimer()
+}
+
+// The retry after game over (R, or a tap) is Restart Level.
+window.restartFromGameOver = () => {
+    const flow = globalThis.__gameFlow
+    applyGameFlowResult(flow.reduceGameOverRetry({
+        gameState,
+        playerGameOver: player.gameOver,
+        restarting: Boolean(player._restarting),
+    }))
 }
 
 // Escape (and the touch pause button, #45) opens/closes the Pause Menu
@@ -1167,7 +1156,7 @@ function applyGameFlowResult(result) {
         selectedLevel = result.selectedLevel
         syncMenuSelectionUI()
     }
-    if (result.restartLevel) void restartLevelFromPauseMenu()
+    if (result.restartLevel) void restartLevel()
     return true
 }
 

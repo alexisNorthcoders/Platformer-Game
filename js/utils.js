@@ -79,14 +79,6 @@ const LevelProgressKeys = (function () {
         isEnemyDefeated(levelNum, kind, x, y) {
             return defeatedEnemies.has(enemyKey(levelNum, kind, x, y))
         },
-        /** Forget this level's diamonds and Pigs, so they come back (Restart Level). */
-        clearLevel(levelNum) {
-            for (const set of [collectedDiamonds, defeatedEnemies]) {
-                for (const key of set) {
-                    if (key.split(':')[1] === String(levelNum)) set.delete(key)
-                }
-            }
-        },
         clearAll() {
             collectedDiamonds.clear()
             defeatedEnemies.clear()
@@ -318,20 +310,7 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const preserve = options.preserveCollectedProgress === true
     const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms } = await loadAssets(level, 2)
-    const diamondPositions = preserve
-        ? diamonds.filter(([x, y]) => !LevelProgressKeys.isDiamondCollected(level, x, y))
-        : diamonds
-    const enemyPositions = preserve
-        ? enemy.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'pig', x, y))
-        : enemy
-    const enemyKingPositions = preserve
-        ? enemyKing.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'king', x, y))
-        : enemyKing
-    const enemyMatchPositions = preserve
-        ? enemyMatch.filter(([x, y]) => !LevelProgressKeys.isEnemyDefeated(level, 'match', x, y))
-        : enemyMatch
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)
@@ -341,14 +320,14 @@ async function createAssets(level, options = {}) {
         platforms: createPlatforms(platforms),
         movingPlatforms: createMovingPlatforms(movingPlatforms),
         doors: createDoor(door),
-        enemies: createEnemies(enemyPositions, level),
+        enemies: createEnemies(enemy, level),
         cannon: createCannon(cannon),
-        enemyMatch: createEnemiesWithMatch(enemyMatchPositions, level),
-        enemyKing: createEnemyKing(enemyKingPositions, level),
+        enemyMatch: createEnemiesWithMatch(enemyMatch, level),
+        enemyKing: createEnemyKing(enemyKing, level),
         collisionBlocks,
         platformsBlocks,
         background: createBackground(level),
-        diamonds: createDiamonds(diamondPositions, level),
+        diamonds: createDiamonds(diamonds, level),
         levelWidth
     }
 }

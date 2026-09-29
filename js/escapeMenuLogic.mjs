@@ -22,6 +22,16 @@ const RESUME = Object.freeze({
     playerPreventInput: false,
 })
 
+// Restart Level: shared by the Pause Menu button and the retry after game over.
+const RESTART_LEVEL = Object.freeze({
+    handled: true,
+    gameState: 'loading',
+    pauseMenuFromPlaying: false,
+    clearKeys: true,
+    playerPreventInput: true,
+    restartLevel: true,
+})
+
 export function reduceEscapeKey({
     gameState,
     pauseMenuFromPlaying,
@@ -73,16 +83,7 @@ export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying,
 
     if (choice === 'resume') return { ...RESUME }
 
-    if (choice === 'restart') {
-        return {
-            handled: true,
-            gameState: 'loading',
-            pauseMenuFromPlaying: false,
-            clearKeys: true,
-            playerPreventInput: true,
-            restartLevel: true,
-        }
-    }
+    if (choice === 'restart') return { ...RESTART_LEVEL }
 
     if (choice === 'quit') {
         return {
@@ -97,4 +98,15 @@ export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying,
     }
 
     return { handled: false, reason: 'notATransition' }
+}
+
+/**
+ * The retry (R, or a tap) after the King loses his last heart: Restart Level,
+ * the same transition as the Pause Menu button.
+ */
+export function reduceGameOverRetry({ gameState, playerGameOver, restarting = false }) {
+    if (gameState !== 'playing' || !playerGameOver || restarting) {
+        return { handled: false, reason: 'notGameOver' }
+    }
+    return { ...RESTART_LEVEL }
 }

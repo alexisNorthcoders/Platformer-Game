@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { reduceEscapeKey, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
+import { reduceEscapeKey, reduceGameOverRetry, reducePauseMenuChoice } from '../js/escapeMenuLogic.mjs'
 
 test('Escape during loading is ignored', () => {
     const r = reduceEscapeKey({
@@ -166,4 +166,17 @@ test('Escape while a game over restart is still loading the level is ignored', (
     })
     assert.equal(r.handled, false)
     assert.equal(r.reason, 'restarting')
+})
+
+test('game over retry is the same transition as the Pause Menu Restart Level', () => {
+    const retry = reduceGameOverRetry({ gameState: 'playing', playerGameOver: true })
+    const restart = reducePauseMenuChoice({ ...PAUSED, choice: 'restart' })
+    assert.deepEqual(retry, restart)
+    assert.equal(retry.restartLevel, true)
+})
+
+test('game over retry only applies during game over, once', () => {
+    assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: false }).handled, false)
+    assert.equal(reduceGameOverRetry({ gameState: 'menu', playerGameOver: true }).handled, false)
+    assert.equal(reduceGameOverRetry({ gameState: 'playing', playerGameOver: true, restarting: true }).handled, false)
 })
