@@ -142,8 +142,20 @@ for (const [i, shelf] of crumblingShelves.entries()) {
     step(60)
     respawnKing()
     const reset = phase() === 'whole' && shelf.state.y === y && shelf.collisionBlocks[0].position.y === y
-    step(130)
-    const wholeAfterReset = phase() === 'whole'
+    const countdownCleared = shelf.state.frame === 0 && shelf.state.vy === 0
+    // Landing again starts a fresh 2 s countdown from zero, not the 60 frames left over.
+    player.setPosition({ x: x + 4 - 35, y: y - FEET - 0.01 })
+    player.velocity.y = 0
+    step(1)
+    const relanded = phase() === 'shaking' && shelf.state.frame === 1
+    player.setPosition(away)
+    player.velocity.x = 0
+    player.velocity.y = 0
+    step(118)
+    const freshStillShaking = phase() === 'shaking'
+    step(1)
+    const wholeAfterReset = countdownCleared && relanded && freshStillShaking && phase() === 'falling'
+    respawnKing()
     const ok = !risingCounts && landed && stillShaking && dropped && gone && notYet && back && reset && wholeAfterReset
     report.crumbling.shelves.push({ i, ok, risingCounts, landed, stillShaking, dropped, gone, notYet, back, reset, wholeAfterReset, fallFrames })
     if (!ok) report.crumbling.ok = false

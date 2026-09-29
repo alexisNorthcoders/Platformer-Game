@@ -84,7 +84,9 @@ export function stepShelf(state, { landed = false, blocked = false } = {}) {
         state.y += dy
         if (state.y >= state.hideY) Object.assign(state, { phase: 'gone', frame: 0 })
     } else if (state.phase === 'gone') {
-        state.frame++
+        // Once the timer is out it polls `blocked` on every frame and comes
+        // back only on one where the spot is clear.
+        if (state.frame < CRUMBLING_SHELF.returnFrames) state.frame++
         if (state.frame >= CRUMBLING_SHELF.returnFrames && !blocked) {
             Object.assign(state, { y: state.homeY, phase: 'whole', frame: 0, vy: 0, fade: 0 })
             event = 'return'
