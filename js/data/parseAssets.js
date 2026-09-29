@@ -72,7 +72,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "crumbling_shelf"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -93,6 +93,7 @@ async function loadAssets(level, scale) {
         const movingPlatformLayer = layers["moving_platform"];
         const rotatingPlatformLayer = layers["rotating_platform"];
         const helixPlatformLayer = layers["helix_platform"];
+        const crumblingShelfLayer = layers["crumbling_shelf"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -134,6 +135,8 @@ async function loadAssets(level, scale) {
                 ...(rotatingPlatformLayer ? rotatingPlatformLayer.objects.flatMap(obj => getRotatingPlatformPaths(obj, scale)) : []),
             ],
             helixPlatforms: helixPlatformLayer ? helixPlatformLayer.objects.map(obj => getHelixPlatformPath(obj, scale)) : [],
+            // A point at each shelf's top-left, map px: its surface in world px.
+            crumblingShelves: crumblingShelfLayer ? crumblingShelfLayer.objects.map(obj => ({ x: scale * obj.x, y: scale * obj.y })) : [],
         };
     } catch (error) {
         console.error(error.message);

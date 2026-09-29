@@ -260,6 +260,11 @@ function createDoor(positions) {
 function createMovingPlatforms(paths) {
     return paths.map(path => new MovingPlatform({ path }))
 }
+function createCrumblingShelves(positions, level) {
+    // Out of sight once the shelf is under the Cloud Bank's surface.
+    const hideY = (levels[level]?.cloudBank?.top ?? 496) + 24
+    return positions.map(position => new CrumblingShelf({ position, hideY }))
+}
 function createHelixPlatforms(paths) {
     return paths.map(path => new HelixPlatform({ path }))
 }
@@ -324,7 +329,7 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, crumblingShelves } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)
@@ -334,6 +339,7 @@ async function createAssets(level, options = {}) {
         platforms: createPlatforms(platforms),
         movingPlatforms: createMovingPlatforms(movingPlatforms),
         helixPlatforms: createHelixPlatforms(helixPlatforms),
+        crumblingShelves: createCrumblingShelves(crumblingShelves, level),
         doors: createDoor(door),
         enemies: createEnemies(enemy, level),
         cannon: createCannon(cannon),
@@ -355,7 +361,7 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, helixPlatforms, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
     const enemyGlow = levels[level]?.enemyGlow ?? null
     enemies.concat(enemyKing, enemyMatch).forEach(enemy => {
@@ -372,7 +378,8 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
         boxes.flatMap(box => box.collisionBlocks),
         platforms.flatMap(platform => platform.collisionBlocks),
         movingPlatforms.flatMap(platform => platform.collisionBlocks),
-        helixPlatforms.flatMap(platform => platform.collisionBlocks)
+        helixPlatforms.flatMap(platform => platform.collisionBlocks),
+        crumblingShelves.flatMap(shelf => shelf.collisionBlocks)
     );
 
     applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks);

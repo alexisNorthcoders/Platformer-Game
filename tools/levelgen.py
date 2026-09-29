@@ -24,6 +24,8 @@ VIEW_WIDTH = 512  # map px: the 1024-px canvas at 2x
 class Layout:
     cols: int
     # Solid ground: (first col, last col, top row), each running to the bottom of the map.
+    # A fourth number is the last row: (first col, last col, top row, bottom row)
+    # is a floating island, with cloud wisps painted under it.
     ground: list
     # Single solid tiles on top of the ground, (col, row): battlements that pen Pigs in.
     battlements: list = field(default_factory=list)
@@ -39,6 +41,10 @@ class Layout:
     # middle of the hub's top, map px; two blades turn flat round it like a
     # rotor, reaching `radius` each side as they point across the view.
     helix_platforms: list = field(default_factory=list)
+    # Crumbling Shelves: (col, row) tiles; the shelf's surface is the top of the tile
+    # and it is one tile wide. Drawn in code (they shake and fall), so they are
+    # not on the level image, only on the Level Preview.
+    crumbling_shelves: list = field(default_factory=list)
     # (col, top row of the ground they stand on).
     pigs: list = field(default_factory=list)
     king_pigs: list = field(default_factory=list)
@@ -54,8 +60,9 @@ class Layout:
     # `water.top` or `sand.top` is twice this), or None for no pit.
     pit_top: int = None
     # 'water' (waves, far isles), 'sand' (dunes, far dunes), 'grass' (a
-    # night thicket of tall grass, a far pine forest) or 'lava' (a molten
-    # floor, far black crags).
+    # night thicket of tall grass, a far pine forest), 'lava' (a molten
+    # floor, far black crags) or 'cloud' (the Cloud Bank: a drifting floor of
+    # cloud, with a bluer daytime sky over it).
     pit: str = 'water'
     # 'clouds': a blue sky with clouds, all on the parallax layer.
     # 'sun': a hot sky with a low sun and rare clouds. The sky colour and the sun
@@ -78,9 +85,9 @@ DOOR_GID, BOX_GID, DIAMOND_GID, PIG_GID, KING_PIG_GID = 290, 291, 293, 294, 295
 
 def solid_cells(layout):
     cells = set()
-    for first, last, top in layout.ground:
+    for first, last, top, *rest in layout.ground:
         for col in range(first, last + 1):
-            for row in range(top, ROWS):
+            for row in range(top, (rest[0] if rest else ROWS - 1) + 1):
                 cells.add((col, row))
     cells.update(layout.battlements)
     return cells
@@ -124,6 +131,11 @@ def build_json(layout, cells):
                  properties=[dict(name=key, type='float', value=p.get(key, default))
                              for key, default in (('radius', 64), ('period', 8), ('arms', 2), ('phase', 0), ('direction', 1))])
             for p in layout.rotating_platforms]))
+    if layout.crumbling_shelves:
+        # A point object at the shelf's top-left (see parseAssets.js getCrumblingShelf).
+        groups.append(('crumbling_shelf', [
+            dict(x=col * TILE, y=row * TILE, width=0, height=0, point=True, name='', type='',
+                 rotation=0, visible=True) for col, row in layout.crumbling_shelves]))
     if layout.helix_platforms:
         # A point object at the middle of the hub's top (see parseAssets.js getHelixPlatformPath).
         groups.append(('helix_platform', [
@@ -199,6 +211,12 @@ LAVA_DEEP, LAVA_MID, LAVA_CREST, LAVA_HOT, LAVA_CRUST = (154, 42, 18), (210, 72,
 # near the lava.
 EMBERLIGHT = (205, 160, 150)
 LAVA_GLOW = (255, 112, 40)
+# The Cloud Bank: kept equal to CLOUD_BANK in index.js. A bluer sky goes over it.
+BANK_DEEP, BANK_MID, BANK_CREST = (196, 222, 230), (226, 242, 244), (250, 253, 252)
+DAY_SKY = [(72, 128, 200), (94, 152, 214), (120, 176, 226), (148, 198, 234), (180, 218, 240), (208, 232, 244)]
+# A Crumbling Shelf, in map px (drawn at 2x in CrumblingShelf.js): a plank of brick
+# with cracks across it. Kept equal to SHELF in CrumblingShelf.js.
+SHELF_BRICK, SHELF_RIM, SHELF_CRACK, SHELF_SHADE = (203, 118, 106), (251, 202, 174), (63, 56, 81), (150, 82, 88)
 
 
 def lerp(a, b, t):
@@ -310,7 +328,7 @@ def paint_far_forest(img, rng, horizon):
             x += rng.randint(*step)
 
 
-def paint_far_isles(img, rng, horizon):
+def paint_far_isles(img, rng, horizon, colour=FAR_ISLE):
     """Low, pale islands on the horizon."""
     px = img.load()
     x = 0
@@ -320,7 +338,7 @@ def paint_far_isles(img, rng, horizon):
             h = round(height * math.sin(math.pi * dx / width) ** 0.6)
             for y in range(horizon - h, horizon):
                 if 0 <= x + dx < img.width:
-                    px[x + dx, y] = (*FAR_ISLE, 255)
+                    px[x + dx, y] = (*colour, 255)
         x += width + rng.randint(40, 200)
 
 
@@ -351,6 +369,43 @@ def paint_water(img, top):
             if depth >= 2 and (x // 6 + y // 3) % 11 == 0 and depth % 5 == 0:
                 colour = WATER_CREST
             px[x, y] = (*colour, 255)
+
+
+def paint_cloud_bank(img, top):
+    """A floor of cloud: a bright crest, greying with depth. Flat on the image;
+    index.js draws its drifting lumps above `top` (never below it, so none of
+    this shows through)."""
+    px = img.load()
+    for y in range(top, img.height):
+        depth = y - top
+        colour = BANK_CREST if depth < 3 else BANK_MID if depth < 14 else BANK_DEEP
+        for x in range(img.width):
+            px[x, y] = (*colour, 255)
+
+
+def paint_island_wisps(img, cells, rng):
+    """Wisps of cloud under each floating island's bottom edge, so it reads as
+    floating: flat blobs, shaded underneath."""
+    for col, row in sorted(cells):
+        if (col, row + 1) in cells or row + 1 >= ROWS:
+            continue
+        bottom = (row + 1) * TILE
+        for _ in range(2):
+            cx, cy = col * TILE + rng.uniform(4, TILE - 4), bottom + rng.uniform(2, 9)
+            r = rng.uniform(9, 16)
+            paint_blob(img, cx, cy + 3, r, r * 0.45, CLOUD_SHADE)
+            paint_blob(img, cx, cy, r, r * 0.45, CLOUD)
+
+
+def paint_shelf(img, x, y):
+    """A Crumbling Shelf with its surface at (x, y), map px: 32 wide, 7 tall."""
+    px = img.load()
+    for dy in range(7):
+        for dx in range(32):
+            px[x + dx, y + dy] = (*(SHELF_RIM if dy < 2 else SHELF_BRICK if dy < 5 else SHELF_SHADE), 255)
+    # Cracks: zigzags running down from the rim.
+    for cx, cy in ((7, 1), (8, 2), (7, 3), (8, 4), (9, 5), (20, 0), (19, 1), (20, 2), (21, 3), (20, 4), (14, 3), (15, 4)):
+        px[x + cx, y + cy] = (*SHELF_CRACK, 255)
 
 
 def grass_blade_height(x):
@@ -463,7 +518,8 @@ def paint_far_crags(img, rng, horizon):
 
 # Terrain (32x32).png gids (1-based, 19 columns): the orange-rimmed wall pieces.
 FRAME = {'tl': 21, 't': 22, 'tr': 23, 'l': 40, 'c': 41, 'r': 42}  # walls 2+ tiles wide
-COLUMN = {'top': 25, 'mid': 44}  # walls one tile wide
+COLUMN = {'top': 25, 'mid': 44, 'bottom': 63}  # walls one tile wide
+BOTTOM = {'bl': 59, 'b': 60, 'br': 61}  # the underside of a floating island
 
 
 def terrain_tile(sheet, gid):
@@ -475,8 +531,11 @@ def terrain_tile(sheet, gid):
 def wall_gid(cells, col, row):
     solid = lambda c, r: (c, r) in cells or r >= ROWS  # walls carry on below the map
     up, left, right = solid(col, row - 1), solid(col - 1, row), solid(col + 1, row)
+    down = solid(col, row + 1)
     if not left and not right:
-        return COLUMN['mid'] if up else COLUMN['top']
+        return COLUMN['bottom'] if up and not down else COLUMN['mid'] if up else COLUMN['top']
+    if up and not down:
+        return BOTTOM['bl'] if not left else BOTTOM['br'] if not right else BOTTOM['b']
     if not up:
         return FRAME['tl'] if not left else FRAME['tr'] if not right else FRAME['t']
     return FRAME['l'] if not left else FRAME['r'] if not right else FRAME['c']
@@ -627,9 +686,11 @@ def build_sky(layout, width):
     elif layout.sky == 'smoke':
         paint_smoke(img, rng)
     else:
-        paint_sky(img, horizon(layout))
+        paint_sky(img, horizon(layout), DAY_SKY if layout.pit == 'cloud' else SKY)
         paint_clouds(img, rng)
-    if layout.pit_top is not None:
+    if layout.pit == 'cloud':
+        paint_far_isles(img, rng, horizon(layout), BANK_DEEP)
+    elif layout.pit_top is not None:
         {'sand': paint_far_dunes, 'grass': paint_far_forest, 'lava': paint_far_crags}.get(layout.pit, paint_far_isles)(img, rng, horizon(layout))
     return img
 
@@ -638,9 +699,10 @@ def build_terrain(layout, cells):
     """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
     img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
     if layout.pit_top is not None:
-        {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava}.get(layout.pit, paint_water)(img, layout.pit_top)
+        {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava, 'cloud': paint_cloud_bank}.get(layout.pit, paint_water)(img, layout.pit_top)
     light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT}.get(layout.sky)
     paint_walls(img, cells, light, layout.pit_top if layout.pit == 'lava' else None)
+    paint_island_wisps(img, cells, random.Random(layout.seed + 3))
     paint_decorations(img, layout)
     return img
 
@@ -653,6 +715,8 @@ def build_preview(layout, terrain):
         img.alpha_composite(build_far(layout, terrain.width, terrain.width // 2 + far_x(layout) - VIEW_WIDTH // 2))
     img.alpha_composite(build_sky(layout, terrain.width))
     img.alpha_composite(terrain)
+    for col, row in layout.crumbling_shelves:
+        paint_shelf(img, col * TILE, row * TILE)
     return img
 
 
