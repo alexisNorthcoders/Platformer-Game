@@ -4,7 +4,7 @@
  * - menu + Pause Menu (opened from playing): Escape resumes
  * - loading: Escape ignored (do not interrupt init)
  * - playing + King dying (last heart lost, death still playing out): Escape ignored
- * - playing + game over overlay: Escape ignored (R restarts)
+ * - playing + game over overlay: Escape ignored (R is Try Again)
  * - playing + level transition (door → next level fade-in): Escape ignored
  * - playing + game over restart still loading the level: Escape ignored
  * - playing: Escape opens the Pause Menu
@@ -13,6 +13,9 @@
  * - Resume: same as Escape
  * - Restart Level: loading → playing once the current level is rebuilt
  * - Quit to Title: back to the Title Screen with a clean session
+ *
+ * Game Over Screen buttons (#89): Try Again is Restart Level, Quit to Title
+ * is the Pause Menu's, each the very same transition.
  */
 
 const RESUME = Object.freeze({
@@ -23,7 +26,7 @@ const RESUME = Object.freeze({
     playerPreventInput: false,
 })
 
-// Restart Level: shared by the Pause Menu button and the retry after game over.
+// Restart Level: shared by the Pause Menu button and Try Again after game over.
 const RESTART_LEVEL = Object.freeze({
     handled: true,
     gameState: 'loading',
@@ -32,6 +35,18 @@ const RESTART_LEVEL = Object.freeze({
     playerPreventInput: true,
     restartLevel: true,
 })
+
+function quitToTitle(currentLevel) {
+    return {
+        handled: true,
+        gameState: 'menu',
+        pauseMenuFromPlaying: false,
+        clearKeys: true,
+        playerPreventInput: true,
+        resetSession: true,
+        selectedLevel: currentLevel,
+    }
+}
 
 export function reduceEscapeKey({
     gameState,
@@ -95,30 +110,23 @@ export function reducePauseMenuChoice({ choice, gameState, pauseMenuFromPlaying,
 
     if (choice === 'restart') return { ...RESTART_LEVEL }
 
-    if (choice === 'quit') {
-        return {
-            handled: true,
-            gameState: 'menu',
-            pauseMenuFromPlaying: false,
-            clearKeys: true,
-            playerPreventInput: true,
-            resetSession: true,
-            selectedLevel: currentLevel,
-        }
-    }
+    if (choice === 'quit') return quitToTitle(currentLevel)
 
     return { handled: false, reason: 'notATransition' }
 }
 
 /**
- * The retry (R, or a tap) after the King loses his last heart: Restart Level,
- * the same transition as the Pause Menu button.
+ * A Game Over Screen button: 'retry' (Try Again) | 'quit'. Only handled while
+ * the game over screen is up: the King lost his last heart, his death has
+ * played out, and no restart is already loading the level.
  */
-export function reduceGameOverRetry({ gameState, playerGameOver, playerDying = false, restarting = false }) {
+export function reduceGameOverChoice({ choice, gameState, playerGameOver, playerDying = false, restarting = false, currentLevel }) {
     if (gameState !== 'playing' || !playerGameOver || playerDying || restarting) {
         return { handled: false, reason: 'notGameOver' }
     }
-    return { ...RESTART_LEVEL }
+    if (choice === 'retry') return { ...RESTART_LEVEL }
+    if (choice === 'quit') return quitToTitle(currentLevel)
+    return { handled: false, reason: 'notATransition' }
 }
 
 /**
