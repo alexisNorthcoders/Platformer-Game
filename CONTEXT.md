@@ -15,7 +15,7 @@ The overlay opened during play (Escape or the touch pause button), drawn over th
 _Avoid_: Escape menu, in-game menu
 
 **Game Over Screen**:
-The overlay shown after the King loses his last heart and his death plays out. The frozen level first dims over about half a second; only then do the panel and buttons appear, and until then the screen accepts no input (so a mashed attack key cannot choose a button), and a key held through the reveal does nothing until pressed afresh. Drawn over the dimmed, frozen level. It names the level and offers Try Again (Restart Level under another label) and Quit to Title. Losing the last heart is the only way to reach it; a game over costs only the level's progress, never the session.
+The overlay shown after the King loses his last heart and his death plays out; when the heart is lost to a pit (Water, Quicksand, a Thicket, the Lava, the Cloud Bank or a Spike Ditch) he is already out of sight, so there is no death to play out and it follows at once, without bringing him back at a Checkpoint. The frozen level first dims over about half a second; only then do the panel and buttons appear, and until then the screen accepts no input (so a mashed attack key cannot choose a button), and a key held through the reveal does nothing until pressed afresh. Drawn over the dimmed, frozen level. It names the level and offers Try Again (Restart Level under another label) and Quit to Title. Losing the last heart is the only way to reach it; a game over costs only the level's progress, never the session.
 _Avoid_: Death screen, game over overlay, game over menu
 
 **Level Preview**:
@@ -88,7 +88,7 @@ A hub with planks hung round it on chains, turning steadily like a wheel; each p
 _Avoid_: Wheel (except when describing one), Ferris wheel, spinning platform
 
 **Tumbling Plank**:
-A wooden plank that turns end over end round its own middle, slowly and without stopping, like a clock hand. The King can stand on it only while it lies nearly flat, which it does twice a turn; as it tips further it drops him, and while it stands on end he passes through it. It never pushes or hurts him.
+A wooden plank that turns end over end round its own middle, slowly and without stopping, like a clock hand. The King never falls through its top face: nearly flat, he stands on it; tilted further, he slides down it but can still jump off; steeper still, he slides off fast. Only while it stands on end is there no top to land on. Jumping up through it from below works as for any plank. It never hurts him.
 _Avoid_: Spinning platform, windmill, flip plank
 
 **Crumbling Shelf**:
