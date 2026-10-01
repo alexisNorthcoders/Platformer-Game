@@ -129,6 +129,8 @@ class Enemy extends Sprite {
     }
     /** Shared death step: the dead animation, the Pig counter, the defeated mark, then the fade. */
     die() {
+        if (this.died) return
+        this.died = true
         this.switchSprite('dead')
         enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 });
         if (this.spawnTrack) {
@@ -152,9 +154,12 @@ class Enemy extends Sprite {
         this.switchSprite('hit')
         // A flinching Pig is already on the shared hit animation: replace its
         // "get back up" callback and clear the finished flag so this one fires.
-        if (this.currentAnimation) {
+        if (this.image === this.animations.hit?.image && this.currentAnimation) {
             this.currentAnimation.isActive = false
             this.currentAnimation.onComplete = () => this.die()
+        } else {
+            // The hit animation could not start: take the shared death path directly.
+            this.die()
         }
     }
     matchOn(){

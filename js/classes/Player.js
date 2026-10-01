@@ -378,6 +378,7 @@ class Player extends Sprite {
     checkSquish() {
         if (this.dead || this.sinking || this.gameOver) return false
         const targets = ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing)
+        // findSquishedPigs excludes the Match Pig by variant, whatever the list holds
         const squished = ContactDamageHelpers.findSquishedPigs(this.hitbox, this.velocity.y, targets)
         if (!squished.length) return false
         squished.forEach(pig => pig.kill())

@@ -39,12 +39,13 @@ export function isSquish(kingHitbox, velocityY, pigHitbox, tolerancePx = SQUISH_
     )
 }
 
-/** The Pigs (live, loaded, fully opaque) the King squishes this frame. */
+/** The Pigs (live, loaded, fully opaque; never the Match Pig) the King squishes this frame. */
 export function findSquishedPigs(kingHitbox, velocityY, pigs) {
     if (!Array.isArray(pigs)) return []
     return pigs.filter(
         (pig) =>
             pig.loaded &&
+            pig.enemyVariant !== 'match' &&
             pig.hitpoints > 0 &&
             pig.opacity >= 1 &&
             isSquish(kingHitbox, velocityY, pig.hitbox)
