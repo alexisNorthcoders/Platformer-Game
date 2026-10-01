@@ -24,3 +24,29 @@ export function contactKnockbackVelocityX(playerHitbox, enemyHitbox, knockbackSp
     const enemyCx = enemyHitbox.position.x + enemyHitbox.width / 2
     return playerCx < enemyCx ? -knockbackSpeed : knockbackSpeed
 }
+
+/** Upward speed the King gets from a Squish (a jump is -10). */
+export const SQUISH_BOUNCE_VY = -7
+/** How far below the Pig's top last frame's feet may be and still count as from above. */
+export const SQUISH_TOLERANCE_PX = 6
+
+/** Whether the King, falling at velocityY, lands on `pigHitbox` from above this frame (a Squish). */
+export function isSquish(kingHitbox, velocityY, pigHitbox, tolerancePx = SQUISH_TOLERANCE_PX) {
+    return (
+        velocityY > 0 &&
+        rectHitboxesOverlap(kingHitbox, pigHitbox) &&
+        kingHitbox.position.y + kingHitbox.height - velocityY <= pigHitbox.position.y + tolerancePx
+    )
+}
+
+/** The Pigs (live, loaded, fully opaque) the King squishes this frame. */
+export function findSquishedPigs(kingHitbox, velocityY, pigs) {
+    if (!Array.isArray(pigs)) return []
+    return pigs.filter(
+        (pig) =>
+            pig.loaded &&
+            pig.hitpoints > 0 &&
+            pig.opacity >= 1 &&
+            isSquish(kingHitbox, velocityY, pig.hitbox)
+    )
+}

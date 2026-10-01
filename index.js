@@ -501,8 +501,8 @@ function dropBomb(feet) {
 }
 
 /**
- * A blast (#74) hits everyone caught in it once, through the hammer's hit
- * paths (Pigs die and Boxes break as from the hammer), with no knockback.
+ * A blast (#74) hits everyone caught in it once: Pigs caught die outright,
+ * Boxes break as from the hammer, and the King loses a heart with no knockback.
  */
 function hitBlastVictims(rect) {
     player.updateHitbox()
@@ -512,7 +512,7 @@ function hitBlastVictims(rect) {
         boxes,
     })
     if (victims.king) victims.king.takeBlastHit()
-    victims.pigs.forEach(pig => pig.hit())
+    victims.pigs.forEach(pig => pig.kill())
     victims.boxes.forEach(box => box.hit())
 }
 

@@ -122,7 +122,7 @@ class Player extends Sprite {
         }
 
         if (enemies?.length || enemyKing?.length || enemyMatch?.length) {
-            this.checkEnemyContactDamage()
+            if (!this.checkSquish()) this.checkEnemyContactDamage()
         }
 
         if (this.gameOver) return
@@ -368,6 +368,24 @@ class Player extends Sprite {
             }
 
         }
+    }
+
+    /**
+     * A Squish: landing on Pigs from above kills them and bounces the King, unhurt.
+     * Runs before applyGravity(), so velocity.y is still last frame's fall speed.
+     * Returns true when it squished (the overlap must not also be contact damage).
+     */
+    checkSquish() {
+        if (this.dead || this.sinking || this.gameOver) return false
+        const targets = ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing)
+        const squished = ContactDamageHelpers.findSquishedPigs(this.hitbox, this.velocity.y, targets)
+        if (!squished.length) return false
+        squished.forEach(pig => pig.kill())
+        this.velocity.y = ContactDamageHelpers.SQUISH_BOUNCE_VY
+        this.isGrounded = false
+        playHitSound()
+        this.switchSprite(this.lastDirection === 'right' ? 'jump' : 'jumpLeft')
+        return true
     }
 
     checkEnemyContactDamage() {
