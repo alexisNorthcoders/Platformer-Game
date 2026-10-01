@@ -594,7 +594,7 @@ function reachCheckpoints() {
     respawnPoint = globalThis.__checkpoint.respawnPointAfter(currentCheckpoints(), respawnPoint, player.position.x)
 }
 
-/** The King falls into the water: back to the respawn point, standing still. */
+/** The King falls into a pit: back to the respawn point, standing still. */
 function respawnKing() {
     player.setPosition(respawnPoint ?? levels[level].playerPosition)
     crumblingShelves.forEach(shelf => shelf.reset())

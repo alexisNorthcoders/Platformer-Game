@@ -3,7 +3,7 @@ class Player extends Sprite {
         super({ imageSrc, frameRate, animations, loop })
         this.hitpoints = 3
         this.preventInput = false
-        /** Caught in the Quicksand and sinking out of sight (no way out). */
+        /** Caught in the Quicksand, Water, Thicket or Lava and sinking out of sight (no way out). */
         this.sinking = false
         /** Whether the sinking, not a door/menu, turned preventInput on (so only it turns it off). */
         this.sinkLockedInput = false
@@ -163,7 +163,7 @@ class Player extends Sprite {
         if (this.dying) this.playDeathAnimation()
     }
 
-    /** Caught: stops dead, input locked, idle, sinking slowly (Quicksand). */
+    /** Caught: stops dead, input locked, idle, sinking slowly (Quicksand, Water, Thicket or Lava). */
     startSinking() {
         if (this.sinking) return
         this.sinking = true
@@ -190,7 +190,7 @@ class Player extends Sprite {
     sinkStep() {
         this.position.y = globalThis.__quicksand.sinkStep(this.position.y)
         this.updateHitbox()
-        if (!globalThis.__quicksand.isSubmerged(this.hitbox.position.y, levels[level]?.sand)) return
+        if (!globalThis.__quicksand.isSubmerged(this.hitbox.position.y, globalThis.__quicksand.sinkFloor(levels[level]))) return
         this.stopSinking()
         this.loseHP()
         respawnKing()
@@ -519,7 +519,7 @@ class Player extends Sprite {
     }
     checkForVerticalCollisions() {
 
-        if (globalThis.__quicksand.touchesSand(this.feetPosition().y, levels[level]?.sand)) {
+        if (globalThis.__quicksand.touchesSand(this.feetPosition().y, globalThis.__quicksand.sinkFloor(levels[level]))) {
             this.startSinking()
             return
         }
