@@ -114,21 +114,7 @@ class Enemy extends Sprite {
                 this.hitpoints--
                 this.switchSprite('hit');
                 if (this.hitpoints === 0) {
-                    this.currentAnimation = {
-                        onComplete: () => {
-                            this.switchSprite('dead')
-                            enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 });
-                            if (this.spawnTrack) {
-                                LevelProgressKeys.markEnemyDefeated(
-                                    this.spawnTrack.levelId,
-                                    this.spawnTrack.kind,
-                                    this.spawnTrack.spawnX,
-                                    this.spawnTrack.spawnY
-                                )
-                            }
-                            setTimeout(() => this.fade(), 2000)
-                        }
-                    }
+                    this.currentAnimation = { onComplete: () => this.die() }
                 }
                 else {
                     this.currentAnimation = {
@@ -139,6 +125,41 @@ class Enemy extends Sprite {
                     }
                 }
             }
+        }
+    }
+    /** Shared death step: the dead animation, the Pig counter, the defeated mark, then the fade. */
+    die() {
+        if (this.died) return
+        this.died = true
+        this.switchSprite('dead')
+        enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 });
+        if (this.spawnTrack) {
+            LevelProgressKeys.markEnemyDefeated(
+                this.spawnTrack.levelId,
+                this.spawnTrack.kind,
+                this.spawnTrack.spawnX,
+                this.spawnTrack.spawnY
+            )
+        }
+        setTimeout(() => this.fade(), 2000)
+    }
+    /** Dies outright (Squish, Bomb), whatever hitpoints are left and even mid-flinch. */
+    kill() {
+        if (this.hitpoints <= 0) return
+        this.hitpoints = 0
+        this.playerHit = true
+        this.attacking = false
+        this.velocity.x = 0
+        playHitSound()
+        this.switchSprite('hit')
+        // A flinching Pig is already on the shared hit animation: replace its
+        // "get back up" callback and clear the finished flag so this one fires.
+        if (this.image === this.animations.hit?.image && this.currentAnimation) {
+            this.currentAnimation.isActive = false
+            this.currentAnimation.onComplete = () => this.die()
+        } else {
+            // The hit animation could not start: take the shared death path directly.
+            this.die()
         }
     }
     matchOn(){

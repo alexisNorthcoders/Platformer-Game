@@ -64,3 +64,12 @@ test('hammer hit detection includes king on left-facing swing when boxes overlap
         'enemyKing targets must use the left attack hitbox like Player.checkEnemyHitCollision'
     )
 })
+
+test('collectAttackableEnemiesForPlayerAttack: leaves out the Match Pig (not hammered, bombed or squished)', () => {
+    const pig = { enemyVariant: 'pig' }
+    const king = { enemyVariant: 'king' }
+    const match = { enemyVariant: 'match' }
+    // The Match Pig lives in enemyMatch, which is never passed in.
+    assert.deepEqual(collectAttackableEnemiesForPlayerAttack([pig], [king]), [pig, king])
+    assert.equal(collectAttackableEnemiesForPlayerAttack([pig], [king]).includes(match), false)
+})
