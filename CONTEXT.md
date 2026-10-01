@@ -34,6 +34,10 @@ _Avoid_: Retry, respawn (Try Again is only a button label)
 **Quit to Title**:
 Leave the level for the Title Screen with a clean session. Offered on the Pause Menu and the Game Over Screen.
 
+**Squish**:
+The King landing on a Pig from above: the Pig dies outright and the King bounces off it, unhurt. Works on Pigs and the King Pig, never on the Match Pig, who still hurts the King on contact.
+_Avoid_: Stomp, jump attack, head bounce
+
 ### Characters
 
 **King**:
@@ -58,7 +62,7 @@ _Avoid_: Pig with a Match (except when naming the sprite folder)
 ### Objects
 
 **Bomb**:
-An explosive that, once lit, blows up when its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. The King drops Bombs, on the ground or in mid-air (a Bomb dropped in mid-air falls unlit and lights its fuse on landing); Bomb Pigs throw them. A live Bomb never outlasts its moment: it is gone, without blowing up, when the King dies, goes through a Door, or the level is restarted or quit.
+An explosive that, once lit, blows up when its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. A Pig caught in a blast dies outright, however many hits it had left; the King loses one heart. The King drops Bombs, on the ground or in mid-air (a Bomb dropped in mid-air falls unlit and lights its fuse on landing); Bomb Pigs throw them. A live Bomb never outlasts its moment: it is gone, without blowing up, when the King dies, goes through a Door, or the level is restarted or quit.
 _Avoid_: King's bomb, Pig bomb, grenade
 
 **Moving Platform**:
