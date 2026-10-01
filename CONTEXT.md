@@ -55,9 +55,23 @@ _Avoid_: Goblin, bomber
 **King Pig**:
 The crowned Pig.
 
+**Giant King Pig**:
+The boss: a King Pig five times the size, fought alone on the Boss Level. He has 10 hit points, shown in a health bar: a hammer hit costs him 1 and a Bomb's blast 3. His attacks are the Bomb Drop and the Ground Pound, and touching him hurts like touching any Pig. He can't be squished.
+_Avoid_: Boss Pig, Pig King, big King Pig
+
 **Match Pig**:
 A Pig holding a lit match, who lights a cannon to fire cannon balls.
 _Avoid_: Pig with a Match (except when naming the sprite folder)
+
+### Attacks
+
+**Bomb Drop**:
+The Giant King Pig's call for Bombs: a few Bombs fall from the ceiling, unlit, and light on landing like any Bomb dropped in mid-air. Their blasts hurt whoever they catch, the Giant King Pig too.
+_Avoid_: Bomb rain, airstrike
+
+**Ground Pound**:
+The Giant King Pig's jump attack: he crouches, leaps and lands with a quake that shakes the screen. The King loses a heart if he is on the ground or a ledge as the Giant King Pig lands; in the air, the quake can't touch him.
+_Avoid_: Stomp, slam, earthquake
 
 ### Objects
 
@@ -82,6 +96,10 @@ A short, thin, cracked plank the King can jump up through and land on. Once he l
 _Avoid_: Crumbling ledge, breaking platform, falling platform
 
 ### Places
+
+**Boss Level**:
+A one-screen throne room where the King fights the Giant King Pig alone. Its Door opens only once the Giant King Pig is beaten.
+_Avoid_: Boss fight (for the place), arena, final level
 
 **Helix Platform**:
 Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. As they turn across the view they stretch out to bridge a gap, then shrink back to the hub. The hub is always safe to stand on. The blades do not carry the King: one shrinking out from under him drops him, so he waits on the hub and walks out as they reach across.
