@@ -92,8 +92,16 @@ The sand along the bottom of an open-air level. The King is caught the moment he
 _Avoid_: Pit, sand trap
 
 **Water**:
-The moat along the bottom of an open-air level. Falling in costs the King a heart and puts him back at his last Checkpoint.
+The moat along the bottom of an open-air level. The King sinks into it just as into the Quicksand: caught the moment he touches it, he sinks slowly out of sight, then loses a heart and comes back at his last Checkpoint.
 _Avoid_: Sea, pit
+
+**Thicket**:
+The tall grass along the bottom of a forest level. The King sinks into it just as into the Quicksand.
+_Avoid_: Grass pit, bushes, undergrowth
+
+**Lava**:
+The molten rock along the bottom of a volcanic level. The King sinks into it just as into the Quicksand (there is never burning or blood).
+_Avoid_: Magma, lava pit
 
 **Cloud Bank**:
 The floor of cloud along the bottom of a sky level. The King sinks out of sight into it; falling in costs him a heart and puts him back at his last Checkpoint.
@@ -104,7 +112,7 @@ A ditch cut down into the ground, with spikes along its bottom. Falling in costs
 _Avoid_: Spike pit, trench
 
 **Checkpoint**:
-A flag on a long level marking where the King comes back after falling into the Water, Quicksand or the Cloud Bank. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
+A flag on a long level marking where the King comes back after falling into the Water, Quicksand, a Thicket, the Lava, the Cloud Bank or a Spike Ditch. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
 _Avoid_: Save point, respawn point
 
 ### Weather
