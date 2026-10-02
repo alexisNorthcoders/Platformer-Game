@@ -783,6 +783,8 @@ def wall_gid(cells, col, row, rows=ROWS):
     down = solid(col, row + 1)
     if not left and not right:
         return COLUMN['bottom'] if up and not down else COLUMN['mid'] if up else COLUMN['top']
+    if up and not down and left and right and not solid(col - 1, row - 1) and not solid(col + 1, row - 1):
+        return FRAME['t']  # a one-row ledge under a lone battlement: the ledge carries on under it
     if up and not down:
         return BOTTOM['bl'] if not left else BOTTOM['br'] if not right else BOTTOM['b']
     if not up:

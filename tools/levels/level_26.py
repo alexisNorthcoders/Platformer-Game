@@ -11,21 +11,26 @@ ends each one). Rides in order; "main" is the most frequent. Every crossing is a
 hop between brick pads fixed to the walls (tile-aligned) by one ride:
 
  S   name              rides, in order                                     main
- 1   First Steps       step, side, shelves, step, lift                     step
- 2   Twin Lifts        lift, lift, shelves, side, wheel                    lift
- 3   Don't Stop        shelves, shelves, step, side, wheel                 shelves
- 4   The Wheel         diag, side, wheel, shelves, wheel                   wheel
- 5   Crossing Paths    side, diag, diag, lift, step                        diag
+ 1   First Steps       step, side, shelves, side, lift                     side
+ 2   Twin Lifts        shelves, lift, wheel, side, lift                    lift
+ 3   Don't Stop        shelves, diag, wheel, side, shelves                 shelves
+ 4   The Wheel         diag, wheel, lift, wheel, shelves                   wheel
+ 5   Crossing Paths    side, diag, diag, lift, helix                       diag
  6   Iron Rotor        helix, shelves, helix, helix, shelves, side         helix
- 7   Side to Side      lift, side, diag, step, side, side                  side
- 8   The Mixed Run     lift, helix, wheel, side, lift                      lift
- 9   Tumble Stairs     step, tumble, side, lift, tumble, wheel             tumble
- 10  Teeth and Turns   diag, step, diag, wheel, diag                       diag
- 11  Wheel Gauntlet    wheel, lift, step, wheel, diag                      wheel
- 12  The Door          side, side, lift, tumble, helix, diag               side
+ 7   Side to Side      lift, side, diag, helix, side, side                 side
+ 8   The Mixed Run     lift, helix, lift, wheel, side                      lift
+ 9   Tumble Stairs     diag, tumble, shelves, side, lift, tumble           tumble
+ 10  Teeth and Turns   shelves, diag, diag, diag, wheel                    diag
+ 11  Wheel Gauntlet    diag, wheel, lift, wheel, side                      wheel
+ 12  The Door          diag, helix, side, side, lift, tumble               side
 
 Adjacent sections differ in main ride, no two sections share a sequence, and no
 ride runs more than 3 times in a row. The build asserts the rise of each section.
+The orders above are the ones that fit; when a listed order does not, the solver
+tries the section's other orders (`orders`).
+
+Only the very first ride is a step: a step back over any other crossing puts its
+pad in that crossing's air (see below), so later sections have none.
 
 WHY EACH JUMP IS POSSIBLE (REFERENCE.md: jump up ~100 world px = 50 map px, flat
 ~160 world px = 80 map px, walk gap < 55 world px = 27 map px):
@@ -42,10 +47,18 @@ WHY EACH JUMP IS POSSIBLE (REFERENCE.md: jump up ~100 world px = 50 map px, flat
  - tumble: a 128 map px gap with the plank level with both pads; he steps on in its
    window (about 1.1 s every 4 s) and steps off.
 The build checks, for every crossing, that its ride lines up with both pads long
-enough (at least 0.6 s) for a hop within these limits, and that no pad or path
-crowds another.
+enough (at least 0.6 s) for a hop within these limits.
+
+HEAD ROOM. Pads are one row of brick (PAD). Every crossing has an air zone
+(`air_zone`): STAND map px over everywhere he stands or rides, JUMP over where he
+takes off, and a sweep (`ride_sweep`): where its planks, blades or shelves pass. No
+pad may hang into another crossing's air or sweep, and no plank may pass through a
+helix, tumbling plank or shelf. The planner keeps to this and `validate` checks it
+over the whole tower, so the King never hits a ceiling mid-jump.
 """
 
+import functools
+import itertools
 import math
 import os
 import random
@@ -60,6 +73,8 @@ FOOT_ROW = 126                   # the ground's top row (two rows deep); its sur
 RISE = 320                       # one section: 10 rows
 SECTIONS_N = 12
 HOP = 32                         # the pad / far end is this much above the plank it is reached from
+PAD = 32                         # a pad's thickness: one row of brick, leaving head room under it
+SINK = 4                         # a rising plank (lift, diag) starts this far below its pad, so he can walk on
 
 
 def row_of(u):
@@ -70,22 +85,26 @@ def surface_y(u):
     return row_of(u) * TILE
 
 
+def mirror_x(x, w=0):
+    return 512 - x - w
+
+
 # --- the sections -----------------------------------------------------------------
 
 # type: (rise options, S options). rise in map px; S = the gap between two pads' inner edges.
 SECTIONS = [
-    ('First Steps', ['step', 'side', 'shelves', 'step', 'lift']),
-    ('Twin Lifts', ['lift', 'lift', 'shelves', 'side', 'wheel']),
-    ("Don't Stop", ['shelves', 'shelves', 'step', 'side', 'wheel']),
-    ('The Wheel', ['diag', 'side', 'wheel', 'shelves', 'wheel']),
-    ('Crossing Paths', ['side', 'diag', 'diag', 'lift', 'step']),
+    ('First Steps', ['step', 'side', 'shelves', 'side', 'lift']),
+    ('Twin Lifts', ['shelves', 'lift', 'wheel', 'side', 'lift']),
+    ("Don't Stop", ['shelves', 'diag', 'wheel', 'side', 'shelves']),
+    ('The Wheel', ['diag', 'wheel', 'lift', 'wheel', 'shelves']),
+    ('Crossing Paths', ['side', 'diag', 'diag', 'lift', 'helix']),
     ('Iron Rotor', ['helix', 'shelves', 'helix', 'helix', 'shelves', 'side']),
-    ('Side to Side', ['lift', 'side', 'diag', 'step', 'side', 'side']),
-    ('The Mixed Run', ['lift', 'helix', 'wheel', 'side', 'lift']),
-    ('Tumble Stairs', ['step', 'tumble', 'side', 'lift', 'tumble', 'wheel']),
-    ('Teeth and Turns', ['diag', 'step', 'diag', 'wheel', 'diag']),
-    ('Wheel Gauntlet', ['wheel', 'lift', 'step', 'wheel', 'diag']),
-    ('The Door', ['side', 'side', 'lift', 'tumble', 'helix', 'diag']),
+    ('Side to Side', ['lift', 'side', 'diag', 'helix', 'side', 'side']),
+    ('The Mixed Run', ['lift', 'helix', 'lift', 'wheel', 'side']),
+    ('Tumble Stairs', ['diag', 'tumble', 'shelves', 'side', 'lift', 'tumble']),
+    ('Teeth and Turns', ['shelves', 'diag', 'diag', 'diag', 'wheel']),
+    ('Wheel Gauntlet', ['diag', 'wheel', 'lift', 'wheel', 'side']),
+    ('The Door', ['diag', 'helix', 'side', 'side', 'lift', 'tumble']),
 ]
 
 # Candidate (S, rise) pairs per ride, in map px; rises are multiples of 32.
@@ -115,35 +134,173 @@ TIGHT = {
 
 
 def clear_of(history, side, edge, u):
-    """A new pad (side, inner edge, u) must not crowd a lower pad on the same side: either
-    it is 120 map px or more above it, or its inner edge is 64 or more short of the lower
-    pad's, leaving that room to stand and jump."""
-    for hside, hedge, hu in history:
-        if hside != side:
-            continue
-        d = u - hu
-        if d >= 120 or d < 0:
-            continue
-        if d == 0:
-            return False
-        if side == 'L' and edge > hedge - 64:
-            return False
-        if side == 'R' and edge < hedge + 64:
-            return False
-    return True
+    """A new pad (side, inner edge, u) must not sit level with a lower pad on the same side
+    (the two would run together). Head room round pads is the air zones' job."""
+    return not any(hside == side and hu == u for hside, hedge, hu, *_ in history)
+
+
+# The King's head room (map px; REFERENCE.md: hitbox 53 world px tall, a jump rises ~100).
+STAND = 40        # above a surface he stands or rides on
+JUMP = 80         # above a surface he jumps from
+MARGIN = 32       # how far a crossing's air reaches onto the pads each side of its gap
+KEEP = 6          # pads (and their crossings) the planner remembers below the current one
+PLANS_TRIED = 2   # plans per ride order the solver tries for a section
+CANDIDATES = 6    # plans in all the solver tries for a section before backtracking
+
+
+def pad_x(side, edge):
+    return (LEFT, edge) if side == 'L' else (edge, RIGHT)
+
+
+def plank_widths(k, kind, S):
+    """The narrowest and widest plank build_tower can give this ride in section k."""
+    if (kind in ('side', 'diag') and S == 128) or (kind == 'wheel' and S == 192):
+        return (64, 64)
+    if kind == 'lift':
+        return (100, 100)
+    return (max(64, round(100 - 36 * (k - 1) / (SECTIONS_N - 1) - 8)), 100)
+
+
+def ride_height(k, kind, S, e_s, u_s, u_d, x):
+    """The highest u a ride's surface reaches over x (forward frame), or None where it never
+    passes. Worked out for every plank width the ride may get."""
+    best = None
+    for w in plank_widths(k, kind, S):
+        h = None
+        if kind in ('side', 'helix'):
+            h = u_s if e_s <= x <= e_s + S else None
+        elif kind == 'lift':
+            h = u_d - HOP if e_s <= x <= e_s + S else None
+        elif kind == 'diag':
+            x_lo, dx = e_s + 12, S - 24 - w
+            if x_lo <= x <= x_lo + dx + w:
+                share = min(1, max(0, (x - x_lo) / dx)) if dx > 0 else 1
+                h = u_s + (u_d - HOP - u_s) * share
+        elif kind == 'wheel':
+            r, hub = (S - 16 - w) / 2, e_s + S / 2
+            off = max(0, abs(x - hub) - w / 2)
+            h = u_s + math.sqrt(r * r - off * off) if off <= r else None
+        elif kind == 'tumble':
+            h = u_s + 22 if e_s <= x <= e_s + S else None   # an end, tilted 25° from flat
+        if h is not None:
+            best = h if best is None else max(best, h)
+    return best
+
+
+@functools.lru_cache(maxsize=None)
+def air_zone(k, kind, S, side, edge, u_s, u_d):
+    """The space a crossing needs free of brick, as rectangles (x0, x1, lo, hi) in map px
+    with u heights (a pad occupies u in (top - PAD, top]): room to stand on the pads by the
+    gap and on the ride all the way across, room to jump where he takes off, and the space
+    a wheel or tumbling plank sweeps below the pads' level. Worked out left to right from
+    the source pad's inner edge, then mirrored for a crossing that starts on the right."""
+    e_s = edge if side == 'L' else mirror_x(edge)
+    e_d, lo = e_s + S, min(u_s, u_d)
+    rects = []
+    if kind == 'step':
+        rects.append((e_s - MARGIN, e_d + MARGIN, lo, max(u_s + JUMP, u_d + STAND)))
+    elif kind == 'shelves':
+        # a hop from each step of the staircase (the pad, then each shelf) to the next
+        n = (u_d - u_s) // HOP - 1
+        for i in range(n + 1):
+            x0 = e_s - MARGIN if i == 0 else e_s + 64 * i - 32
+            x1 = e_d + MARGIN if i == n else e_s + 64 * (i + 1)
+            rects.append((x0, x1, lo, u_s + HOP * i + JUMP))
+    else:
+        rects.append((e_s - MARGIN, e_s, lo, u_s + STAND))
+        rects.append((e_d, e_d + MARGIN, lo, u_d + STAND))
+        for x in range(e_s, e_d, 16):
+            h = max((ride_height(k, kind, S, e_s, u_s, u_d, x_) for x_ in (x, x + 16)
+                     if ride_height(k, kind, S, e_s, u_s, u_d, x_) is not None), default=None)
+            if h is not None:
+                rects.append((x, x + 16, lo, h + STAND))
+        if kind != 'tumble':
+            # he jumps off the ride's far end, from its level there, up to the far pad
+            jump_from = {'diag': u_d - HOP, 'lift': u_d - HOP}.get(kind, u_s)
+            rects.append((e_d - 64, e_d + MARGIN, lo, jump_from + JUMP))
+        if kind == 'wheel':
+            w = plank_widths(k, kind, S)[0]
+            r = (S - 16 - w) / 2
+            rects.append((e_s, e_d, u_s - r - 8, u_s))    # the planks' lower half-turn
+        if kind == 'tumble':
+            mid = e_s + S / 2
+            rects.append((mid - 50, mid + 50, u_s - 22, u_s + 22))   # the plank while solid (25° either side of flat)
+    if side == 'R':
+        rects = [(mirror_x(x1), mirror_x(x0), a, b) for x0, x1, a, b in rects]
+    return tuple(rects)
+
+
+@functools.lru_cache(maxsize=None)
+def ride_sweep(k, kind, S, side, edge, u_s, u_d):
+    """The space a crossing's planks, blades or shelves pass through, as rectangles like an
+    air zone's (planks are 8 map px thick). No pad may stand in it. Returned with whether
+    the surface stays put (a helix hub, a tumbling plank, shelves): no plank may pass
+    through one of those, as it would lift the King off. Two planks may pass, as a wheel
+    rising through the crossing above it does."""
+    e_s = edge if side == 'L' else mirror_x(edge)
+    e_d = e_s + S
+    rects = []
+    if kind == 'shelves':
+        for i in range((u_d - u_s) // HOP - 1):
+            x = e_s + 64 * (i + 1) - 32
+            rects.append((x, x + TILE, u_s + HOP * (i + 1) - 8, u_s + HOP * (i + 1)))
+    elif kind == 'wheel':
+        w = plank_widths(k, kind, S)[0]
+        r, hub = (S - 16 - w) / 2, e_s + S / 2
+        for x in range(e_s, e_d, 16):
+            off = max(0, min(abs(x - hub), abs(x + 16 - hub)) - w / 2)
+            if off <= r:
+                h = math.sqrt(r * r - off * off)
+                rects.append((x, x + 16, u_s - h - 8, u_s + h))
+    elif kind == 'tumble':
+        mid = e_s + S / 2
+        rects.append((mid - 50, mid + 50, u_s - 22, u_s + 22))
+    elif kind != 'step':
+        for x in range(e_s, e_d, 16):
+            hs = [ride_height(k, kind, S, e_s, u_s, u_d, x_) for x_ in (x, x + 16)]
+            hs = [h for h in hs if h is not None]
+            if hs:
+                sink = SINK if kind in ('diag', 'lift') else 0
+                rects.append((x, x + 16, u_s - sink - 8, max(hs)))
+    if side == 'R':
+        rects = [(mirror_x(x1), mirror_x(x0), a, b) for x0, x1, a, b in rects]
+    return tuple(rects), kind in FIXED
+
+
+FIXED = ('helix', 'tumble', 'shelves')
+
+
+def sweeps_clash(a, b):
+    """Do two crossings' sweeps (rects, fixed) clash: one fixed, and they meet?"""
+    return (a[1] or b[1]) and rects_meet(a[0], b[0])
+
+
+def rects_meet(a, b):
+    return any(ax0 < bx1 and ax1 > bx0 and alo < bhi and ahi > blo
+               for ax0, ax1, alo, ahi in a for bx0, bx1, blo, bhi in b)
+
+
+def intrudes(pad, zone):
+    """Does a pad (side, edge, top u) hang into any rectangle of an air zone?"""
+    side, edge, u = pad[:3]
+    x0, x1 = pad_x(side, edge)
+    return any(x0 < zx1 and x1 > zx0 and u - PAD < hi and u > lo for zx0, zx1, lo, hi in zone)
 
 
 def plan_section(k, types, start, history=()):
     """Yields plans: a (S, rise, side, edge) per ride so that the pad edges stay inside
     the tower, the rises make 320 and the section ends on a rest landing at least 128
     map px wide, with no pad crowding another. `start` = (side, inner edge of the
-    starting pad); `history` the pads below it as (side, edge, u) with u relative to it."""
+    starting pad); `history` the pads below it as (side, edge, u, zone, sweep) with u
+    relative to it, zone and sweep those of the crossing that reached the pad (None for
+    the foot)."""
     rng = random.Random(1000 + k)
     n = len(types)
     memo = {}
 
     def landing_ok(side, edge):
-        return (side == 'L' and 160 <= edge <= 256) or (side == 'R' and 256 <= edge <= 352)
+        # wide enough (6 columns) for a Pig pen and room to land beside it
+        return (side == 'L' and 192 <= edge <= 256) or (side == 'R' and 256 <= edge <= 320)
 
     def steps(i, side, edge, used, hist):
         cands = list(OPTIONS[types[i]]) + (TIGHT.get(types[i], []) if k >= 4 else [])
@@ -157,15 +314,33 @@ def plan_section(k, types, start, history=()):
             nside = 'R' if side == 'L' else 'L'
             if not clear_of(hist, nside, new_edge, used + r):
                 continue
+            # no pad hangs into a crossing's air: neither an older pad into the new one's,
+            # nor the new pad into an older one's
+            zone = air_zone(k, types[i], s, side, edge, used, used + r)
+            sweep = ride_sweep(k, types[i], s, side, edge, used, used + r)
+            ends = {(side, edge, used), (nside, new_edge, used + r)}
+            if any(h[:3] not in ends and intrudes(h, zone + sweep[0]) for h in hist):
+                continue
+            if any(h[3] and intrudes((nside, new_edge, used + r), h[3] + h[4][0]) for h in hist):
+                continue
+            # nor does a plank pass through a helix, a tumbling plank or a shelf
+            if any(h[4] and sweeps_clash(sweep, h[4]) for h in hist):
+                continue
             yield (s, r, nside, new_edge)
+
+    def push(i, side, edge, used, hist, o):
+        s, r, nside, new_edge = o
+        zone = air_zone(k, types[i], s, side, edge, used, used + r)
+        sweep = ride_sweep(k, types[i], s, side, edge, used, used + r)
+        return (hist + ((nside, new_edge, used + r, zone, sweep),))[-KEEP:]
 
     def feasible(i, side, edge, used, hist):
         if i == n:
             return used == RISE and landing_ok(side, edge)
         key = (i, side, edge, used, hist)
         if key not in memo:
-            memo[key] = any(feasible(i + 1, ns_, ne, used + r, (hist + ((ns_, ne, used + r),))[-4:])
-                            for _, r, ns_, ne in steps(i, side, edge, used, hist))
+            memo[key] = any(feasible(i + 1, o[2], o[3], used + o[1], push(i, side, edge, used, hist, o))
+                            for o in steps(i, side, edge, used, hist))
         return memo[key]
 
     def search(i, side, edge, used, hist, acc):
@@ -173,29 +348,52 @@ def plan_section(k, types, start, history=()):
             yield list(acc)
             return
         options = [o for o in steps(i, side, edge, used, hist)
-                   if feasible(i + 1, o[2], o[3], used + o[1], (hist + ((o[2], o[3], used + o[1]),))[-4:])]
+                   if feasible(i + 1, o[2], o[3], used + o[1], push(i, side, edge, used, hist, o))]
         rng.shuffle(options)
         for o in options:
-            yield from search(i + 1, o[2], o[3], used + o[1], (hist + ((o[2], o[3], used + o[1]),))[-4:], acc + [o])
+            yield from search(i + 1, o[2], o[3], used + o[1], push(i, side, edge, used, hist, o), acc + [o])
 
     starts = [start[1]] if k > 1 else [224, 256, 288, 320, 352]
     for edge in starts:
-        hist = tuple(history) + ((start[0], edge, 0),)
-        if feasible(0, start[0], edge, 0, hist[-4:]):
-            for plan in search(0, start[0], edge, 0, hist[-4:], []):
+        hist = tuple(history) if history else ((start[0], edge, 0, None, None),)
+        if feasible(0, start[0], edge, 0, hist[-KEEP:]):
+            for plan in search(0, start[0], edge, 0, hist[-KEEP:], []):
                 yield ([('start', edge)] if k == 1 else []) + plan
 
 
 _solved = {}
 
 
-def tail_history(first_side, first_edge, body):
-    """The last pads of a section, as (side, edge, u) relative to the landing at its top."""
-    pads, used = [(first_side, first_edge, 0)], 0
-    for s, r, side, edge in body:
-        used += r
-        pads.append((side, edge, used))
-    return tuple((side, edge, u - RISE) for side, edge, u in pads[-4:])
+def tail_history(k, types, first_side, first_edge, body):
+    """The last pads of a section, as (side, edge, u, zone, sweep) relative to the landing at its top."""
+    pads, used, side, edge = [(first_side, first_edge, 0, None, None)], 0, first_side, first_edge
+    for kind, (s, r, nside, new_edge) in zip(types, body):
+        pads.append((nside, new_edge, used + r, air_zone(k, kind, s, side, edge, used, used + r),
+                     ride_sweep(k, kind, s, side, edge, used, used + r)))
+        used, side, edge = used + r, nside, new_edge
+
+    def shift(zone):
+        return zone and tuple((x0, x1, lo - RISE, hi - RISE) for x0, x1, lo, hi in zone)
+
+    return tuple((side, edge, u - RISE, shift(zone), sweep and (shift(sweep[0]), sweep[1]))
+                 for side, edge, u, zone, sweep in pads[-KEEP:])
+
+
+def orders(types):
+    """A section's rides in the order listed, then every other order: the listed one
+    may not fit the pads it starts from."""
+    yield list(types)
+    for p in sorted(set(itertools.permutations(types))):
+        if list(p) != list(types):
+            yield list(p)
+
+
+def candidates(k, side, edge, history):
+    """(ride order, plan) pairs for section k, a few plans per order: when one leads
+    nowhere, its near twins usually don't either."""
+    for types in orders(SECTIONS[k - 1][1]):
+        for plan in itertools.islice(plan_section(k, types, (side, edge), history), PLANS_TRIED):
+            yield types, plan
 
 
 def solve(k, side, edge, history=()):
@@ -206,23 +404,19 @@ def solve(k, side, edge, history=()):
     if key in _solved:
         return _solved[key]
     result = None
-    for plan in plan_section(k, SECTIONS[k - 1][1], (side, edge), history):
+    for types, plan in itertools.islice(candidates(k, side, edge, history), CANDIDATES):
         first = plan[0][1] if k == 1 else edge
         body = plan[1:] if k == 1 else plan
         last = body[-1]
-        rest = solve(k + 1, last[2], last[3], tail_history(side, first, body))
+        rest = solve(k + 1, last[2], last[3], tail_history(k, types, side, first, body))
         if rest is not None:
-            result = [(first, body)] + rest
+            result = [(first, types, body)] + rest
             break
     _solved[key] = result
     return result
 
 
 # --- building -----------------------------------------------------------------------
-
-def mirror_x(x, w=0):
-    return 512 - x - w
-
 
 class Tower:
     def __init__(self):
@@ -239,7 +433,7 @@ class Tower:
             x0, x1 = LEFT, edge
         else:
             x0, x1 = edge, RIGHT
-        self.ground.append((x0 // TILE, x1 // TILE - 1, row_of(u), row_of(u) + 1))
+        self.ground.append((x0 // TILE, x1 // TILE - 1, row_of(u), row_of(u) + PAD // TILE - 1))
         self.pads.append((x0, x1, u))
 
 
@@ -250,9 +444,15 @@ def build_tower():
     plans = solve(1, 'L', 288)
     if plans is None:
         raise SystemExit('no layout fits the sections')
-    for k, (name, types) in enumerate(SECTIONS, start=1):
+    sequence = [kind for _, types, _ in plans for kind in types]
+    for i in range(len(sequence) - 3):
+        if len(set(sequence[i:i + 4])) == 1:
+            raise SystemExit(f'{sequence[i]} runs 4 times in a row')
+    if len({tuple(types) for _, types, _ in plans}) < SECTIONS_N:
+        raise SystemExit('two sections share a ride order')
+    for k, (name, _) in enumerate(SECTIONS, start=1):
         d = (k - 1) / (SECTIONS_N - 1)    # difficulty 0..1
-        edge, plan = plans[k - 1]
+        edge, types, plan = plans[k - 1]
         rng = random.Random(77 + k)
         sec = dict(k=k, name=name, rides=[])
         for j, (kind, (S, rise, nside, new_edge)) in enumerate(zip(types, plan)):
@@ -277,11 +477,11 @@ def build_tower():
             elif kind == 'diag':
                 du = rise - HOP
                 dx = S - 24 - w
-                fwd = dict(x=e_s + 12, y=surface_y(u), dx=dx, dy=-du, period=period + 1, phase=0, width=w)
+                fwd = dict(x=e_s + 12, y=surface_y(u) + SINK, dx=dx, dy=-du - SINK, period=period + 1, phase=0, width=w)
             elif kind == 'lift':
                 w = 100
                 du = rise - HOP
-                fwd = dict(x=e_s + 14, y=surface_y(u), dx=0, dy=-du, period=round(period + du / 40, 1), phase=0, width=w)
+                fwd = dict(x=e_s + 14, y=surface_y(u) + SINK, dx=0, dy=-du - SINK, period=round(period + du / 40, 1), phase=0, width=w)
             if fwd:
                 # the second and later rides start at a varied phase, but never mid-way for the first hop:
                 # the King boards when the plank is at its near end, so phase only shifts the wait.
@@ -455,25 +655,20 @@ def validate(t):
         ok, why = check_ride(k, kind, src, dst, ride)
         if not ok:
             bad.append((k, kind, why))
-    # pads stacked on one side need head room for a King standing on the lower one beyond the upper's edge
-    pads = [(x0, x1, surface_y(u)) for x0, x1, u in t.pads]
-    for a in pads:
-        for b in pads:
-            if a is b or b[2] >= a[2]:
-                continue          # only pads b above... (y smaller = higher): a lower, b higher
-        # (the lower pad's standing space beyond the upper's edge is what matters)
-    for i, a in enumerate(pads):
-        for b in pads[i + 1:]:
-            lo, hi = (a, b) if a[2] > b[2] else (b, a)
-            if hi[2] == lo[2]:
-                continue
-            overlap = min(lo[1], hi[1]) - max(lo[0], hi[0])
-            # a pad is 64 thick; head room under the upper pad is its bottom minus the lower surface
-            if overlap > 0 and lo[2] - hi[2] - 64 < 0 and overlap == min(lo[1], hi[1]) - max(lo[0], hi[0]):
-                if lo[2] - (hi[2] + 64) < 44 and lo[2] - hi[2] < 120:
-                    free = (lo[1] - lo[0]) - overlap if lo[0] == hi[0] or lo[1] == hi[1] else 99
-                    if free < 64:
-                        bad.append(('pads', f'headroom {lo} under {hi}'))
+    # no pad hangs into the air a crossing needs (the planner's rule, checked on the whole tower)
+    pads = [('L' if x0 == LEFT else 'R', x1 if x0 == LEFT else x0, u) for x0, x1, u in t.pads]
+    sweeps = []
+    for k, kind, src, dst, ride in t.rides:
+        side, edge, u = src
+        zone = air_zone(k, kind, ride['S'], side, edge, u, dst[2])
+        sweep = ride_sweep(k, kind, ride['S'], side, edge, u, dst[2])
+        for pad in pads:
+            if pad not in (src, dst) and intrudes(pad, zone + sweep[0]):
+                bad.append((k, kind, f'pad {pad} in the air over {src} -> {dst}'))
+        for ok_, okind, osrc in sweeps:
+            if sweeps_clash(sweep, ok_):
+                bad.append((k, kind, f'crosses the {okind} from {osrc}'))
+        sweeps.append((sweep, kind, src))
     if bad:
         raise SystemExit('tower check failed: ' + '; '.join(map(str, bad)))
 

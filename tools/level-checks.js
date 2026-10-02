@@ -24,8 +24,15 @@ if (levels[N].tower) {
     // A Tower Level has no pit: a Long Fall (feet more than a screen below his last footing) is the fall.
     const start = levels[N].playerPosition
     const hearts = player.hitpoints
+    // In the air above the last Checkpoint, clear of the ledges: the first height up
+    // with nothing to stand on within 120 px under his feet.
     const spot = levels[N].checkpoints.at(-1)
-    player.setPosition({ x: spot.x, y: spot.y - 300 }) // in the air, clear of the ledges
+    const surfaces = [...collisionBlocks, ...movingPlatforms.flatMap(p => p.collisionBlocks)]
+    const clearUnder = y => !surfaces.some(b => b.position.x < spot.x + 90 && b.position.x + b.width > spot.x + 35 &&
+        b.position.y + b.height > y && b.position.y < y + FEET + 120)
+    let airY = spot.y - 300
+    while (!clearUnder(airY) && airY > 0) airY -= 16
+    player.setPosition({ x: spot.x, y: airY })
     player.velocity.x = 0
     player.velocity.y = 0
     lastFootingY = player.feetPosition().y - canvas.height + 20

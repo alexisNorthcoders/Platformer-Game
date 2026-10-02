@@ -47,7 +47,7 @@ Measured from the code while building Level 18. When the code changes, re-check 
 
 ## Helix Platforms [`helixPlatform.mjs`, `HelixPlatform.js`]
 
-- Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. The walkable surface is one-way and is what the blades cover: hub.x ± max(24, radius × |cos angle|) world px, at the hub's height. It reaches the full radius each side twice a turn and shrinks to the 48-px hub in between. The mast is drawn only; it has no collision.
+- Two iron blades on a mast, turning flat like a helicopter's rotor, seen side-on. The walkable surface is one-way and is what the blades cover: hub.x ± max(24, radius × |cos angle|) world px, at the hub's height. It reaches the full radius each side twice a turn and shrinks to the 48-px hub in between. The mast is drawn only; it has no collision. It stands on the first solid block under the hub when that is within 160 world px, runs out of the world over a pit, and is otherwise a short capped spindle (`mastFoot`).
 - The King is not carried. A blade shrinking out from under him drops him, so he waits on the hub and walks out as the blades reach across.
 - **A helix crosses a gap of 2 × radius + both dock gaps** (map px). Level 21: radius 92 over a 6-tile gap and radius 108 over a 7-tile gap, 4 map px from each landing.
 - With an 8 s turn the blades reach across every 4 s and the tips move at most about 2.4 world px/frame, slower than the King's 4. He walks 184 px from the hub to the landing in about 46 frames. The window to leave the hub is about 1 s either side of full reach.
