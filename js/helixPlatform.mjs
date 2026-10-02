@@ -38,3 +38,26 @@ export function stepHelix(state) {
     state.frame++
     Object.assign(state, helixSurfaceAt(state.path, state.frame))
 }
+
+/** How far below the hub a mast reaches down to stand on a block; past that it is a short spindle. */
+export const HELIX_MAST = { reach: 160, spindle: 48 }
+
+/**
+ * Where the mast under a hub at `center` (`halfWidth` each side) ends, as
+ * { y, capped }: on the top of the first solid block below the hub when that
+ * is within reach, a short capped spindle when the first block is further
+ * down, or `mapHeight` with none (over a pit or lava, it runs out of the
+ * world). One-way platforms don't hold it.
+ */
+export function mastFoot(center, halfWidth, blocks, mapHeight) {
+    let block = Infinity
+    for (const b of blocks) {
+        if (b.type === 'platform') continue
+        if (b.position.y <= center.y) continue
+        if (b.position.x >= center.x + halfWidth || b.position.x + b.width <= center.x - halfWidth) continue
+        block = Math.min(block, b.position.y)
+    }
+    if (block === Infinity) return { y: mapHeight, capped: false }
+    if (block - center.y <= HELIX_MAST.reach) return { y: block, capped: false }
+    return { y: center.y + HELIX_PLATFORM.height + HELIX_MAST.spindle, capped: true }
+}

@@ -39,7 +39,9 @@ class HelixPlatform {
         const near = Math.sin(angle) >= 0 ? reach : -reach
         const { x, y } = path.center
         drawHelixBlade(x, y, -near, HELIX_BLADE.back)
-        drawHelixMast(x, y)
+        // The level's blocks are all in place by the first draw, and never move.
+        this.mastFoot ??= lib.mastFoot(path.center, HELIX_MAST.width / 2, collisionBlocks, mapHeight)
+        drawHelixMast(x, y, this.mastFoot)
         drawHelixBlade(x, y, near, HELIX_BLADE.front)
         drawHelixHub(x, y)
     }
@@ -79,21 +81,28 @@ function drawHelixBlade(x, y, reach, colours) {
     c.restore()
 }
 
-/** The mast, from under the hub down past the bottom of the view. */
-function drawHelixMast(x, y) {
+/** The mast, from under the hub down to `foot` (helixPlatform.mjs mastFoot): a block, the bottom of the world, or a capped spindle. */
+function drawHelixMast(x, y, { y: foot, capped }) {
     const { width, iron, shade } = HELIX_MAST
     const left = snap2(x - width / 2)
     const top = snap2(y + HELIX_BLADE.height)
     c.save()
     c.fillStyle = HELIX_BLADE.outline
-    c.fillRect(left - 2, top, width + 4, mapHeight - top)
+    c.fillRect(left - 2, top, width + 4, foot - top)
     c.fillStyle = iron
-    c.fillRect(left, top, width, mapHeight - top)
+    c.fillRect(left, top, width, foot - top)
     c.fillStyle = shade
-    c.fillRect(left + width - 6, top, 6, mapHeight - top)
-    for (let band = top + 24; band < mapHeight; band += 40) {
+    c.fillRect(left + width - 6, top, 6, foot - top)
+    for (let band = top + 24; band < foot; band += 40) {
         c.fillStyle = HELIX_BLADE.outline
         c.fillRect(left, band, width, 4)
+    }
+    if (capped) {
+        // A rounded iron cap, like the hub's, closing off the spindle.
+        c.fillStyle = HELIX_BLADE.outline
+        c.fillRect(left - 4, foot - 2, width + 8, 10)
+        c.fillStyle = HELIX_MAST.cap
+        c.fillRect(left - 2, foot, width + 4, 6)
     }
     c.restore()
 }
