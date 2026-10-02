@@ -158,12 +158,14 @@ export function reduceGameOverChoice({ choice, gameState, playerGameOver, player
 /**
  * Dying → game over: the King has lost his last heart, and only once he is on
  * the ground with his Dead animation finished does the level freeze and the
- * restart prompt appear.
+ * restart prompt appear. A King lost out of sight in a pit has no death to play
+ * out, so he goes straight to game over.
  */
-export function reduceDeathProgress({ gameState, playerDying, playerGrounded, deathAnimationDone }) {
+export function reduceDeathProgress({ gameState, playerDying, playerGrounded, deathAnimationDone, outOfSight = false }) {
     if (gameState !== 'playing' || !playerDying) {
         return { handled: false, reason: 'notDying' }
     }
+    if (outOfSight) return { handled: true, gameOver: true }
     if (!playerGrounded || !deathAnimationDone) {
         return { handled: false, reason: 'stillDying' }
     }

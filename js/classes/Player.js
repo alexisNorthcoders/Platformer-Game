@@ -21,6 +21,8 @@ class Player extends Sprite {
         /** performance.now() when game over began; the Game Over Screen's menu waits GAME_OVER_MENU_DELAY_MS after it. */
         this.gameOverAt = null
         this.deathAnimationDone = false
+        /** Lost the last heart to a pit: stays out of sight, no Dead animation, straight to game over. */
+        this.diedOutOfSight = false
         this.isShowingHello = false
         this.canJump = true
         this.attacking = false
@@ -88,7 +90,7 @@ class Player extends Sprite {
 
     /** The only way into game over: the Dead animation has finished while dying. */
     finishDeath() {
-        if (!this.dying || !this.deathAnimationDone) return false
+        if (!this.dying || !(this.deathAnimationDone || this.diedOutOfSight)) return false
         this.gameOver = true
         return true
     }
@@ -98,7 +100,7 @@ class Player extends Sprite {
         if (this.isGrounded && this.running) playStepSound()
         if (!this.running || !this.isGrounded) stopStepSound()
 
-        if (this.gameOver) return
+        if (this.gameOver || this.diedOutOfSight) return
 
         if (this.sinking) {
             this.sinkStep()
@@ -192,8 +194,22 @@ class Player extends Sprite {
         this.updateHitbox()
         if (!globalThis.__quicksand.isSubmerged(this.hitbox.position.y, globalThis.__quicksand.sinkFloor(levels[level]))) return
         this.stopSinking()
+        this.fallIntoPit()
+    }
+
+    /** Lost to a pit: a heart gone, then back at the Checkpoint, or, on the last heart, straight to game over. */
+    fallIntoPit() {
         this.loseHP()
-        respawnKing()
+        if (this.dead) this.dieOutOfSight()
+        else respawnKing()
+    }
+
+    /** Dies where he is, out of sight: no gravity, no collisions, no Dead animation to wait for. */
+    dieOutOfSight() {
+        this.velocity.x = 0
+        this.velocity.y = 0
+        this.diedOutOfSight = true
+        this.deathAnimationDone = true
     }
 
     jump() {
@@ -514,6 +530,7 @@ class Player extends Sprite {
         if (!this.hitpoints) {
             this.dead = true
             this.deathAnimationDone = false
+            this.diedOutOfSight = false
             this.deathStarted = false
             playerContactHurtTint.clearPlayerHurtTint(this)
             levelTimer.stop(performance.now())
@@ -535,8 +552,7 @@ class Player extends Sprite {
             return
         }
         if (player.position.y > canvas.height) {
-            this.loseHP()
-            respawnKing()
+            this.fallIntoPit()
         }
         for (let i = 0; i < this.collisionBlocks.length; i++) {
             const collisionBlock = this.collisionBlocks[i]
