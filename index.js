@@ -73,6 +73,10 @@ let diamonds = []
 let debugCollisions = false
 let diamondCount = 0
 let mapWidth
+/** The map's height in world px: the bottom of the world (576 on a 9-row level). */
+let mapHeight
+/** Tower Level: the King's feet y the last time he had footing, for the Long Fall. */
+let lastFootingY = null
 let doorClosed = true
 
 const breakImages = [
@@ -752,7 +756,28 @@ function currentCheckpoints() {
 /** Moves the respawn point on as the King passes the level's Checkpoints. */
 function reachCheckpoints() {
     if (!respawnPoint || player.dead) return
-    respawnPoint = globalThis.__checkpoint.respawnPointAfter(currentCheckpoints(), respawnPoint, player.position.x)
+    respawnPoint = globalThis.__checkpoint.respawnPointAfter(currentCheckpoints(), respawnPoint, player.position.x,
+        isTower() ? player.position : undefined)
+}
+
+/** A Tower Level (levels.js `tower: true`): one screen wide and many high. */
+function isTower() {
+    return !!levels[level]?.tower
+}
+
+/**
+ * On a Tower Level, notes where the King last had footing; a Long Fall (his
+ * feet more than a screen below it, airborne) is a fall into a pit.
+ */
+function checkLongFall() {
+    if (!isTower() || player.dead || player.dying) return
+    const feetY = player.feetPosition().y
+    if (player.isGrounded || player.plankRide || lastFootingY == null) {
+        lastFootingY = feetY
+    } else if (globalThis.__tower.isLongFall(lastFootingY, feetY, canvas.height)) {
+        lastFootingY = null
+        player.fallIntoPit()
+    }
 }
 
 /** The King falls into a pit: back to the respawn point, standing still. */
@@ -778,7 +803,7 @@ function drawCheckpoints() {
         // The King's feet are 88px below his position; the pole stands beside them.
         const baseX = Math.round(checkpoint.x + 30)
         const baseY = Math.round(checkpoint.y + 88)
-        const reached = globalThis.__checkpoint.isReached(checkpoint, respawnPoint)
+        const reached = globalThis.__checkpoint.isReached(checkpoint, respawnPoint, isTower())
         c.fillStyle = '#3f3851'
         c.fillRect(baseX - 2, baseY - poleHeight - 2, poleWidth + 4, poleHeight + 2)
         c.fillStyle = '#a1acad'
@@ -898,7 +923,7 @@ function weatherIsRain() {
 /** The pit's surface (world y): where a drop that lands on nothing vanishes. */
 function pitSurface() {
     const cfg = levels[level]
-    return (cfg.grass ?? cfg.water ?? cfg.sand ?? cfg.lava ?? cfg.cloudBank ?? cfg.spikes)?.top ?? canvas.height
+    return (cfg.grass ?? cfg.water ?? cfg.sand ?? cfg.lava ?? cfg.cloudBank ?? cfg.spikes)?.top ?? mapHeight
 }
 
 /** A ring on a Puddle: a flat ellipse widening and fading as it ages. */
@@ -1160,11 +1185,13 @@ function drawSky() {
     if (!sky || !backdrop) return
     if (far) {
         far.position.x = camera.x
+        far.position.y = camera.y
         far.draw(2)
     }
     // A Storm's bolt comes down in the sky behind the clouds and the skyline, in front of the far layer only.
     drawBolt()
     sky.position.x = camera.x - Math.round(camera.x * backdrop.parallax)
+    sky.position.y = camera.y - Math.round(camera.y * backdrop.parallax)
     sky.draw(2)
     drawSkylineRim(sky.position.x)
 }
@@ -1220,7 +1247,7 @@ function drawFlash() {
     if (flash <= 0) return
     c.save()
     c.fillStyle = `rgba(${STORM_LOOK.flash}, ${flash})`
-    c.fillRect(camera.x, 0, canvas.width, canvas.height)
+    c.fillRect(camera.x, camera.y, canvas.width, canvas.height)
     c.restore()
 }
 
@@ -1617,19 +1644,19 @@ function animate() {
     c.clearRect(0, 0, canvas.width, canvas.height);
 
     // Calculate camera position
-    let playerCenterX = player.position.x - canvas.width / 2;
-    let maxCameraX = mapWidth - canvas.width;
-
     // Clamp camera position
     // Whole pixels only: a fractional camera (the King carried by a Moving
     // Platform, say) resamples the pixel art every frame and it shimmers.
-    camera.x = Math.round(Math.max(0, Math.min(playerCenterX, maxCameraX)));
+    // A 9-row map has no vertical room, so camera.y stays 0.
+    const follow = globalThis.__tower.cameraFollow(player.position, { w: canvas.width, h: canvas.height }, { w: mapWidth, h: mapHeight })
+    camera.x = follow.x
+    camera.y = follow.y
 
     // Apply camera transformation
     c.save();
     // The Giant King Pig's landing shakes the view: drawing only, camera.x stays as it is.
     const shake = giantKingPig && !player.gameOver ? bossLib.shakeOffset(giantKingPig.boss) : { x: 0, y: 0 }
-    c.translate(-camera.x + shake.x, shake.y);  // Move everything relative to camera
+    c.translate(-camera.x + shake.x, -camera.y + shake.y);  // Move everything relative to camera
 
     // Draw background & UI elements
     drawSky()
@@ -1713,6 +1740,7 @@ function animate() {
     player.update();
     advanceDeath()
     reachCheckpoints()
+    checkLongFall()
     drawWater()
     drawSand()
     drawGrass()

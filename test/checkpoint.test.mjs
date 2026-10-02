@@ -27,3 +27,28 @@ test('checkpoints at or behind the respawn point are reached', () => {
     assert.equal(isReached(CHECKPOINTS[1], CHECKPOINTS[1]), true)
     assert.equal(isReached(CHECKPOINTS[2], CHECKPOINTS[1]), false)
 })
+
+// Tower Level: Checkpoints count by height (smaller y is higher).
+const TOWER_START = { x: 480, y: 7000 }
+const TOWER = [{ x: 400, y: 6400 }, { x: 560, y: 5600 }, { x: 300, y: 4800 }]
+
+test('tower: a Checkpoint is reached standing at or above it, near its x', () => {
+    assert.equal(respawnPointAfter(TOWER, TOWER_START, 0, { x: 420, y: 6400 }), TOWER[0])
+    assert.equal(respawnPointAfter(TOWER, TOWER_START, 0, { x: 420, y: 6300 }), TOWER[0])
+    assert.equal(respawnPointAfter(TOWER, TOWER_START, 0, { x: 420, y: 6600 }), TOWER_START)
+    assert.equal(respawnPointAfter(TOWER, TOWER_START, 0, { x: 900, y: 6300 }), TOWER_START, 'too far sideways')
+})
+
+test('tower: a higher Checkpoint replaces a lower one', () => {
+    assert.equal(respawnPointAfter(TOWER, TOWER[0], 0, { x: 560, y: 5500 }), TOWER[1])
+})
+
+test('tower: a lower Checkpoint never replaces a higher one', () => {
+    assert.equal(respawnPointAfter(TOWER, TOWER[1], 0, { x: 400, y: 6400 }), TOWER[1])
+})
+
+test('tower: a Checkpoint is reached when it is no higher than the respawn point', () => {
+    assert.equal(isReached(TOWER[0], TOWER[1], true), true)
+    assert.equal(isReached(TOWER[1], TOWER[1], true), true)
+    assert.equal(isReached(TOWER[2], TOWER[1], true), false)
+})

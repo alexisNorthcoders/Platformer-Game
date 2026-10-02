@@ -107,7 +107,9 @@ function fall(state, dtMs, landsAt) {
         state.bomb = litBomb(bomb.x, floorY)
         return dtMs * (1 - share)
     }
-    if (bomb.t >= BOMB.maxFallMs) state.bomb = null
+    // Past the bottom of the world (`state.bottom`, set from the map's height) it is gone; with no bottom known, after maxFallMs.
+    const gone = state.bottom != null ? bomb.y > state.bottom : bomb.t >= BOMB.maxFallMs
+    if (gone) state.bomb = null
     else bomb.y = toY
     return 0
 }

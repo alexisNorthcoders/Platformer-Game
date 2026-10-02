@@ -561,7 +561,7 @@ class Player extends Sprite {
             this.startSinking()
             return
         }
-        if (player.position.y > canvas.height) {
+        if (player.position.y > mapHeight) {
             this.fallIntoPit()
         }
         for (let i = 0; i < this.collisionBlocks.length; i++) {

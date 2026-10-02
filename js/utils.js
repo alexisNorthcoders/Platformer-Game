@@ -353,7 +353,7 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, levelHeight, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = await loadAssets(level, 2)
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)
@@ -380,7 +380,8 @@ async function createAssets(level, options = {}) {
         far: createFar(level),
         sky: createSky(level),
         diamonds: createDiamonds(diamonds, level),
-        levelWidth
+        levelWidth,
+        levelHeight
     }
 }
 function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks, giantKingPig = null) {
@@ -392,7 +393,7 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     if (giantKingPig) giantKingPig.collisionBlocks = collisionBlocks.filter(block => !platforms.some(platform => platform.collisionBlocks.includes(block)))
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, giantKingPig, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, giantKingPig, background, far, sky, diamonds, platformsBlocks, levelWidth, levelHeight, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
     const enemyGlow = levels[level]?.enemyGlow ?? null
     enemies.concat(enemyKing, enemyMatch, giantKingPig ?? []).forEach(enemy => {
@@ -431,6 +432,9 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
     doorClosed = true
 
     mapWidth = levelWidth
+    mapHeight = levelHeight
+    bombs.bottom = mapHeight > canvas.height ? mapHeight : undefined // a tall map ends a fall at its bottom
+    lastFootingY = null
 
     if (player.currentAnimation) player.currentAnimation.isActive = false;
     if (level === 1 && !options.skipLevelIntro) {

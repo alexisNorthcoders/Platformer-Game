@@ -46,12 +46,14 @@ export function stepLevel(current, delta, count) {
 /**
  * Centred source crop of an `sw`×`sh` image with the aspect ratio of a
  * `dw`×`dh` frame, so drawing it into the frame covers it without spilling out.
+ * A portrait image (a Tower Level, many screens high) is cropped from its top
+ * instead: the Door, the goal, is up there.
  */
 export function coverSourceRect(sw, sh, dw, dh) {
     const scale = Math.max(dw / sw, dh / sh)
     const cw = dw / scale
     const ch = dh / scale
-    return { sx: (sw - cw) / 2, sy: (sh - ch) / 2, sw: cw, sh: ch }
+    return { sx: (sw - cw) / 2, sy: sh > sw ? 0 : (sh - ch) / 2, sw: cw, sh: ch }
 }
 
 /**

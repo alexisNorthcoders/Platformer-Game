@@ -142,7 +142,7 @@ function assertCropInsideImage(crop, sw, sh) {
 test('coverSourceRect: crop keeps the frame aspect ratio, so it fills the frame exactly', () => {
     const frame = { w: 512, h: 288 }
     // Every Level Preview image size shipped in img/.
-    for (const [sw, sh] of [[512, 288], [513, 289], [1025, 289], [1537, 289], [3200, 288], [3168, 288], [3520, 288], [3584, 288], [3648, 288], [3936, 288], [5344, 288]]) {
+    for (const [sw, sh] of [[512, 288], [513, 289], [1025, 289], [1537, 289], [3200, 288], [3168, 288], [3520, 288], [3584, 288], [3648, 288], [3936, 288], [5344, 288], [512, 4096]]) {
         const crop = coverSourceRect(sw, sh, frame.w, frame.h)
         assertCropInsideImage(crop, sw, sh)
         assert.ok(Math.abs(crop.sw / crop.sh - frame.w / frame.h) < 1e-9, `${sw}x${sh} aspect`)
@@ -156,9 +156,9 @@ test('coverSourceRect: wide images are cropped to their centre, full height', ()
     assert.equal(crop.sy, 0)
 })
 
-test('coverSourceRect: tall images are cropped to their centre, full width', () => {
+test('coverSourceRect: tall images (a Tower Level) show their top screen, full width', () => {
     const crop = coverSourceRect(100, 400, 200, 100)
-    assert.deepEqual(crop, { sx: 0, sy: 175, sw: 100, sh: 50 })
+    assert.deepEqual(crop, { sx: 0, sy: 0, sw: 100, sh: 50 })
 })
 
 test('pauseMenuHitTarget: Resume, Restart Level and Quit to Title hit their buttons', () => {
