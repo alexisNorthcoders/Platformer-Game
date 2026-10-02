@@ -261,9 +261,9 @@ class Enemy extends Sprite {
         const configs = {
             pig: { ox: 23, oy: 30, w: 37, h: 28 },
             king: { ox: 24, oy: 30, w: 38, h: 28 },
-            // The Giant King Pig (#113) draws at 10× (380×280). The art fills x 110–290, y 80–280 of
+            // The Giant King Pig (#113) draws at 5× (190×140). The art fills x 55–145, y 40–140 of
             // the frame; the box is the body, inside it, centred on the art.
-            giantKing: { ox: 110, oy: 100, w: 180, h: 180 },
+            giantKing: { ox: 55, oy: 50, w: 90, h: 90 },
             match: { ox: 6, oy: 8, w: 20, h: 12 }
         }
         const cfg = configs[this.enemyVariant] || configs.pig

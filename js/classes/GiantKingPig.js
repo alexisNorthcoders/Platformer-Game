@@ -1,12 +1,12 @@
 /**
- * The Giant King Pig (#113): a King Pig drawn at 10× (380×280), the Boss Level's
+ * The Giant King Pig (#113): a King Pig drawn at 5× (190×140), the Boss Level's
  * fight. Reuses Enemy's sheets, gravity and collisions; the fight itself (what
  * he does when, his hit points) is js/boss.mjs, and what its events do to the
  * rest of the game (Bombs, the quake, the Door) is index.js's
  * onGiantKingPigEvent(). Draw him with draw(GiantKingPig.SCALE).
  */
 class GiantKingPig extends Enemy {
-    static SCALE = 10
+    static SCALE = 5
     /** The wall-to-wall room the fight happens in, world px (Level 25). */
     static ARENA = { left: 80, right: 944, ceilingY: 120 }
 
@@ -17,7 +17,7 @@ class GiantKingPig extends Enemy {
         this.defeated = false
         /** Whether his feet were on the floor after the last step. */
         this.onFloor = true
-        this.boss = lib.createBossState({ x: 0, arena: GiantKingPig.ARENA, halfWidth: 90 })
+        this.boss = lib.createBossState({ x: 0, arena: GiantKingPig.ARENA, halfWidth: 45 })
         // He faces the King on the left. Flipped, the art is mirrored in its frame: 2 art px keep it centred.
         this.flip = false
         this.flipOffsetX = 2
@@ -59,13 +59,19 @@ class GiantKingPig extends Enemy {
         this.blastHit()
     }
 
+    /**
+     * Only showPhase() picks his sheet. Enemy's collision code switches a Pig to idle
+     * on every landing and wall bump, which would restart his Run on each frame.
+     */
+    switchSprite() {}
+
     /** Takes the sheet for the current phase. */
     showPhase() {
         const name = globalThis.__boss.bossAnimation(this.boss, {
             walking: this.velocity.x !== 0,
             rising: this.velocity.y < 0,
         })
-        this.switchSprite(name === 'run' ? 'runLeft' : name)
+        super.switchSprite(name === 'run' ? 'runLeft' : name)
     }
 
     update() {

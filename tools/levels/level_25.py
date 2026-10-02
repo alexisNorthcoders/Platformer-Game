@@ -114,8 +114,8 @@ def build():
         objects(5, 'porta', DOOR_GID, 46, 56, [(160, 255.5)]),
         objects(8, 'enemy', PIG_GID, 34, 28, []),
         objects(7, 'boxes', BOX_GID, 22, 16, []),
-        # Hitbox middle x = 800: position.x = 800 - 110 - 90 = 600 = 2x. Falls onto the floor.
-        objects(11, 'enemyKing', 293, 34, 28, [(300, 116)]),
+        # Hitbox middle x = 800: position.x = 800 - 55 - 45 = 700 = 2x. Falls onto the floor.
+        objects(11, 'enemyKing', 293, 34, 28, [(350, 116)]),
         dict(id=6, name='collisions', type='tilelayer', data=flat(collisions), width=COLS, height=ROWS,
              x=0, y=0, opacity=0.52, visible=False),
     ]

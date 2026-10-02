@@ -28,7 +28,9 @@ function seeded(seed) {
     }
 }
 
-const newBoss = () => createBossState({ x: X, arena: ARENA, halfWidth: 95 })
+/** Half his hitbox's width (GiantKingPig.js). */
+const HALF_WIDTH = 45
+const newBoss = () => createBossState({ x: X, arena: ARENA, halfWidth: HALF_WIDTH })
 
 /** Steps in `step` ms slices; returns the events with the time (ms) each came at. */
 function run(state, ms, { kingX = 200, rand = () => 0.9, step = 10 } = {}) {
@@ -192,7 +194,7 @@ test('Ground Pound: crouch, then leap, then landed, with the configured timings'
 
 test('Ground Pound: the leap goes toward the King by up to maxLeapPx and stays in the arena', () => {
     const leapFor = (x, kingX) => {
-        const boss = createBossState({ x, arena: ARENA, halfWidth: 95 })
+        const boss = createBossState({ x, arena: ARENA, halfWidth: HALF_WIDTH })
         const [leap] = stepBoss(Object.assign(boss, { phase: 'crouch', t: BOSS.groundPound.crouchMs - 1 }), 1, { kingX, x, rand: POUND_FIRST })
         const frames = BOSS.groundPound.airMs / (1000 / 60)
         return { dx: leap.vx * frames, vy: leap.vy, frames }
@@ -200,7 +202,7 @@ test('Ground Pound: the leap goes toward the King by up to maxLeapPx and stays i
     assert.ok(Math.abs(leapFor(800, 100).dx + BOSS.groundPound.maxLeapPx) < 1e-6)
     assert.ok(Math.abs(leapFor(500, 600).dx - 100) < 1e-6)
     // against the right wall: no leaving the arena
-    assert.ok(800 + leapFor(800, 960).dx + 95 <= ARENA.right + 1e-6)
+    assert.ok(800 + leapFor(800, 960).dx + HALF_WIDTH <= ARENA.right + 1e-6)
     // vy and gravity bring him back to where he left after airMs
     const { vy, frames } = leapFor(500, 500)
     assert.ok(Math.abs(vy * frames + (BOSS.gravity * frames * frames) / 2) < 1e-6)
