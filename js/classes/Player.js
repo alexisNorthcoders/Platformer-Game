@@ -53,6 +53,7 @@ class Player extends Sprite {
     setPosition(position) {
         this.position = { ...position }
         lastFootingY = null // placed somewhere new: no footing to fall from yet (Tower Level Long Fall)
+        cameraSnap = true // and no camera to ease from
     }
 
     hello() {

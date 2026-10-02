@@ -77,6 +77,8 @@ let mapWidth
 let mapHeight
 /** Tower Level: the King's feet y the last time he had footing, for the Long Fall. */
 let lastFootingY = null
+/** The King was placed somewhere new: the camera snaps to him instead of easing there. */
+let cameraSnap = true
 let doorClosed = true
 
 const breakImages = [
@@ -1648,9 +1650,9 @@ function animate() {
     // Whole pixels only: a fractional camera (the King carried by a Moving
     // Platform, say) resamples the pixel art every frame and it shimmers.
     // A 9-row map has no vertical room, so camera.y stays 0.
-    const follow = globalThis.__tower.cameraFollow(player.position, { w: canvas.width, h: canvas.height }, { w: mapWidth, h: mapHeight })
-    camera.x = follow.x
-    camera.y = follow.y
+    const king = { ...player.position, grounded: player.isGrounded || !!player.plankRide }
+    camera = globalThis.__tower.cameraFollow(king, { w: canvas.width, h: canvas.height }, { w: mapWidth, h: mapHeight }, cameraSnap ? undefined : camera)
+    cameraSnap = false
 
     // Apply camera transformation
     c.save();
