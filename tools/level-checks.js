@@ -34,7 +34,7 @@ if (levels[N].tower) {
     lastFootingY = player.feetPosition().y - canvas.height - 40
     step(2)
     report.fall = {
-        ok: notYet && player.hitpoints === hearts - 1 && Math.abs(player.position.x - start.x) < 1 && Math.abs(player.position.y - start.y) < 2,
+        ok: notYet && player.hitpoints === hearts - 1 && Math.abs(player.position.x - respawnPoint.x) < 1 && Math.abs(player.position.y - respawnPoint.y) < 2,
         heartsBefore: hearts, heartsAfter: player.hitpoints, at: { ...player.position },
     }
 } else {
@@ -70,6 +70,10 @@ await play(N)
 await play(N)
 report.rides = { ok: true, platforms: [] }
 for (const [i, platform] of movingPlatforms.entries()) {
+    // On a tall map rides stack in one shaft: wait until no other ride is within 90 px of this one's surface.
+    const crowded = () => movingPlatforms.some((other, j) => j !== i &&
+        Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200)
+    for (let f = 0; f < 3000 && crowded(); f++) step(1)
     const surface = platform.surface()
     player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
     player.velocity.x = 0
@@ -333,8 +337,8 @@ for (const spot of [levels[N].playerPosition, ...(levels[N].checkpoints ?? [])])
 // sideways, and the sky covers the view at both ends.
 if (mapHeight > canvas.height) {
     const at = []
-    for (const y of [60, mapHeight - 200]) {
-        player.setPosition({ x: 480, y })
+    for (const y of [60, levels[N].playerPosition.y]) {
+        player.setPosition({ x: y === 60 ? 480 : levels[N].playerPosition.x, y })
         player.velocity.x = 0
         player.velocity.y = 0
         step(2)

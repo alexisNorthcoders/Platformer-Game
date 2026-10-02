@@ -13,6 +13,8 @@ A level is three things, all keyed by its number N:
 
 A **Boss Level** (`boss: true` in its `levels.js` entry, read as `levels[level]?.boss`) is a one-screen castle interior drawn in Tiled, not generated: Level 25 (`tools/levels/level_25.py` renders it). Its Door opens when the Giant King Pig is beaten, not at half the Pigs.
 
+A **Tower Level** (`tower: true`, read as `levels[level]?.tower`) is one screen wide and many rows high: Level 26 (`tools/levels/level_26.py`, `Layout.rows`, `sky='tower'`). The camera follows the King up (`js/tower.mjs`), Checkpoints count by height and a Long Fall (feet more than a screen below his last footing) costs a heart. The bottom of the world is `mapHeight`.
+
 Levels 1–17 were drawn by hand in Tiled (castle interiors, sources in `tiled/maps/`). Newer levels are generated from a Python layout file with `tools/levelgen.py`. That is the path below. It needs Pillow.
 
 Every number this skill relies on (tile sizes, the King's jump, object offsets, tile IDs) is in [REFERENCE.md](REFERENCE.md). Read it before designing the layout.
