@@ -48,6 +48,7 @@ test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
         gameOver: true,
         gameOverAt: 1234,
         deathAnimationDone: true,
+        diedOutOfSight: true,
         isShowingHello: true,
         _restarting: true,
         hitpoints: 0,
@@ -70,6 +71,7 @@ test('resetPlayerForNewLevelRun clears run/combat/death state', () => {
     assert.equal(player.gameOver, false)
     assert.equal(player.gameOverAt, null)
     assert.equal(player.deathAnimationDone, false)
+    assert.equal(player.diedOutOfSight, false)
     assert.equal(player.isShowingHello, false)
     assert.equal(player._restarting, false)
     assert.equal(player.hitpoints, 3)

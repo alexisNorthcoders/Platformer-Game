@@ -260,6 +260,18 @@ test('a grounded King stays dying while the Dead animation is still playing', ()
     assert.equal(r.handled, false)
 })
 
+test('a King lost out of sight in a pit goes straight to game over, grounded or not', () => {
+    const r = reduceDeathProgress({
+        gameState: 'playing',
+        playerDying: true,
+        playerGrounded: false,
+        deathAnimationDone: false,
+        outOfSight: true,
+    })
+    assert.equal(r.handled, true)
+    assert.equal(r.gameOver, true)
+})
+
 test('death progress only applies while playing and dying', () => {
     assert.equal(reduceDeathProgress({ gameState: 'playing', playerDying: false, playerGrounded: true, deathAnimationDone: true }).handled, false)
     assert.equal(reduceDeathProgress({ gameState: 'menu', playerDying: true, playerGrounded: true, deathAnimationDone: true }).handled, false)

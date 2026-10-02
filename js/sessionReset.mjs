@@ -44,6 +44,7 @@ export function resetPlayerForNewLevelRun(player) {
     player.gameOver = false
     player.gameOverAt = null
     player.deathAnimationDone = false
+    player.diedOutOfSight = false
     player.isShowingHello = false
     player._restarting = false
     player.hitpoints = 3

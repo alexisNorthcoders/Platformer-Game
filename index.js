@@ -1693,6 +1693,7 @@ function advanceDeath() {
         playerDying: player.dying,
         playerGrounded: player.isGrounded,
         deathAnimationDone: player.deathAnimationDone,
+        outOfSight: player.diedOutOfSight,
     })
     if (result.handled && result.gameOver && player.finishDeath()) {
         gameOverFocus = 'retry'
@@ -1741,6 +1742,7 @@ async function restartLevel() {
         player.gameOverAt = null
         player.dead = false
         player.deathAnimationDone = false
+        player.diedOutOfSight = false
         player.hitpoints = 3
         // Old level is still active until createAssets() resolves; stay invulnerable.
         player.hitCooldown = true
