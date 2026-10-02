@@ -15,6 +15,7 @@ function enterDoor() {
     player.switchSprite('enterDoor')
     // Nothing goes off or carries over while the King walks through.
     bombLib.clearBombs(bombs)
+    bossBombs.length = 0
 }
 
 window.addEventListener('keydown', (event) => {
