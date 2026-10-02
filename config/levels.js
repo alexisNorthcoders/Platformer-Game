@@ -187,4 +187,8 @@ const levels = {
             { x: 6114, y: 296 },
         ],
     },
+    // The Boss Level (js/data/levels/Level_25.json, built by tools/levels/level_25.py): a
+    // one-screen throne room, where the King fights the Giant King Pig. Its Door
+    // opens when he is beaten. No pit, no Checkpoints.
+    25: { playerPosition: { x: 100, y: 360 }, lastDirection: 'right', boss: true },
 };

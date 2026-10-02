@@ -190,6 +190,56 @@ function createEnemiesWithMatch(positions, levelNum) {
         }
     }))
 }
+/** The King Pig sheets (38×28 frames), shared by the King Pigs and the Giant King Pig. */
+function kingPigAnimations() {
+    return {
+        idle: {
+            frameRate: 12,
+            frameBuffer: 6,
+            loop: true,
+            imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+        },
+        runLeft: {
+            frameRate: 6,
+            frameBuffer: 6,
+            loop: true,
+            imageSrc: './Sprites/02-King Pig/Run (38x28).png',
+        },
+        hit: {
+            frameRate: 2,
+            frameBuffer: 12,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Hit (38x28).png',
+        },
+        dead: {
+            frameRate: 4,
+            frameBuffer: 12,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Dead (38x28).png',
+        },
+        attack: {
+            frameRate: 5,
+            frameBuffer: 12,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Attack (38x28).png',
+        },
+        ground: {
+            frameRate: 1,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Ground (38x28).png',
+        },
+        jump: {
+            frameRate: 1,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Jump (38x28).png',
+        },
+        fall: {
+            frameRate: 1,
+            loop: false,
+            imageSrc: './Sprites/02-King Pig/Fall (38x28).png',
+        },
+    }
+}
 function createEnemyKing(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
@@ -200,49 +250,20 @@ function createEnemyKing(positions, levelNum) {
         loop: true,
         autoplay: true,
         // hit / dead / attack / jump / fall: consumed by Enemy base (same hooks as pigs).
-        animations: {
-            idle: {
-                frameRate: 12,
-                frameBuffer: 6,
-                loop: true,
-                imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
-            },
-            runLeft: {
-                frameRate: 6,
-                frameBuffer: 6,
-                loop: true,
-                imageSrc: './Sprites/02-King Pig/Run (38x28).png',
-            },
-            hit: {
-                frameRate: 2,
-                frameBuffer: 12,
-                loop: false,
-                imageSrc: './Sprites/02-King Pig/Hit (38x28).png',
-            },
-            dead: {
-                frameRate: 4,
-                frameBuffer: 12,
-                loop: false,
-                imageSrc: './Sprites/02-King Pig/Dead (38x28).png',
-            },
-            attack: {
-                frameRate: 5,
-                frameBuffer: 12,
-                loop: false,
-                imageSrc: './Sprites/02-King Pig/Attack (38x28).png',
-            },
-            jump: {
-                frameRate: 1,
-                loop: false,
-                imageSrc: './Sprites/02-King Pig/Jump (38x28).png',
-            },
-            fall: {
-                frameRate: 1,
-                loop: false,
-                imageSrc: './Sprites/02-King Pig/Fall (38x28).png',
-            },
-        }
+        animations: kingPigAnimations(),
     }))
+}
+/** The Boss Level's Giant King Pig (#113), from the first object of the `enemyKing` layer; null elsewhere. */
+function createGiantKingPig(positions) {
+    if (!positions.length) return null
+    return new GiantKingPig({
+        position: { x: positions[0][0], y: positions[0][1] },
+        imageSrc: './Sprites/02-King Pig/Idle (38x28).png',
+        frameRate: 12,
+        loop: true,
+        autoplay: true,
+        animations: kingPigAnimations(),
+    })
 }
 function createPlatforms(positions) {
     return positions.map(position => new Platform({ position: { x: position[0], y: position[1] - 13 } }))
@@ -348,7 +369,8 @@ async function createAssets(level, options = {}) {
         enemies: createEnemies(enemy, level),
         cannon: createCannon(cannon),
         enemyMatch: createEnemiesWithMatch(enemyMatch, level),
-        enemyKing: createEnemyKing(enemyKing, level),
+        enemyKing: levels[level]?.boss ? [] : createEnemyKing(enemyKing, level),
+        giantKingPig: levels[level]?.boss ? createGiantKingPig(enemyKing) : null,
         collisionBlocks,
         // What Rain splashes on: the walls' tops, and the Puddles painted on them.
         rainTops: globalThis.__weather.wallTops(collisionBlocks),
@@ -361,17 +383,19 @@ async function createAssets(level, options = {}) {
         levelWidth
     }
 }
-function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks) {
+function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks, giantKingPig = null) {
     player.collisionBlocks = collisionBlocks
     enemies.forEach(enemy => enemy.collisionBlocks = collisionBlocks)
     enemyKing.forEach(king => king.collisionBlocks = collisionBlocks)
     enemyMatch.forEach(match => match.collisionBlocks = collisionBlocks)
+    // One-way planks are no wall to him: he is taller than the room's ledges.
+    if (giantKingPig) giantKingPig.collisionBlocks = collisionBlocks.filter(block => !platforms.some(platform => platform.collisionBlocks.includes(block)))
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, giantKingPig, background, far, sky, diamonds, platformsBlocks, levelWidth, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
     const enemyGlow = levels[level]?.enemyGlow ?? null
-    enemies.concat(enemyKing, enemyMatch).forEach(enemy => {
+    enemies.concat(enemyKing, enemyMatch, giantKingPig ?? []).forEach(enemy => {
         enemy.tint = enemyTint
         enemy.glow = enemyGlow
     })
@@ -390,7 +414,8 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
         crumblingShelves.flatMap(shelf => shelf.collisionBlocks)
     );
 
-    applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks);
+    applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks, giantKingPig);
+    bossBombs.length = 0
 
     if (player.contactDamageTimeoutId) {
         clearTimeout(player.contactDamageTimeoutId)

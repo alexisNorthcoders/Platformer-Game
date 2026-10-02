@@ -121,7 +121,7 @@ class Player extends Sprite {
             this.checkDiamondHitCollision()
         }
 
-        if (enemies?.length || enemyKing?.length || enemyMatch?.length) {
+        if (enemies?.length || enemyKing?.length || enemyMatch?.length || giantKingPig) {
             if (!this.checkSquish()) this.checkEnemyContactDamage()
         }
 
@@ -336,6 +336,7 @@ class Player extends Sprite {
                 attackHitboxLeft: this.attackHitboxLeft,
                 enemies,
                 enemyKing,
+                giantKingPig,
             })
             hitEnemies.forEach((enemy) => {
                 enemy.hit()
@@ -392,7 +393,7 @@ class Player extends Sprite {
     checkEnemyContactDamage() {
         if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
 
-        const groups = [enemies, enemyKing, enemyMatch]
+        const groups = [enemies, enemyKing, enemyMatch, giantKingPig ? [giantKingPig] : []]
         for (let g = 0; g < groups.length; g++) {
             const group = groups[g]
             if (!group?.length) continue
@@ -418,6 +419,16 @@ class Player extends Sprite {
     takeBlastHit() {
         if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
         this.takeHit(null)
+    }
+
+    /** The Giant King Pig's Ground Pound landing (#113): a hit with no knockback but a small hop, so it reads. */
+    takeQuakeHit() {
+        if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
+        this.takeHit(null)
+        if (!this.dead) {
+            this.velocity.y = -4
+            this.isGrounded = false
+        }
     }
 
     /** Loses a hitpoint and starts hitCooldown with the hurt tint; knocked away from `knockbackFrom` if given. */

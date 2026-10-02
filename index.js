@@ -65,6 +65,8 @@ let respawnPoint = null
 let doors = []
 let enemies = []
 let enemyKing = []
+// The Boss Level's Giant King Pig (#113); null on every other level.
+let giantKingPig = null
 let enemyMatch = []
 let cannon = []
 let diamonds = []
@@ -170,6 +172,7 @@ const player = new Player({
                         }
                         levelTimer.reset()
                         bombLib.clearBombs(bombs)
+                        bossBombs.length = 0
                         await initLevel(level)
                         recordLevelEntry()
                         const dir = levels[level].lastDirection
@@ -508,22 +511,102 @@ function hitBlastVictims(rect) {
     player.updateHitbox()
     const victims = bombLib.findBlastVictims(rect, {
         king: player,
-        pigs: ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing),
+        pigs: ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig),
         boxes,
     })
     if (victims.king) victims.king.takeBlastHit()
-    victims.pigs.forEach(pig => pig.kill())
+    // The Giant King Pig takes the blast as 3 hit points; any other Pig dies outright.
+    victims.pigs.forEach(pig => (pig.blastHit ? pig.blastHit() : pig.kill()))
     victims.boxes.forEach(box => box.hit())
 }
 
 /** Steps and draws the Bombs; call inside the camera transform. */
 function updateAndDrawBombs() {
     // A dead King's Bomb never goes off: Pigs it would beat stay beaten after the retry.
-    if (player.dead) bombLib.defuseBombs(bombs)
+    if (player.dead) {
+        bombLib.defuseBombs(bombs)
+        bossBombs.forEach(state => bombLib.defuseBombs(state))
+    }
     for (const event of bombLib.advanceBombs(bombs, performance.now(), bombLandsAt)) {
         if (event.type === 'explosion') hitBlastVictims(event.rect)
     }
     drawSpriteList(bombLib.bombDrawList(bombs), bombImages)
+    // The Bomb Drop's Bombs: each its own state, gone from the list once spent.
+    for (const state of bossBombs) {
+        for (const event of bombLib.advanceBombs(state, performance.now(), bombLandsAt)) {
+            if (event.type === 'explosion') hitBlastVictims(event.rect)
+        }
+        drawSpriteList(bombLib.bombDrawList(state), bombImages)
+    }
+    for (let i = bossBombs.length - 1; i >= 0; i--) if (!bossBombs[i].bomb) bossBombs.splice(i, 1)
+}
+
+// The Giant King Pig's fight (#113). The Bomb Drop's Bombs are a list of
+// states, because the King's own `bombs` holds one at a time.
+const bossLib = globalThis.__boss
+const bossBombs = []
+
+/** Freezes the fight and its Bombs (Pause Menu, loading); they resume where they were. */
+function pauseBossFight() {
+    bossBombs.forEach(state => bombLib.pauseBombs(state))
+    if (giantKingPig) bossLib.pauseBoss(giantKingPig.boss)
+}
+
+/** What the fight's events do to the rest of the game. */
+function onGiantKingPigEvent(event) {
+    if (event.type === 'dropBomb') {
+        const state = bombLib.createBombState()
+        bombLib.tryDropBomb(state, { x: event.x, y: event.y }, bombLandsAt)
+        bossBombs.push(state)
+    } else if (event.type === 'landed') {
+        // The screen shakes (drawn in animate()); the quake hurts a King who isn't in the air.
+        player.updateHitbox()
+        if (bossLib.quakeHits(player)) player.takeQuakeHit()
+    } else if (event.type === 'defeated') {
+        giantKingPig.defeated = true
+        enemyNumberSprite = createNumberSprites(EnemyTracker.increaseEnemyCount(), { x: 50, y: 80 })
+        if (doorClosed && doors.length) {
+            doorClosed = false
+            doors[0].play()
+        }
+    }
+}
+
+/** The Giant King Pig's health bar at the top-middle of the screen: a plank frame, 10 red segments. */
+function drawBossHealthBar() {
+    if (!levels[level]?.boss || !giantKingPig || giantKingPig.defeated) return
+    const { maxHp } = bossLib.BOSS
+    const segW = 28
+    const segH = 14
+    const gap = 3
+    const pad = 6
+    const w = maxHp * (segW + gap) - gap + pad * 2
+    const h = segH + pad * 2
+    const x = Math.round((canvas.width - w) / 2)
+    const y = 14
+    c.save()
+    c.imageSmoothingEnabled = false
+    c.fillStyle = '#2b1a0c'
+    c.fillRect(x - 3, y - 3, w + 6, h + 6)
+    c.fillStyle = '#7a4e2a'
+    c.fillRect(x, y, w, h)
+    c.fillStyle = '#9a6a3a'
+    c.fillRect(x, y, w, 2)
+    c.fillStyle = '#4a2c14'
+    c.fillRect(x, y + h - 2, w, 2)
+    for (let i = 0; i < maxHp; i++) {
+        const sx = x + pad + i * (segW + gap)
+        const sy = y + pad
+        c.fillStyle = '#1c0f06'
+        c.fillRect(sx, sy, segW, segH)
+        if (i < giantKingPig.boss.hp) {
+            c.fillStyle = '#d8281e'
+            c.fillRect(sx, sy, segW, segH)
+            c.fillStyle = '#f2685a'
+            c.fillRect(sx, sy, segW, 3)
+        }
+    }
+    c.restore()
 }
 
 /**
@@ -1291,6 +1374,8 @@ function resetSession() {
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
     LevelProgressKeys.clearAll()
     bombLib.clearBombs(bombs)
+    bossBombs.length = 0
+    giantKingPig = null
 }
 
 // The only input route for the menu buttons, on touch too: taps synthesise a
@@ -1421,6 +1506,7 @@ function animate() {
     if (gameState === 'menu') {
         // Bombs freeze behind the Pause Menu and carry on after Resume.
         bombLib.pauseBombs(bombs)
+        pauseBossFight()
         if (pauseMenuFromPlaying) {
             titleSceneLib.pauseTitleScene(titleScene)
             drawPauseMenu()
@@ -1432,13 +1518,15 @@ function animate() {
 
     if (gameState === 'loading') {
         bombLib.pauseBombs(bombs)
+        pauseBossFight()
         c.clearRect(0, 0, canvas.width, canvas.height)
         c.fillStyle = '#000000'
         c.fillRect(0, 0, canvas.width, canvas.height)
         return
     }
 
-    if (doorClosed && doors.length && EnemyTracker.isLevelHalfCleared()) {
+    // On a Boss Level the Door opens when the Giant King Pig is beaten (onGiantKingPigEvent), not half-way.
+    if (doorClosed && doors.length && !levels[level]?.boss && EnemyTracker.isLevelHalfCleared()) {
         doorClosed = false
         doors[0].play()
     }
@@ -1459,7 +1547,9 @@ function animate() {
 
     // Apply camera transformation
     c.save();
-    c.translate(-camera.x, 0);  // Move everything relative to camera
+    // The Giant King Pig's landing shakes the view: drawing only, camera.x stays as it is.
+    const shake = giantKingPig && !player.gameOver ? bossLib.shakeOffset(giantKingPig.boss) : { x: 0, y: 0 }
+    c.translate(-camera.x + shake.x, shake.y);  // Move everything relative to camera
 
     // Draw background & UI elements
     drawSky()
@@ -1511,6 +1601,10 @@ function animate() {
             king.draw(2);
             if (!levelFrozen) king.update();
         });
+    }
+    if (giantKingPig) {
+        giantKingPig.draw(GiantKingPig.SCALE)
+        if (!levelFrozen) giantKingPig.update()
     }
     if (cannon) {
         cannon.forEach(x => {
@@ -1579,6 +1673,7 @@ function animate() {
         sprite.draw(2);
     });
     drawLevelTimer()
+    drawBossHealthBar()
 
 
     // Overlay effect
@@ -1640,6 +1735,7 @@ async function restartLevel() {
         diamondCount = levelEntryCounts.diamonds
         EnemyTracker.setEnemyCount(levelEntryCounts.pigs)
         bombLib.clearBombs(bombs)
+        bossBombs.length = 0
         globalThis.__gameFlow.clearHeldInputKeys(keys)
         player.gameOver = false
         player.gameOverAt = null
@@ -1706,6 +1802,7 @@ function applyGameFlowResult(result) {
         levelTimer.pause(performance.now())
         // Freeze a live Bomb now, not on the next menu frame.
         bombLib.pauseBombs(bombs)
+        pauseBossFight()
         stopPlayerSounds()
         pauseMenuFocus = 'resume'
     }
