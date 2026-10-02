@@ -1,9 +1,8 @@
 /**
  * A Tumbling Plank (tumblingPlank.mjs): platform.png turning round its own
- * middle in the plane of the screen. It has a one-way collision block that
- * exists only while the plank is within its window of flat; otherwise the
- * block is parked out of the world, so the King drops through or passes
- * through it. index.js calls step() once a frame while playing. The plank
+ * middle in the plane of the screen. It has no collision block: index.js
+ * (stepTumblingPlanks) rides the King on its tilted top face, so he can never
+ * fall through it. index.js calls step() once a frame while playing. The plank
  * takes its turn from a frame count that is never reset (see `tumblingFrame`
  * in index.js), so it keeps turning where it is through a respawn or restart.
  */
@@ -13,31 +12,21 @@ class TumblingPlank extends Sprite {
         const state = lib.createTumbleState(path)
         super({ position: { x: 0, y: 0 }, imageSrc })
         this.state = state
-        this.collisionBlocks = [new CollisionBlock({
-            position: { x: state.x, y: state.y },
-            width: lib.TUMBLING_PLANK.length,
-            height: lib.TUMBLING_PLANK.height,
-            type: 'platform',
-        })]
+        this.collisionBlocks = []
         this.step(tumblingFrame)
     }
 
-    /** The walkable surface, or null while the plank is tipped past its window. */
+    /** The top face now: { y at x }-style query `yAt(x)`, or null while the plank is on end. */
     surface() {
-        const { x, y, width, standable } = this.state
-        return standable ? { x, y, width } : null
+        const lib = globalThis.__tumblingPlank
+        if (lib.slopeBand(this.state.tilt) === 'onEnd') return null
+        return { tilt: this.state.tilt, yAt: x => lib.surfaceYAt(this.state.path, this.state.frame, x) }
     }
 
-    /** Turns to `frame` of the running clock and moves the collision block to match. */
+    /** Turns to `frame` of the running clock. */
     step(frame) {
-        const lib = globalThis.__tumblingPlank
         this.state.frame = frame - 1
-        lib.stepTumble(this.state)
-        const block = this.collisionBlocks[0]
-        block.position.x = this.state.x
-        // Parked far below the world while the plank is steep: nothing can stand on it.
-        block.position.y = this.state.standable ? this.state.y : 100000
-        block.width = this.state.standable ? this.state.width : 0
+        globalThis.__tumblingPlank.stepTumble(this.state)
     }
 
     /** The plank's angle now, radians (0 when flat). */

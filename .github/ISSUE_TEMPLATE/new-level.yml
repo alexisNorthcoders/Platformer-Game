@@ -61,7 +61,7 @@ body:
         - label: Diagonal ride (Moving Platform)
         - label: Rotating Platform (planks turning round a hub)
         - label: Helix Platform (blades turning flat like a rotor)
-        - label: Tumbling Plank (a plank turning end over end; standable only near flat)
+        - label: Tumbling Plank (a plank turning end over end; the King stands near flat, slides when tilted)
   - type: textarea
     id: mechanics
     attributes:

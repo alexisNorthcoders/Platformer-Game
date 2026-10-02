@@ -8,6 +8,12 @@ class Player extends Sprite {
         /** Whether the sinking, not a door/menu, turned preventInput on (so only it turns it off). */
         this.sinkLockedInput = false
         this.isGrounded = true
+        /** On a Tumbling Plank (index.js stepTumblingPlanks): { yAt(x) } for the face under his feet, else null. */
+        this.plankRide = null
+        /** Speed along a Tumbling Plank's slope, px/frame, positive downhill. */
+        this.slideSpeed = 0
+        /** Horizontal slide speed he keeps in the air after jumping or sliding off a plank. */
+        this.slideVx = 0
         this.hitCooldown = false
         this.action = false
         this.canAttack = true
@@ -161,6 +167,7 @@ class Player extends Sprite {
 
         }
         this.checkForVerticalCollisions()
+        this.snapToPlank()
 
         if (this.dying) this.playDeathAnimation()
     }
@@ -284,6 +291,9 @@ class Player extends Sprite {
             this.velocity.x = -4;
             this.lastDirection = 'left';
         }
+
+        // Off a Tumbling Plank he keeps the slide sideways until he lands.
+        if (!this.plankRide) this.velocity.x += this.slideVx
 
         if (this.lastDirection === 'right' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleRight')
         if (this.lastDirection === 'left' && this.isGrounded === true && !this.action && !this.running) this.switchSprite('idleLeft')
@@ -601,6 +611,29 @@ class Player extends Sprite {
                 this.isGrounded = false;
             }
         }
+    }
+
+    /**
+     * On a Tumbling Plank (no collision block): feet exactly on the tilted face
+     * under him. Off its span he is in the air again.
+     */
+    snapToPlank() {
+        if (!this.plankRide) return
+        this.updateHitbox()
+        const y = this.plankRide.yAt(this.hitbox.position.x + this.hitbox.width / 2)
+        if (y == null) {
+            // Past the end: in the air, keeping the slide as his horizontal and downward speed.
+            const { tilt } = this.plankRide.plank.state
+            this.slideVx = this.slideSpeed * Math.cos(tilt) * Math.sign(tilt)
+            this.velocity.y = this.slideSpeed * Math.abs(Math.sin(tilt))
+            this.slideSpeed = 0
+            this.plankRide = null
+            return
+        }
+        this.position.y += y - (this.hitbox.position.y + this.hitbox.height)
+        this.velocity.y = 0
+        this.isGrounded = true
+        this.updateHitbox()
     }
 
     applyGravity() {
