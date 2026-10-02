@@ -129,8 +129,16 @@ _Avoid_: Cloud sea, sky pit
 A ditch cut down into the ground, with spikes along its bottom. Falling in costs the King a heart (he flashes as when hurt; there is never blood) and puts him back at his last Checkpoint.
 _Avoid_: Spike pit, trench
 
+**Tower Level**:
+A level one screen wide and many screens high, climbed from its foot to the Door at its top by jumping from platform to platform. The view follows the King up and down, never sideways.
+_Avoid_: Vertical level, climb level
+
+**Long Fall**:
+On a Tower Level, a fall that carries the King more than a screen's height below where he left his footing. It costs him a heart and brings him back at his last Checkpoint, as a pit does. A shorter fall only costs him the height he lost.
+_Avoid_: Fall damage, death fall
+
 **Checkpoint**:
-A flag on a long level marking where the King comes back after falling into the Water, Quicksand, a Thicket, the Lava, the Cloud Bank or a Spike Ditch. Passing it raises its flag; he always comes back at the furthest one he has passed, or at the level's start before any. Restart Level lowers them all.
+A flag on a long level marking where the King comes back after falling into the Water, Quicksand, a Thicket, the Lava, the Cloud Bank or a Spike Ditch. Passing it raises its flag; he always comes back at the furthest one he has passed (on a Tower Level, the highest), or at the level's start before any. Restart Level lowers them all.
 _Avoid_: Save point, respawn point
 
 ### Weather
