@@ -20,7 +20,24 @@ function pitX(beforeX) {
 // 1. A fall into the pit costs one heart and puts the King back at the start
 //    (run first: placing him on checkpoints moves the respawn point on).
 await play(N)
-{
+if (levels[N].tower) {
+    // A Tower Level has no pit: a Long Fall (feet more than a screen below his last footing) is the fall.
+    const start = levels[N].playerPosition
+    const hearts = player.hitpoints
+    const spot = levels[N].checkpoints.at(-1)
+    player.setPosition({ x: spot.x, y: spot.y - 300 }) // in the air, clear of the ledges
+    player.velocity.x = 0
+    player.velocity.y = 0
+    lastFootingY = player.feetPosition().y - canvas.height + 20
+    step(1)
+    const notYet = player.hitpoints === hearts // 556 px below the footing is still no Long Fall
+    lastFootingY = player.feetPosition().y - canvas.height - 40
+    step(2)
+    report.fall = {
+        ok: notYet && player.hitpoints === hearts - 1 && Math.abs(player.position.x - respawnPoint.x) < 1 && Math.abs(player.position.y - respawnPoint.y) < 2,
+        heartsBefore: hearts, heartsAfter: player.hitpoints, at: { ...player.position },
+    }
+} else {
     const start = levels[N].playerPosition
     const x = pitX(levels[N].checkpoints?.[0]?.x ?? mapWidth)
     const hearts = player.hitpoints
@@ -53,6 +70,10 @@ await play(N)
 await play(N)
 report.rides = { ok: true, platforms: [] }
 for (const [i, platform] of movingPlatforms.entries()) {
+    // On a tall map rides stack in one shaft: wait until no other ride is within 90 px of this one's surface.
+    const crowded = () => movingPlatforms.some((other, j) => j !== i &&
+        Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200)
+    for (let f = 0; f < 3000 && crowded(); f++) step(1)
     const surface = platform.surface()
     player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
     player.velocity.x = 0
@@ -131,7 +152,7 @@ for (const [i, shelf] of crumblingShelves.entries()) {
     const dropped = phase() === 'falling'
     let fallFrames = 0
     while (phase() === 'falling' && fallFrames < 600) { step(1); fallFrames++ }
-    const gone = phase() === 'gone' && !crumblingShelves[i].collisionBlocks.some(b => b.position.y < canvas.height)
+    const gone = phase() === 'gone' && !crumblingShelves[i].collisionBlocks.some(b => b.position.y < mapHeight)
     step(179)
     const notYet = phase() === 'gone'
     step(1)
@@ -312,6 +333,27 @@ for (const spot of [levels[N].playerPosition, ...(levels[N].checkpoints ?? [])])
     }
 }
 
+// 5b. A tall map: the camera is a whole number at the top and at the foot, never moves
+// sideways, and the sky covers the view at both ends.
+if (mapHeight > canvas.height) {
+    const at = []
+    for (const y of [60, levels[N].playerPosition.y]) {
+        player.setPosition({ x: y === 60 ? 480 : levels[N].playerPosition.x, y })
+        player.velocity.x = 0
+        player.velocity.y = 0
+        step(2)
+        const skyBottom = sky ? sky.position.y + sky.height * 2 : null
+        const covers = (sky === null || (sky.position.y <= camera.y && skyBottom >= camera.y + canvas.height)) &&
+            (far === null || (far.position.y <= camera.y && far.position.y + far.height * 2 >= camera.y + canvas.height))
+        at.push({ y, cameraY: camera.y, cameraX: camera.x, skyTop: sky?.position.y, skyBottom, covers })
+    }
+    report.tall = {
+        ok: at.every(a => Number.isInteger(a.cameraY) && a.cameraX === 0 && a.covers) &&
+            at[0].cameraY === 0 && at[1].cameraY === mapHeight - canvas.height,
+        mapHeight, at,
+    }
+}
+
 // 6. Weather never touches the King: 300 frames of the same keys with the Weather on
 // and off leave him in the same place with the same hearts, and rain falls in view.
 if (levels[N].weather) {
@@ -339,5 +381,5 @@ if (levels[N].weather) {
     }
 }
 
-report.ok = ['fall', 'pigs', 'rides', 'helix', 'tumbling', 'crumbling', 'standing', 'farEnd', 'weather'].every(check => !report[check] || report[check].ok)
+report.ok = ['fall', 'pigs', 'rides', 'helix', 'tumbling', 'crumbling', 'standing', 'farEnd', 'tall', 'weather'].every(check => !report[check] || report[check].ok)
 return report

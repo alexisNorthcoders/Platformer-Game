@@ -52,6 +52,7 @@ class Player extends Sprite {
     }
     setPosition(position) {
         this.position = { ...position }
+        lastFootingY = null // placed somewhere new: no footing to fall from yet (Tower Level Long Fall)
     }
 
     hello() {
@@ -561,7 +562,7 @@ class Player extends Sprite {
             this.startSinking()
             return
         }
-        if (player.position.y > canvas.height) {
+        if (player.position.y > mapHeight) {
             this.fallIntoPit()
         }
         for (let i = 0; i < this.collisionBlocks.length; i++) {

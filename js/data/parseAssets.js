@@ -153,6 +153,7 @@ async function loadAssets(level, scale) {
             diamonds: diamondsData ? getAssetsPositions(diamondsData) : [],
             mapColumns: jsonData.width,
             levelWidth: jsonData.width * scale * 32,
+            levelHeight: jsonData.height * scale * 32,
             cannon: cannonData ? getAssetsPositions(cannonData) : [],
             enemyMatch: enemyMatchData ? getAssetsPositions(enemyMatchData) : [],
             movingPlatforms: [

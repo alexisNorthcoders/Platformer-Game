@@ -5,8 +5,8 @@ Measured from the code while building Level 18. When the code changes, re-check 
 ## Units
 
 - Map tiles are 32 px. The game draws everything at 2×, so one tile is 64 world px. "Map px" means Tiled/layout coordinates; "world px" means game coordinates, which are map px × 2.
-- The canvas is 1024 × 576 world px, 16 × 9 tiles. **Maps are always 9 rows tall.** Width is free, and the camera scrolls horizontally only.
-- The King dies into the water or pit once his position y is greater than 576 [`Player.checkForVerticalCollisions`].
+- The canvas is 1024 × 576 world px, 16 × 9 tiles. Maps are 9 rows tall unless the layout sets `rows` (a Tower Level, `tower: true`, where the camera also scrolls vertically, `mapHeight`). Width is free.
+- The King dies into the water or pit once his position y is greater than `mapHeight` (576 on a 9-row map) [`Player.checkForVerticalCollisions`].
 
 ## The King's reach [`Player.js`]
 

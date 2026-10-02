@@ -191,4 +191,31 @@ const levels = {
     // one-screen throne room, where the King fights the Giant King Pig. Its Door
     // opens when he is beaten. No pit, no Checkpoints.
     25: { playerPosition: { x: 100, y: 360 }, lastDirection: 'right', boss: true },
+    // The Sky Tower (built by tools/levels/level_26.py): a Tower Level, one screen wide and
+    // 128 rows high. The King climbs from its foot to the Door at the top over Moving,
+    // Rotating and Helix Platforms, Crumbling Shelves and Tumbling Planks. Checkpoints count
+    // by height, and a Long Fall (more than a screen below his last footing) costs a heart.
+    26: {
+        playerPosition: { x: 162, y: 7976 },
+        lastDirection: 'right',
+        tower: true,
+        backdrop: {
+            sky: './img/Level 26 sky.png',
+            terrain: './img/Level 26 terrain.png',
+            parallax: 0.3,
+        },
+        checkpoints: [
+            { x: 706, y: 7336 },
+            { x: 258, y: 6696 },
+            { x: 706, y: 6056 },
+            { x: 194, y: 5416 },
+            { x: 642, y: 4776 },
+            { x: 706, y: 4136 },
+            { x: 642, y: 3496 },
+            { x: 386, y: 2856 },
+            { x: 194, y: 2216 },
+            { x: 578, y: 1576 },
+            { x: 258, y: 936 },
+        ],
+    },
 };

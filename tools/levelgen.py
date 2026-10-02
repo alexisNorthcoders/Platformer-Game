@@ -6,7 +6,8 @@ A level is a layout file in tools/levels/ that builds a `Layout` and calls
 (.claude/skills/new-level/) for the rules a layout has to follow.
 
 Everything here is in map px (32 px tiles); the game draws it at 2x. A tile at
-(col, row) spans x = col*32, y = row*32. Maps are always 9 rows tall.
+(col, row) spans x = col*32, y = row*32. Maps are 9 rows tall unless the
+layout sets `rows` (a Tower Level is many screens high).
 """
 
 import json
@@ -16,7 +17,7 @@ from dataclasses import dataclass, field
 
 from PIL import Image
 
-ROWS, TILE = 9, 32
+ROWS, TILE = 9, 32  # ROWS: the default `Layout.rows`
 VIEW_WIDTH = 512  # map px: the 1024-px canvas at 2x
 
 
@@ -85,6 +86,8 @@ class Layout:
     # 'storm': a deeper steel blue on the far layer, dark heavy storm clouds and a
     # Viking village silhouette (two ranks) on the parallax layer, and a `rim` image of
     # the village's outline that a Storm's flash lights; the walls are cooled.
+    # 'tower': one tall parallax layer, day blue at the foot darkening through dusk
+    # to the first stars at the top, with clouds drifting past halfway up (no far layer).
     sky: str = 'clouds'
     # The sky scrolls at this share of the camera's speed.
     parallax: float = 0.3
@@ -92,6 +95,10 @@ class Layout:
     # Paint Puddles into the brick tops (shallow spots on islands 2+ tiles wide)
     # and list them in a `puddle` layer, so the game can ripple them under Rain.
     puddles: bool = False
+    # Map height in tiles: 9 is one screen; a Tower Level is many screens high.
+    rows: int = ROWS
+    # Cloud wisps under every floating island; off for a tower, whose ledges sit on its walls.
+    wisps: bool = True
 
 
 # --- Tiled JSON -------------------------------------------------------------------
@@ -105,7 +112,7 @@ def solid_cells(layout):
     cells = set()
     for first, last, top, *rest in layout.ground:
         for col in range(first, last + 1):
-            for row in range(top, (rest[0] if rest else ROWS - 1) + 1):
+            for row in range(top, (rest[0] if rest else layout.rows - 1) + 1):
                 cells.add((col, row))
     cells.update(layout.battlements)
     return cells
@@ -120,9 +127,9 @@ def tile_objects(gid, width, height, spots):
 def build_json(layout, cells):
     cols = layout.cols
     collisions = [COLLISION_GID if (col, row) in cells else 0
-                  for row in range(ROWS) for col in range(cols)]
+                  for row in range(layout.rows) for col in range(cols)]
     layers = [dict(name='collisions', type='tilelayer', data=collisions, width=cols,
-                   height=ROWS, opacity=1, visible=True, x=0, y=0)]
+                   height=layout.rows, opacity=1, visible=True, x=0, y=0)]
 
     # The game places a tile object at (2x, 2y - 32): see parseAssets.js. Pigs
     # spawn a little above the ground and settle onto it.
@@ -184,7 +191,7 @@ def build_json(layout, cells):
         layer['id'] = i + 1
 
     return dict(
-        compressionlevel=-1, height=ROWS, width=cols, infinite=False, orientation='orthogonal',
+        compressionlevel=-1, height=layout.rows, width=cols, infinite=False, orientation='orthogonal',
         renderorder='right-down', tiledversion='1.11.1', version='1.10', type='map',
         tileheight=TILE, tilewidth=TILE, nextlayerid=len(layers) + 1, nextobjectid=next_id,
         tilesets=[
@@ -232,6 +239,9 @@ GRASS_DEEP, GRASS_MID, GRASS_CREST, GRASS_BLADE = (18, 36, 32), (30, 58, 44), (5
 # Moonlight on the walls: every wall pixel is multiplied by this.
 MOONLIGHT = (150, 160, 205)
 # The 'smoke' sky: soot overhead to a red glow at the horizon.
+# The 'tower' sky, top to foot: night, indigo, dusk rose, a low warm glow, then day blue.
+TOWER_SKY = [(14, 16, 38), (26, 30, 70), (52, 50, 104), (112, 80, 130), (214, 128, 128), (246, 176, 140),
+             (150, 196, 226), (118, 170, 222), (96, 150, 210)]
 SMOKE_SKY = [(26, 20, 24), (38, 28, 32), (54, 36, 38), (78, 44, 40), (108, 52, 38), (140, 62, 36), (170, 74, 36)]
 SMOKE, SMOKE_SHADE = (70, 60, 64), (52, 44, 50)
 VOLCANO, VOLCANO_SHADE, CRAG = (44, 30, 34), (34, 24, 28), (30, 22, 26)
@@ -274,10 +284,9 @@ def lerp(a, b, t):
     return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
-def paint_sky(img, horizon, palette=SKY):
+def paint_sky(img, horizon, palette=SKY, bands=16):
     """Flat colour bands, deep overhead to a warm glow at the horizon."""
     px = img.load()
-    bands = 16
     for y in range(img.height):
         band = min(bands - 1, y * bands // horizon)
         t = band / (bands - 1) * (len(palette) - 1)
@@ -328,6 +337,31 @@ def paint_blob(img, cx, cy, rx, ry, colour):
 def paint_clouds(img, rng):
     for _ in range(img.width // 90):
         cx, cy = rng.uniform(0, img.width), rng.uniform(12, 150)
+        puffs = [(cx + rng.uniform(-26, 26), cy + rng.uniform(-6, 4), rng.uniform(8, 18)) for _ in range(5)]
+        for x, y, r in puffs:
+            paint_blob(img, x, y + 3, r, r * 0.55, CLOUD_SHADE)
+        for x, y, r in puffs:
+            paint_blob(img, x, y, r, r * 0.55, CLOUD)
+
+
+def paint_tower_sky(img, rng):
+    """Day at the foot (bottom), dusk above, stars over the top fifth, and clouds
+    drifting past from about a third to two thirds of the way up."""
+    h = img.height
+    paint_sky(img, h, TOWER_SKY, bands=48)
+    px = img.load()
+    for _ in range(img.width * h // 1500):
+        x, y = rng.randrange(img.width), rng.randrange(int(h * 0.3))
+        near = 1 - y / (h * 0.3)  # thicker towards the very top
+        if rng.random() > near + 0.15:
+            continue
+        if rng.random() < 0.12:
+            for dx, dy in ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)):
+                px[x + dx if 0 <= x + dx < img.width else x, y + dy] = (*STAR, 255)
+        else:
+            px[x, y] = (*(STAR if rng.random() < 0.4 else STAR_DIM), 255)
+    for _ in range(img.height // 90):
+        cx, cy = rng.uniform(0, img.width), rng.uniform(h * 0.33, h * 0.67)
         puffs = [(cx + rng.uniform(-26, 26), cy + rng.uniform(-6, 4), rng.uniform(8, 18)) for _ in range(5)]
         for x, y, r in puffs:
             paint_blob(img, x, y + 3, r, r * 0.55, CLOUD_SHADE)
@@ -435,10 +469,11 @@ def paint_cloud_bank(img, top):
 
 
 def paint_island_wisps(img, cells, rng):
+    rows = img.height // TILE
     """Wisps of cloud under each floating island's bottom edge, so it reads as
     floating: flat blobs, shaded underneath."""
     for col, row in sorted(cells):
-        if (col, row + 1) in cells or row + 1 >= ROWS:
+        if (col, row + 1) in cells or row + 1 >= rows:
             continue
         bottom = (row + 1) * TILE
         for _ in range(2):
@@ -742,8 +777,8 @@ def terrain_tile(sheet, gid):
     return sheet.crop((col * TILE, row * TILE, col * TILE + TILE, row * TILE + TILE))
 
 
-def wall_gid(cells, col, row):
-    solid = lambda c, r: (c, r) in cells or r >= ROWS  # walls carry on below the map
+def wall_gid(cells, col, row, rows=ROWS):
+    solid = lambda c, r: (c, r) in cells or r >= rows  # walls carry on below the map
     up, left, right = solid(col, row - 1), solid(col - 1, row), solid(col + 1, row)
     down = solid(col, row + 1)
     if not left and not right:
@@ -760,7 +795,7 @@ def paint_walls(img, cells, light=None, pit_top=None):
     lava light). Moonlit walls grow grass; lava-lit ones glow near the lava."""
     sheet = Image.open('Sprites/14-TileSets/Terrain (32x32).png').convert('RGBA')
     for col, row in sorted(cells):
-        tile = terrain_tile(sheet, wall_gid(cells, col, row))
+        tile = terrain_tile(sheet, wall_gid(cells, col, row, img.height // TILE))
         if light:
             tile = moonlight(tile, light)
         img.alpha_composite(tile, (col * TILE, row * TILE))
@@ -845,7 +880,14 @@ def paint_decorations(img, layout):
 # --- Images -----------------------------------------------------------------------
 
 def horizon(layout):
-    return layout.pit_top if layout.pit_top is not None else ROWS * TILE
+    return layout.pit_top if layout.pit_top is not None else layout.rows * TILE
+
+
+def sky_height(layout):
+    """The parallax sky's height: the view plus `parallax` of the rest of the map
+    (a tower scrolls the sky up with the camera); one view for a 9-row map."""
+    return math.ceil(horizon(layout) if layout.rows == ROWS
+                     else ROWS * TILE + (layout.rows - ROWS) * TILE * layout.parallax)
 
 
 def sky_width(layout):
@@ -899,9 +941,11 @@ def far_x(layout):
 def build_sky(layout, width):
     """The parallax layer: clouds and the far horizon. Over sky bands for a
     'clouds' sky; clear for a 'sun' sky, whose far layer shows through."""
-    img = Image.new('RGBA', (width, horizon(layout)))
+    img = Image.new('RGBA', (width, sky_height(layout)))
     rng = random.Random(layout.seed)
-    if layout.sky == 'sun':
+    if layout.sky == 'tower':
+        paint_tower_sky(img, rng)
+    elif layout.sky == 'sun':
         paint_haze(img, rng)
     elif layout.sky == 'moon':
         paint_night_clouds(img, rng)
@@ -914,7 +958,9 @@ def build_sky(layout, width):
     else:
         paint_sky(img, horizon(layout), DAY_SKY if layout.pit == 'cloud' else SKY)
         paint_clouds(img, rng)
-    if layout.sky == 'storm':
+    if layout.sky == 'tower':
+        pass
+    elif layout.sky == 'storm':
         img.alpha_composite(build_village(layout, width)[0])
     elif layout.pit == 'cloud':
         paint_far_isles(img, rng, horizon(layout), BANK_DEEP)
@@ -928,12 +974,13 @@ def build_sky(layout, width):
 
 def build_terrain(layout, cells):
     """The pit, walls and decorations over a clear sky: drawn over the parallax sky."""
-    img = Image.new('RGBA', (layout.cols * TILE, ROWS * TILE))
+    img = Image.new('RGBA', (layout.cols * TILE, layout.rows * TILE))
     if layout.pit_top is not None:
         {'sand': paint_sand, 'grass': paint_grass, 'lava': paint_lava, 'cloud': paint_cloud_bank, 'spike': paint_spikes}.get(layout.pit, paint_water)(img, layout.pit_top)
     light = {'moon': MOONLIGHT, 'smoke': EMBERLIGHT, 'overcast': OVERCAST_LIGHT, 'storm': STORM_LIGHT}.get(layout.sky)
     paint_walls(img, cells, light, layout.pit_top if layout.pit == 'lava' else None)
-    paint_island_wisps(img, cells, random.Random(layout.seed + 3))
+    if layout.wisps:
+        paint_island_wisps(img, cells, random.Random(layout.seed + 3))
     if layout.puddles:
         paint_puddles(img, island_puddles(layout, cells))
     paint_decorations(img, layout)
@@ -944,6 +991,11 @@ def build_preview(layout, terrain):
     """A map-wide sky under the terrain: the Title Screen's Level Preview. The
     preview shows the middle of the map, so a sun goes there."""
     img = Image.new('RGBA', terrain.size)
+    if layout.sky == 'tower':
+        # The sky is shorter than the tower: stretch it over the whole climb.
+        img.alpha_composite(build_sky(layout, terrain.width).resize(terrain.size, Image.NEAREST))
+        img.alpha_composite(terrain)
+        return img
     if has_far(layout):
         img.alpha_composite(build_far(layout, terrain.width, terrain.width // 2 + far_x(layout) - VIEW_WIDTH // 2))
     img.alpha_composite(build_sky(layout, terrain.width))

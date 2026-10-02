@@ -86,12 +86,12 @@ function drawHelixMast(x, y) {
     const top = snap2(y + HELIX_BLADE.height)
     c.save()
     c.fillStyle = HELIX_BLADE.outline
-    c.fillRect(left - 2, top, width + 4, canvas.height - top)
+    c.fillRect(left - 2, top, width + 4, mapHeight - top)
     c.fillStyle = iron
-    c.fillRect(left, top, width, canvas.height - top)
+    c.fillRect(left, top, width, mapHeight - top)
     c.fillStyle = shade
-    c.fillRect(left + width - 6, top, 6, canvas.height - top)
-    for (let band = top + 24; band < canvas.height; band += 40) {
+    c.fillRect(left + width - 6, top, 6, mapHeight - top)
+    for (let band = top + 24; band < mapHeight; band += 40) {
         c.fillStyle = HELIX_BLADE.outline
         c.fillRect(left, band, width, 4)
     }
