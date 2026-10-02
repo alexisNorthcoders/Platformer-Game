@@ -661,7 +661,8 @@ function stepTumblingPlanks() {
     }
     player.updateHitbox()
     const feet = player.feetPosition()
-    const input = player.velocity.x
+    // His own run, without the slide he keeps in the air (Player.handleInput adds that once).
+    const input = player.velocity.x - (player.plankRide ? 0 : player.slideVx)
     if (player.velocity.y < 0 && player.plankRide) {
         // A jump leaves the plank at once, the usual jump; he keeps the slide sideways.
         const { tilt } = player.plankRide.plank.state
@@ -700,7 +701,7 @@ function stepTumblingPlanks() {
         player.plankRide = null
         player.slideSpeed = 0
         player.slideVx = vx
-        player.velocity.x = sliding ? vx : input
+        player.velocity.x = input + vx
         player.velocity.y = sliding ? along * Math.abs(Math.sin(tilt)) : 0
         return
     }

@@ -622,6 +622,11 @@ class Player extends Sprite {
         this.updateHitbox()
         const y = this.plankRide.yAt(this.hitbox.position.x + this.hitbox.width / 2)
         if (y == null) {
+            // Past the end: in the air, keeping the slide as his horizontal and downward speed.
+            const { tilt } = this.plankRide.plank.state
+            this.slideVx = this.slideSpeed * Math.cos(tilt) * Math.sign(tilt)
+            this.velocity.y = this.slideSpeed * Math.abs(Math.sin(tilt))
+            this.slideSpeed = 0
             this.plankRide = null
             return
         }

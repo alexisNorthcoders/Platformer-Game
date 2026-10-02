@@ -74,20 +74,51 @@ export function surfaceYAt(path, frame, x) {
     return path.center.y + u * Math.tan(tilt) - halfThickness * (1 / Math.cos(tilt) - 1)
 }
 
+/** The top face's line y at world `x` at (fractional) `frame`, ignoring the span. Null on end. */
+function faceLineAt(path, frame, x) {
+    const tilt = tiltAt(path, frame)
+    if (slopeBand(tilt) === 'onEnd') return null
+    const u = x - path.center.x
+    return path.center.y + u * Math.tan(tilt) - TUMBLING_PLANK.halfThickness * (1 / Math.cos(tilt) - 1)
+}
+
+const SWEEP_STEPS = 16
+
 /**
  * Whether a King whose feet go from `prevFeet` {x, y} (last frame) to `feet`
- * (this frame) meets the top face at `frame`: he was on or above the face as
- * it was last frame and is on or below it now, which catches his fall and the
- * wood rising through him as it turns. Returns { x, y, tilt } (where he stands)
- * or null. A King below the face, or going up through it, never lands.
+ * (this frame) meets the top face at `frame`. Sweeps his feet's segment against
+ * the face as it moves from `frame - 1` to `frame`: he is on or above it at the
+ * start and on or below it at the end, within its span where they cross. That
+ * catches his fall and the wood rising through him as it turns. Returns
+ * { x, y, tilt } (where he stands this frame) or null. A King below the face,
+ * or going up through it, never lands.
  */
 export function landsOnPlank(path, frame, prevFeet, feet) {
-    const now = surfaceYAt(path, frame, feet.x)
-    if (now == null || feet.y < now) return null
-    // Last frame's face, where he was then; if it didn't reach him, the face now is the one he was above.
-    const before = surfaceYAt(path, frame - 1, prevFeet.x) ?? surfaceYAt(path, frame, prevFeet.x)
-    if (before == null || prevFeet.y > before + 0.01) return null
-    return { x: feet.x, y: now, tilt: tiltAt(path, frame) }
+    const { length } = TUMBLING_PLANK
+    const gapAt = t => {
+        const x = prevFeet.x + (feet.x - prevFeet.x) * t
+        const y = prevFeet.y + (feet.y - prevFeet.y) * t
+        const line = faceLineAt(path, frame - 1 + t, x)
+        return line == null ? null : { gap: y - line, x, t }
+    }
+    let prev = gapAt(0)
+    for (let i = 1; i <= SWEEP_STEPS; i++) {
+        const cur = gapAt(i / SWEEP_STEPS)
+        if (prev && cur && prev.gap <= 0.01 && cur.gap >= 0) {
+            // Cross at the linear root inside this step; he must be over the wood there.
+            const span = prev.gap - cur.gap
+            const k = span === 0 ? 1 : prev.gap / span
+            const t = prev.t + (cur.t - prev.t) * Math.min(1, Math.max(0, k))
+            const tilt = tiltAt(path, frame - 1 + t)
+            const x = prevFeet.x + (feet.x - prevFeet.x) * t
+            const u = x - path.center.x
+            if (Math.abs(u - TUMBLING_PLANK.halfThickness * Math.sin(tilt)) <= (length / 2) * Math.cos(tilt)) {
+                return { x: feet.x, y: faceLineAt(path, frame, feet.x) ?? feet.y, tilt: tiltAt(path, frame) }
+            }
+        }
+        prev = cur
+    }
+    return null
 }
 
 /**

@@ -200,18 +200,29 @@ for (const [i, plank] of tumblingPlanks.entries()) {
     for (const dx of [-70, 0, 70]) {
         settle(seekTilt(seek(seek(tumblingFrame, false), true), 0.1) - 1) // from flat
         stand(center.x + dx, center.y - 0.01)
-        let worstBelow = 0, ridden = 0, leftAt = null
-        for (let f = 0; f < 240 && leftAt == null; f++) {
+        let worstBelow = 0, worstGap = 0, ridden = 0, leftAt = null, leftVx = 0, airVx = null
+        for (let f = 0; f < 240 && airVx == null; f++) {
             step(1)
             if (player.plankRide) {
                 ridden++
-                worstBelow = Math.max(worstBelow, feetY() - faceAt(feetX()))
-            } else if (ridden) leftAt = +(tiltAt(plank.state.frame) / DEG).toFixed(1)
+                // Feet on the face every frame of the ride, across the whole tilt band.
+                const gap = feetY() - faceAt(feetX())
+                worstGap = Math.max(worstGap, Math.abs(gap))
+                worstBelow = Math.max(worstBelow, gap)
+            } else if (ridden) {
+                if (leftAt == null) {
+                    leftAt = +(tiltAt(plank.state.frame) / DEG).toFixed(1)
+                    leftVx = player.velocity.x
+                } else airVx = player.velocity.x
+            }
         }
-        standing.push({ dx, ridden, leftAt, worstBelow: +worstBelow.toFixed(3) })
+        // Off the end he is in the air, carried downhill at the slide speed, applied once (not doubled).
+        const carried = leftAt != null && Math.sign(leftVx) === Math.sign(plank.state.tilt) && Math.abs(leftVx) <= plankLib.TUMBLING_PLANK.maxSlide + 0.01 &&
+            airVx != null && Math.abs(airVx) <= Math.abs(leftVx) + 0.01
+        standing.push({ dx, ridden, leftAt, worstBelow: +worstBelow.toFixed(3), worstGap: +worstGap.toFixed(3), carried })
         respawnKing()
     }
-    const standingOk = standing.every(s => s.ridden > 20 && s.leftAt != null && s.leftAt < 80 && s.worstBelow < 1)
+    const standingOk = standing.every(s => s.ridden > 20 && s.leftAt != null && s.leftAt < 80 && s.worstBelow < 1 && s.worstGap < 1 && s.carried)
     // (b) A fall onto the face at 0, 30 and 60 degrees lands on it, never through it.
     const falls = []
     for (const deg of [0, 30, 60]) {
@@ -238,7 +249,8 @@ for (const [i, plank] of tumblingPlanks.entries()) {
     hold('w', 1)
     let rose = 0
     for (let f = 0; f < 8; f++) { step(1); rose = Math.max(rose, y0 - feetY()) }
-    const jumped = slidBefore > 0 && rose > 10 && !player.plankRide
+    const jumpVx = player.velocity.x
+    const jumped = slidBefore > 0 && rose > 10 && !player.plankRide && Math.sign(jumpVx) === Math.sign(plank.state.tilt)
     respawnKing()
     // (d) Keys only: walk from the ledge as the plank tips out of its stand, hold right to the far ledge.
     settle(seek(seek(tumblingFrame, true), false)) // just as it stops being standable
