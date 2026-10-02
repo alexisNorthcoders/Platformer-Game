@@ -489,7 +489,13 @@ const bombImages = new Map(
 
 /** Where a falling Bomb lands (#75): on the level's collision blocks. */
 function bombLandsAt(x, fromY, toY) {
-    return bombLib.landsAtBlocks(player.collisionBlocks)(x, fromY, toY)
+    let floorY = bombLib.landsAtBlocks(player.collisionBlocks)(x, fromY, toY)
+    // A Bomb lands on a Tumbling Plank's top face if it is under it (it is not carried or slid).
+    for (const plank of tumblingPlanks) {
+        const y = globalThis.__tumblingPlank.surfaceYAt(plank.state.path, plank.state.frame, x)
+        if (y != null && y >= fromY && y <= toY && (floorY == null || y < floorY)) floorY = y
+    }
+    return floorY
 }
 
 /**
@@ -636,6 +642,77 @@ function stepMovingPlatforms() {
 }
 
 /**
+ * Rides the King on the Tumbling Planks (#116), one frame; runs after the
+ * planks have turned and before he moves. A plank has no collision block: he is
+ * on one if he was on it and is still inside its span, or if this frame's
+ * move meets its top face (landsOnPlank sweeps his fall and the wood rising
+ * through him). On it, Player.snapToPlank puts his feet on the tilted face
+ * after he moves; in Slide and Steep he slides down it by slideStep. A jump, or
+ * going past the span, leaves the plank with the slide as his speed.
+ */
+function stepTumblingPlanks() {
+    if (!tumblingPlanks.length) return
+    const lib = globalThis.__tumblingPlank
+    if (player.dead || player.sinking) {
+        player.plankRide = null
+        player.slideSpeed = 0
+        player.slideVx = 0
+        return
+    }
+    player.updateHitbox()
+    const feet = player.feetPosition()
+    const input = player.velocity.x
+    if (player.velocity.y < 0 && player.plankRide) {
+        // A jump leaves the plank at once, the usual jump; he keeps the slide sideways.
+        const { tilt } = player.plankRide.plank.state
+        player.slideVx = player.slideSpeed * Math.cos(tilt) * Math.sign(tilt)
+        player.velocity.x = input + player.slideVx
+        player.slideSpeed = 0
+        player.plankRide = null
+        return
+    }
+    let plank = player.plankRide?.plank ?? null
+    let landed = false
+    if (!plank) {
+        const next = { x: feet.x + player.velocity.x, y: feet.y + player.velocity.y + player.gravity }
+        for (const candidate of tumblingPlanks) {
+            if (lib.landsOnPlank(candidate.state.path, candidate.state.frame, feet, next)) {
+                plank = candidate
+                landed = true
+                break
+            }
+        }
+    }
+    if (!plank) {
+        if (player.isGrounded) player.slideSpeed = player.slideVx = 0
+        return
+    }
+    const { tilt } = plank.state
+    const sign = Math.sign(tilt)
+    const along = lib.slideStep(landed ? 0 : player.slideSpeed, tilt, Math.sign(input))
+    const sliding = along > 0
+    // His speed on screen: the slide, or (standing) his own run.
+    const vx = sliding ? along * Math.cos(tilt) * sign : 0
+    const yAt = x => lib.surfaceYAt(plank.state.path, plank.state.frame, x)
+    const nextX = feet.x + (sliding ? vx : input)
+    if (yAt(nextX) == null) {
+        // Off the end (or the wood turned out from under him): in the air at the slide's speed.
+        player.plankRide = null
+        player.slideSpeed = 0
+        player.slideVx = vx
+        player.velocity.x = sliding ? vx : input
+        player.velocity.y = sliding ? along * Math.abs(Math.sin(tilt)) : 0
+        return
+    }
+    player.plankRide = { plank, yAt }
+    player.slideSpeed = along
+    player.slideVx = 0
+    if (sliding) player.velocity.x = vx
+    player.velocity.y = 0
+    player.isGrounded = true
+}
+
+/**
  * Steps each Crumbling Shelf one frame: the King landing on one starts its
  * countdown, and one that is falling carries him and a resting Bomb down with
  * it (a Bomb that goes out of sight with it is gone without blowing up).
@@ -681,6 +758,8 @@ function reachCheckpoints() {
 function respawnKing() {
     player.setPosition(respawnPoint ?? levels[level].playerPosition)
     crumblingShelves.forEach(shelf => shelf.reset())
+    player.plankRide = null
+    player.slideSpeed = player.slideVx = 0
     player.velocity.x = 0
     player.velocity.y = 0
 }
@@ -1580,6 +1659,7 @@ function animate() {
         helixPlatforms.forEach(platform => platform.step())
         tumblingFrame++
         tumblingPlanks.forEach(platform => platform.step(tumblingFrame))
+        stepTumblingPlanks()
         stepCrumblingShelves()
     }
     crumblingShelves.forEach(shelf => shelf.draw())

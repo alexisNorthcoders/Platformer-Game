@@ -13,9 +13,10 @@ deep and beside a row-5 one 3. Every transition, and the reason it works:
   1-tile battlement                jump: 64 px < 100 px
   Ferry, Elevator                  docks 4-14 map px (8-28 world px) < 55 px hitbox
   Tumbling Plank over 4 tiles      the plank is 100 map px in a 128 map px ditch, so
-                                   14 map px (28 world px) either side: walk on while it
-                                   is within 25 degrees of flat (a 1.1 s window every
-                                   4 s at 8 s a turn), 200 px in about 0.85 s at 4 px/frame
+                                   14 map px (28 world px) either side: the King can't fall
+                                   through its top face, he stands within 25 degrees of
+                                   flat and slides down it (and can jump) when it tilts;
+                                   200 px in about 0.85 s at 4 px/frame
   tower to the street              walk off the ledge: a 4-row drop
 
 Run from the repo root:  python3 tools/levels/level_24.py   (needs Pillow)

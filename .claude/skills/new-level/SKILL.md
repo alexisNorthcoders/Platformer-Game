@@ -34,7 +34,7 @@ Every number this skill relies on (tile sizes, the King's jump, object offsets, 
 6. **Play it in the browser** with `node tools/play.mjs --level N --file tools/level-checks.js` (headless Chromium; recipe in REFERENCE.md). It checks each of these:
    - Under `weather`, the same keys with and without it leave the King in the same place with the same hearts (a Storm's flashes also stay at or under 35% white).
    - The King rides every Moving Platform and Rotating Platform plank, with his feet gap staying about 0.
-   - Each Tumbling Plank holds the King for its whole window of flat, drops him past it, lets him through on end, and a keys-only crossing from the ledge before it works.
+   - Each Tumbling Plank: standing still from flat the King slides off its low end before 80° and is never below the face; a fall onto it at 0°, 30° and 60° lands on the tilted face; a jump from mid-slide works; and a keys-only crossing from the ledge before it works (§3d).
    - He stands on every Helix Platform's hub for a whole turn, and drops from near a blade's tip as the blades turn in.
    - Each Crumbling Shelf shakes and drops 2 s after the King lands on it (even if he hops off), comes back about 3 s later, and is whole after a respawn.
    - A fall into the pit costs one heart and respawns him at the last checkpoint.

@@ -44,8 +44,8 @@ class Layout:
     # rotor, reaching `radius` each side as they point across the view.
     helix_platforms: list = field(default_factory=list)
     # Tumbling Planks: dict(x, y, period, phase, direction). (x, y) is the middle of the
-    # plank's surface top, map px: the point it turns round, end over end, in the plane
-    # of the screen. It is flat twice a turn and standable within +-25 degrees of flat
+    # plank's surface top, map px: it turns end over end, in the plane
+    # of the screen. It is flat twice a turn; the King stands within 25 degrees of flat and slides on it when more tilted
     # (js/tumblingPlank.mjs). Drawn in code, so not on the level image.
     tumbling_planks: list = field(default_factory=list)
     # Crumbling Shelves: (col, row) tiles; the shelf's surface is the top of the tile
