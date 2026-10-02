@@ -1185,13 +1185,13 @@ function drawSky() {
     if (!sky || !backdrop) return
     if (far) {
         far.position.x = camera.x
-        far.position.y = camera.y
+        far.position.y = isTower() ? camera.y : 0
         far.draw(2)
     }
     // A Storm's bolt comes down in the sky behind the clouds and the skyline, in front of the far layer only.
     drawBolt()
     sky.position.x = camera.x - Math.round(camera.x * backdrop.parallax)
-    sky.position.y = camera.y - Math.round(camera.y * backdrop.parallax)
+    sky.position.y = isTower() ? camera.y - Math.round(camera.y * backdrop.parallax) : 0
     sky.draw(2)
     drawSkylineRim(sky.position.x)
 }
