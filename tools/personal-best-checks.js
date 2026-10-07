@@ -50,7 +50,7 @@ try {
 
     await play(N)
     levelTimer.start(clock)
-    report.hud = { ok: ghostRunStore.personalBest(N) === 5000 && stored() === 5000 && newBestFlash === false }
+    report.hud = { ok: ghostRunStore.personalBest(N, currentLevelFingerprint()) === 5000 && stored() === 5000 && newBestFlash === false }
     report.slower = { flashed: clearIn(7000), best: stored() }
     report.slower.ok = report.slower.flashed === false && report.slower.best === 5000
 
