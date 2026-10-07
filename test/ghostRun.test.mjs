@@ -50,3 +50,9 @@ test('extra fields are stored and read back; corrupt records read as none', () =
     assert.equal(store.personalBest(4), null)
     assert.equal(store.save(4, 100), true)
 })
+
+test('a zero, negative or non-finite time is never saved', () => {
+    const store = createGhostRunStore(memoryStorage())
+    for (const bad of [0, -5, NaN, Infinity, undefined]) assert.equal(store.save(1, bad), false)
+    assert.equal(store.personalBest(1), null)
+})

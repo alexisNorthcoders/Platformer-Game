@@ -11,9 +11,16 @@ performance.now = () => clock
 const keyOf = n => `kings-and-pigs:ghost-run:level-${n}`
 const stored = () => ghostRunStore.personalBest(N)
 
+/** A store that rereads the cleared storage (the real one caches what it has read). */
+async function reloadStore() {
+    const { createGhostRunStore } = await import('/kings-and-pigs/js/ghostRun.mjs')
+    globalThis.ghostRunStore = createGhostRunStore(localStorage)
+}
+
 /** Fresh run of the level with an empty store; the clock starts at the timer. */
 async function fresh() {
     localStorage.clear()
+    await reloadStore()
     await play(N)
     levelTransitioning = false
     clock += 1000

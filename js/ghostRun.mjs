@@ -10,13 +10,20 @@ const KEY_PREFIX = 'kings-and-pigs:ghost-run:level-'
 export function createGhostRunStore(storage) {
     const keyFor = level => `${KEY_PREFIX}${level}`
 
+    // Parsed records by level, so the HUD can ask every frame; save() keeps it current.
+    const cache = new Map()
+
     function read(level) {
+        if (cache.has(level)) return cache.get(level)
+        let record = null
         try {
-            const record = JSON.parse(storage.getItem(keyFor(level)))
-            return Number.isFinite(record?.timeMs) ? record : null
+            record = JSON.parse(storage.getItem(keyFor(level)))
         } catch {
-            return null
+            // Unreadable: treated as no record.
         }
+        if (!Number.isFinite(record?.timeMs)) record = null
+        cache.set(level, record)
+        return record
     }
 
     return {
@@ -31,13 +38,16 @@ export function createGhostRunStore(storage) {
          * it is faster. Returns true when this save set a new Personal Best.
          */
         save(level, timeMs, extra = {}) {
+            if (!Number.isFinite(timeMs) || timeMs <= 0) return false
             const best = read(level)
             if (best && best.timeMs <= timeMs) return false
+            const record = { ...extra, timeMs }
             try {
-                storage.setItem(keyFor(level), JSON.stringify({ ...extra, timeMs }))
+                storage.setItem(keyFor(level), JSON.stringify(record))
             } catch {
-                return false
+                // Storage full or blocked: the best lasts until the page closes.
             }
+            cache.set(level, record)
             return true
         },
     }
