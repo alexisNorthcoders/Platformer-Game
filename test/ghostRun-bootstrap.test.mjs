@@ -8,6 +8,6 @@ test('ghostRun-bootstrap puts the store on globalThis.ghostRunStore', async () =
     assert.ok(store)
     assert.equal(typeof store.save, 'function')
     assert.equal(typeof store.personalBest, 'function')
-    assert.equal(store.save(1, 1234), true)
-    assert.equal(store.personalBest(1), 1234)
+    assert.equal(store.save(1, 1234, 'abc'), true)
+    assert.equal(store.personalBest(1, 'abc'), 1234)
 })

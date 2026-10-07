@@ -353,7 +353,9 @@ function createCannon(positions) {
 }
 
 async function createAssets(level, options = {}) {
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, levelHeight, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = await loadAssets(level, 2)
+    const assets = await loadAssets(level, 2)
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, levelHeight, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = assets
+    levelFingerprints.set(level, levelFingerprint(assets, levels[level]))
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
     const parsedCollisions = collisions.parse2D(mapColumns)

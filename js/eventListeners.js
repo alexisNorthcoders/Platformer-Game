@@ -14,7 +14,7 @@ function enterDoor() {
     const now = performance.now()
     levelTimer.stop(now)
     // Any clear counts toward the Personal Best, whatever hearts were lost.
-    newBestFlash = ghostRunStore.save(level, levelTimer.elapsed(now))
+    newBestFlash = ghostRunStore.save(level, levelTimer.elapsed(now), currentLevelFingerprint())
     player.switchSprite('enterDoor')
     // Nothing goes off or carries over while the King walks through.
     bombLib.clearBombs(bombs)

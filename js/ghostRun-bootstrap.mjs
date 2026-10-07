@@ -1,4 +1,4 @@
-import { createGhostRunStore } from './ghostRun.mjs'
+import { createGhostRunStore, levelFingerprint } from './ghostRun.mjs'
 
 let storage = null
 try {
@@ -15,3 +15,4 @@ if (!storage) {
 }
 
 globalThis.ghostRunStore = createGhostRunStore(storage)
+globalThis.levelFingerprint = levelFingerprint

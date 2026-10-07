@@ -413,9 +413,28 @@ function drawFramedLevelPreview(rect) {
     c.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
 }
 
+/** Fingerprints (ghostRun.mjs) by level number, filled as levels load or are looked at in the menu. */
+const levelFingerprints = new Map()
+
+/** The level's fingerprint, or undefined while it is still being read (the Level Preview asks every frame). */
+function levelFingerprintOf(n) {
+    if (!levelFingerprints.has(n)) {
+        levelFingerprints.set(n, undefined)
+        loadAssets(n, 2).then(assets => {
+            if (assets && !Array.isArray(assets)) levelFingerprints.set(n, levelFingerprint(assets, levels[n]))
+            else levelFingerprints.delete(n)
+        }, () => levelFingerprints.delete(n))
+    }
+    return levelFingerprints.get(n)
+}
+
+function currentLevelFingerprint() {
+    return levelFingerprints.get(level)
+}
+
 /** The selected level's Personal Best over the Level Preview, `--:--:--` when it has none. */
 function drawPreviewBest(at) {
-    const best = ghostRunStore.personalBest(selectedLevel)
+    const best = ghostRunStore.personalBest(selectedLevel, levelFingerprintOf(selectedLevel))
     const text = `BEST ${best === null ? '--:--:--' : formatLevelTime(best)}`
     c.font = menuArt.pixelFont(16)
     c.textAlign = 'center'
@@ -1849,7 +1868,7 @@ function drawLevelTimer() {
     const text = formatLevelTime(levelTimer.elapsed(performance.now()))
     c.strokeText(text, canvas.width / 2, 16)
     c.fillText(text, canvas.width / 2, 16)
-    const best = ghostRunStore.personalBest(level)
+    const best = ghostRunStore.personalBest(level, currentLevelFingerprint())
     if (best !== null) {
         c.font = 'bold 16px monospace'
         const pbText = `PB ${formatLevelTime(best)}`
