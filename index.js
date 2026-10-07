@@ -1767,6 +1767,7 @@ function animate() {
         })
     }
 
+    drawGhostKing()
     player.draw(2);
     updateAndDrawBombs()
     if (diamonds) {
@@ -1778,6 +1779,7 @@ function animate() {
         });
     }
     player.update();
+    recordGhostFrame()
     advanceDeath()
     reachCheckpoints()
     checkLongFall()
@@ -1853,9 +1855,46 @@ function advanceDeath() {
 
 // Starts from 0; if Escape opened the menu mid-transition, start paused.
 function startLevelTimer() {
+    ghostRecorder.clear()
     const now = performance.now()
     levelTimer.start(now)
     if (gameState !== 'playing') levelTimer.pause(now)
+}
+
+/** Records the King while the level timer runs (#130). */
+function recordGhostFrame() {
+    const now = performance.now()
+    if (!levelTimer.isRunning()) return
+    ghostRecorder.record(levelTimer.elapsed(now), {
+        x: player.position.x,
+        y: player.position.y,
+        key: player.animationKey(),
+        frame: player.currentFrame,
+        flip: player.flip,
+    })
+}
+
+let ghostPlayed = { record: null, frames: [] }
+
+/** The Ghost King (#130): the Personal Best run, drawn pale just before the King. */
+function drawGhostKing() {
+    if (levelTransitioning || player._restarting) return
+    const record = ghostRunStore.get(level, currentLevelFingerprint())
+    if (!record?.run) return
+    if (ghostPlayed.record !== record) ghostPlayed = { record, frames: ghostPlayback.unpackRun(record.run) }
+    const f = ghostPlayback.ghostFrameAt(ghostPlayed.frames, levelTimer.elapsed(performance.now()), record.timeMs)
+    const anim = f && player.animations[f.key]
+    if (!anim?.image?.complete || !anim.image.naturalWidth) return
+    const width = anim.image.naturalWidth / anim.frameRate
+    const height = anim.image.naturalHeight
+    const offset = (anim.flipOffsetX || 0) * 2
+    c.save()
+    c.globalAlpha = 0.35
+    c.filter = 'saturate(0.4) hue-rotate(160deg) brightness(1.4)'
+    if (f.flip) c.scale(-1, 1)
+    c.drawImage(anim.image, width * f.frame, 0, width, height,
+        f.flip ? -f.x - width * 2 - offset : f.x, f.y, width * 2, height * 2)
+    c.restore()
 }
 
 function drawLevelTimer() {

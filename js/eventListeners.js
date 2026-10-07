@@ -12,9 +12,11 @@ function enterDoor() {
     player.preventInput = true
     levelTransitioning = true
     const now = performance.now()
+    recordGhostFrame() // the clear itself, while the timer still runs
     levelTimer.stop(now)
     // Any clear counts toward the Personal Best, whatever hearts were lost.
-    newBestFlash = ghostRunStore.save(level, levelTimer.elapsed(now), currentLevelFingerprint())
+    newBestFlash = ghostRunStore.save(level, levelTimer.elapsed(now), currentLevelFingerprint(),
+        { run: ghostPlayback.packRun(ghostRecorder.frames()) })
     player.switchSprite('enterDoor')
     // Nothing goes off or carries over while the King walks through.
     bombLib.clearBombs(bombs)
