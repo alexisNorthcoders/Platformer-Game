@@ -19,7 +19,7 @@
  * requestAnimationFrame is switched off, so the game only moves when a script
  * steps it: step(n) runs n frames. Frames are deterministic between calls.
  * Helpers in the page: step(n), hold(key, frames) for 'a' | 'd' | 'w' | 'space'
- * | 's', and play(level). Set CHROMIUM to pick a browser binary.
+ * | 's', and play(level). Set CHROMIUM to pick a browser binary (CI adds --no-sandbox).
  */
 
 import { spawn } from 'node:child_process'
@@ -89,7 +89,10 @@ async function launchChromium(profile) {
     const binary = process.env.CHROMIUM ?? 'chromium'
     const proc = spawn(binary, [
         '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
-        '--mute-audio', '--autoplay-policy=no-user-gesture-required', '--window-size=1100,700', 'about:blank',
+        '--mute-audio', '--autoplay-policy=no-user-gesture-required', '--window-size=1100,700',
+        // CI runners restrict the unprivileged user namespaces Chrome's sandbox needs.
+        ...(process.env.CI ? ['--no-sandbox'] : []),
+        'about:blank',
     ], { stdio: ['ignore', 'ignore', 'pipe'] })
     const wsUrl = await new Promise((resolve, reject) => {
         let log = ''
