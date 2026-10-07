@@ -422,8 +422,8 @@ function levelFingerprintOf(n) {
         levelFingerprints.set(n, undefined)
         loadAssets(n, 2).then(assets => {
             if (assets && !Array.isArray(assets)) levelFingerprints.set(n, levelFingerprint(assets, levels[n]))
-            else levelFingerprints.delete(n)
-        }, () => levelFingerprints.delete(n))
+            else levelFingerprints.set(n, null) // unreadable: no Personal Best, and no refetch every frame
+        }, () => levelFingerprints.set(n, null))
     }
     return levelFingerprints.get(n)
 }
