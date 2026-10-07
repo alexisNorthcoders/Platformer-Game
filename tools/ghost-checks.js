@@ -40,7 +40,9 @@ try {
     const without = walk() // no record yet, so no ghost
 
     await fresh()
-    run(60)
+    run(30)
+    player.attack()
+    run(30)
     clock += 16
     doorClosed = false
     player.preventInput = false
@@ -48,7 +50,7 @@ try {
     player.hitbox.position.y = doors[0].position.y + 2
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))
     const raw = JSON.parse(localStorage.getItem(keyOf(N)))
-    report.saved = { bytes: JSON.stringify(raw).length, ok: !!raw?.run?.d?.length && JSON.stringify(raw).length < 60000 }
+    report.saved = { bytes: JSON.stringify(raw).length, ok: raw?.run?.keys.every(k => typeof k === 'string') && raw.run.keys.some(k => k.startsWith('attack')) && !!raw.run.d.length && JSON.stringify(raw).length < 60000 }
 
     // With the ghost.
     await fresh()

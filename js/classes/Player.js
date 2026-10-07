@@ -310,9 +310,9 @@ class Player extends Sprite {
         }
     }
 
-    /** Name of the animation playing (a key of `animations`). */
+    /** Name of the sheet showing (a key of `animations`), though attacks and death swap in a callback object as currentAnimation. */
     animationKey() {
-        return Object.keys(this.animations).find(key => this.animations[key] === this.currentAnimation)
+        return this.spriteKey ?? 'idleRight'
     }
 
     switchSprite(name) {
@@ -325,6 +325,7 @@ class Player extends Sprite {
             this.frameBuffer = anim.frameBuffer
             this.loop = anim.loop
             this.currentAnimation = anim
+            this.spriteKey = name
             this.flip = anim.flip || false
             this.flipOffsetX = anim.flipOffsetX || 0
         }

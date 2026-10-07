@@ -16,6 +16,7 @@ export function createGhostRecorder() {
         },
         /** Records the King at `elapsedMs`; a frame identical to the last one is dropped. */
         record(elapsedMs, { x, y, key, frame, flip }) {
+            if (typeof key !== 'string') return
             x = Math.round(x)
             y = Math.round(y)
             flip = Boolean(flip)

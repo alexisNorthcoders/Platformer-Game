@@ -27,6 +27,12 @@ test('consecutive identical frames are dropped, a change in any field keeps one'
     assert.equal(rec.frames().length, 1 + 8)
 })
 
+test('a frame without an animation key is not recorded', () => {
+    const rec = createGhostRecorder()
+    rec.record(0, pose({ key: undefined }))
+    assert.deepEqual(rec.frames(), [])
+})
+
 test('clear forgets the run', () => {
     const rec = createGhostRecorder()
     rec.record(0, pose())
