@@ -41,7 +41,8 @@ async function checkLevel(n) {
         const { stdout } = await run(process.execPath, [
             path.join(ROOT, 'tools/play.mjs'), '--level', String(n), '--file', path.join(ROOT, 'tools/level-checks.js'),
         ], { cwd: ROOT, maxBuffer: 16 * 1024 * 1024 })
-        const report = JSON.parse(stdout)
+        // play.mjs may print other lines (e.g. "saved ...") before the pretty-printed report
+        const report = JSON.parse(stdout.slice(stdout.search(/^\{/m)))
         const failed = failedChecks(report)
         return { n, failed, error: report.ok || failed.length ? null : 'report not ok' }
     } catch (err) {
