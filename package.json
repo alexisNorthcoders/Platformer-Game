@@ -5,6 +5,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "level-checks": "node tools/level-checks.mjs",
     "test": "node --test 'test/**/*.test.mjs'"
   }
 }
