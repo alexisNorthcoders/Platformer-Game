@@ -7,6 +7,7 @@
 const N = level
 const report = {}
 const realNow = performance.now.bind(performance)
+const realDraw = c.drawImage
 let clock = 100000
 performance.now = () => clock
 const keyOf = n => `kings-and-pigs:ghost-run:level-${n}`
@@ -55,7 +56,7 @@ try {
     // With the ghost.
     await fresh()
     let drawn = 0
-    const draw = c.drawImage.bind(c)
+    const draw = realDraw.bind(c)
     c.drawImage = (...a) => { if (c.globalAlpha === 0.35) drawn++; return draw(...a) }
     const withGhost = walk()
     c.drawImage = draw
@@ -73,6 +74,7 @@ try {
     report.same = { withGhost, without, ok: JSON.stringify(withGhost) === JSON.stringify(without) }
 } finally {
     performance.now = realNow
+    c.drawImage = realDraw
     localStorage.clear()
 }
 
