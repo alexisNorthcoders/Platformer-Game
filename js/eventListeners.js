@@ -1,4 +1,4 @@
-// doorEntry and levelTimer are globals set by their *-bootstrap.mjs modules,
+// doorEntry, levelTimer and ghostRunStore are globals set by their *-bootstrap.mjs modules,
 // loaded before this script in index.html; bombLib and bombs come from
 // index.js. Shared by keyboard ↑ and the touch
 // controller's Enter button (touchControls-bootstrap.mjs).
@@ -11,7 +11,10 @@ function enterDoor() {
     player.velocity.y = 0
     player.preventInput = true
     levelTransitioning = true
-    levelTimer.stop(performance.now())
+    const now = performance.now()
+    levelTimer.stop(now)
+    // Any clear counts toward the Personal Best, whatever hearts were lost.
+    newBestFlash = ghostRunStore.save(level, levelTimer.elapsed(now))
     player.switchSprite('enterDoor')
     // Nothing goes off or carries over while the King walks through.
     bombLib.clearBombs(bombs)

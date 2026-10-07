@@ -32,6 +32,8 @@ let selectedLevel = 1
 let pauseMenuFromPlaying = false
 /** True from entering the door until the next level's fade-in completes. */
 let levelTransitioning = false
+/** True from a record clear through the Door until the next level starts: the HUD flashes NEW BEST!. */
+let newBestFlash = false
 /** Diamond and Pig counts on entering the current level, for Restart Level. */
 let levelEntryCounts = { diamonds: 0, pigs: 0 }
 
@@ -177,6 +179,7 @@ const player = new Player({
                             LevelProgressKeys.clearAll()
                         }
                         levelTimer.reset()
+                        newBestFlash = false
                         bombLib.clearBombs(bombs)
                         bossBombs.length = 0
                         await initLevel(level)
@@ -1478,6 +1481,7 @@ function resetSession() {
     flow.clearHeldInputKeys(keys)
     flow.resetPlayerForNewLevelRun(player)
     levelTimer.reset()
+    newBestFlash = false
     resetHearts()
     EnemyTracker.resetSession()
     enemyNumberSprite = createNumberSprites(EnemyTracker.getEnemyCount(), { x: 50, y: 80 })
@@ -1831,6 +1835,20 @@ function drawLevelTimer() {
     const text = formatLevelTime(levelTimer.elapsed(performance.now()))
     c.strokeText(text, canvas.width / 2, 16)
     c.fillText(text, canvas.width / 2, 16)
+    const best = ghostRunStore.personalBest(level)
+    if (best !== null) {
+        c.font = 'bold 16px monospace'
+        const pbText = `PB ${formatLevelTime(best)}`
+        c.lineWidth = 3
+        c.strokeText(pbText, canvas.width / 2, 46)
+        c.fillText(pbText, canvas.width / 2, 46)
+    }
+    if (newBestFlash) {
+        c.font = 'bold 20px monospace'
+        c.fillStyle = '#ffd84a'
+        c.strokeText('NEW BEST!', canvas.width / 2, 68)
+        c.fillText('NEW BEST!', canvas.width / 2, 68)
+    }
     c.restore()
 }
 
