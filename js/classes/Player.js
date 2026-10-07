@@ -310,6 +310,11 @@ class Player extends Sprite {
         }
     }
 
+    /** Name of the animation playing (a key of `animations`). */
+    animationKey() {
+        return Object.keys(this.animations).find(key => this.animations[key] === this.currentAnimation)
+    }
+
     switchSprite(name) {
         const anim = this.animations[name]
         if (!this.hitCooldown || this.dead) {
