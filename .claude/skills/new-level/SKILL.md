@@ -43,6 +43,8 @@ Every number this skill relies on (tile sizes, the King's jump, object offsets, 
    - Every Pig is still on its island after about 900 frames.
    - The camera is a whole number at the far end of the map, and the sky still covers the view there.
 
+   `npm run level-checks` runs these checks on every open-air level (those with Checkpoints and a backdrop in `config/levels.js`), prints one line per level naming any failing checks, and exits 1 if any fail (about 30-60 s a level); `npm run level-checks -- --level N` runs one. It honours `CHROMIUM`.
+
    Then script a crossing, keys only, of every new or unusual ride (such as a Rotating Platform), and take `--shot` screenshots along the route and look at them. Done when every check passes and the screenshots match the layout.
 
 7. **Run `npm test`** and hand over. Add the new `img/Level N.png` size to the Level Preview sizes in `test/menuGeometry.test.mjs`. In the PR, list the route, and close the issue if there was one (`Closes #n`). Say which checks were scripted and which still need a human to play through, and leave the "played by hand" box unticked until someone has.
