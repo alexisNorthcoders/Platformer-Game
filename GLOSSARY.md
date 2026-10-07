@@ -157,3 +157,13 @@ _Avoid_: Thunderstorm, lightning (for the whole Weather)
 **Puddle**:
 Standing rainwater on an island's bricks or a Moving Platform's plank, rippling where drops land. Purely for looks: it is never slippery.
 _Avoid_: Pool, pond
+
+### Records
+
+**Personal Best**:
+The fastest time the King has cleared a level in on this device, going through its Door. It is shown on the HUD as PB. Losing the last heart or Quit to Title never sets one, and changing a level's layout clears its Personal Best.
+_Avoid_: PB (except on the HUD), record, high score
+
+**Ghost King**:
+A see-through King replaying a level's Personal Best run alongside the King, in step with the level timer. It is only drawn and never touches anything.
+_Avoid_: Ghost (on its own), shadow, replay
