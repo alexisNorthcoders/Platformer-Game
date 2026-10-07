@@ -428,8 +428,9 @@ function levelFingerprintOf(n) {
     return levelFingerprints.get(n)
 }
 
+/** createAssets() sets it before play starts; if it hasn't, this starts the read like the preview does. */
 function currentLevelFingerprint() {
-    return levelFingerprints.get(level)
+    return levelFingerprintOf(level)
 }
 
 /** The selected level's Personal Best over the Level Preview, `--:--:--` when it has none. */
