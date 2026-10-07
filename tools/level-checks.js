@@ -80,30 +80,30 @@ for (const [i, platform] of movingPlatforms.entries()) {
     // On a tall map rides stack in one shaft: wait until no other ride is within 90 px of this one's surface.
     const crowded = () => movingPlatforms.some((other, j) => j !== i &&
         Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200)
-    // A neighbour sweeping through mid-ride shoves or steals the King, which says nothing about this ride:
-    // a failed ride with a neighbour in range is run again from a clear start. One with no neighbour is a real failure.
-    let result
-    for (let attempt = 0; attempt < 6; attempt++) {
-        for (let f = 0; f < 3000 && crowded(); f++) step(1)
-        const surface = platform.surface()
-        player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
-        player.velocity.x = 0
-        player.velocity.y = 0
-        const offset = player.position.x - platform.state.x
-        const heartsBefore = player.hitpoints
-        let interfered = false
-        for (let f = 0; f < 100; f++) {
-            step(1)
-            interfered ||= crowded()
-        }
-        const gap = player.position.y + FEET - platform.state.y
-        const drift = player.position.x - platform.state.x - offset
-        const ok = Math.abs(gap) < 1 && Math.abs(drift) < 2
-        result = { i, ok, gap: +gap.toFixed(3), drift: +drift.toFixed(3), lostHeart: player.hitpoints < heartsBefore }
-        player.hitpoints = heartsBefore
-        if (ok || !interfered) break
-        result.interfered = attempt + 1
+    // One measurement per platform, from a clear start. If a neighbour sweeps through mid-ride, the result
+    // is kept as measured and the neighbours are named, so a failure is told apart from a real one.
+    for (let f = 0; f < 3000 && crowded(); f++) step(1)
+    const surface = platform.surface()
+    player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
+    player.velocity.x = 0
+    player.velocity.y = 0
+    const offset = player.position.x - platform.state.x
+    const heartsBefore = player.hitpoints
+    const neighbours = new Set()
+    for (let f = 0; f < 100; f++) {
+        step(1)
+        movingPlatforms.forEach((other, j) => {
+            if (j !== i && Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200) neighbours.add(j)
+        })
     }
+    const gap = player.position.y + FEET - platform.state.y
+    const drift = player.position.x - platform.state.x - offset
+    const ok = Math.abs(gap) < 1 && Math.abs(drift) < 2
+    const result = { i, ok, gap: +gap.toFixed(3), drift: +drift.toFixed(3), lostHeart: player.hitpoints < heartsBefore }
+    if (!ok && neighbours.size) result.failure = 'interfered by neighbour'
+    else if (!ok) result.failure = 'ride'
+    if (neighbours.size) result.neighbours = [...neighbours]
+    player.hitpoints = heartsBefore
     report.rides.platforms.push(result)
     if (!result.ok) report.rides.ok = false
 }
