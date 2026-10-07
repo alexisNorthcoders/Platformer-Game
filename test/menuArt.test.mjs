@@ -112,3 +112,12 @@ test('waitForPixelFont: gives up after the timeout so the game still starts', as
 test('waitForPixelFont: false without a FontFaceSet', async () => {
     assert.equal(await waitForPixelFont(undefined), false)
 })
+
+test('Title Screen Personal Best line sits inside the Level Preview, centred', () => {
+    const { preview, previewBest } = TITLE_SCREEN
+    // "BEST --:--:--" is 13 glyphs at the 16px pixel font.
+    const halfWidth = (13 * 16) / 2
+    assert.equal(previewBest.x, preview.x + preview.w / 2)
+    assert.ok(previewBest.x - halfWidth >= preview.x && previewBest.x + halfWidth <= preview.x + preview.w)
+    assert.ok(previewBest.y - 8 >= preview.y && previewBest.y + 8 <= preview.y + preview.h)
+})

@@ -13,6 +13,8 @@
 export const TITLE_SCREEN = {
     // 16:9 like the level images; its frame runs 20px outside it.
     preview: { x: 52, y: 116, w: 448, h: 252 },
+    // Personal Best line, centred along the bottom edge inside the Level Preview.
+    previewBest: { x: 276, y: 344 },
     panel: { x: 544, y: 96, w: 448, h: 292 },
     // "LEVEL" caption above the selector, centred on the panel.
     levelCaption: { x: 768, y: 176 },
