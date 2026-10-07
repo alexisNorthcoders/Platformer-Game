@@ -45,7 +45,9 @@ export function createGhostRunStore(storage) {
             try {
                 storage.setItem(keyFor(level), JSON.stringify(record))
             } catch {
-                // Storage full or blocked: the best lasts until the page closes.
+                // Storage full or blocked: nothing was persisted, so don't claim a best.
+                cache.delete(level)
+                return false
             }
             cache.set(level, record)
             return true

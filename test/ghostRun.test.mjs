@@ -56,3 +56,10 @@ test('a zero, negative or non-finite time is never saved', () => {
     for (const bad of [0, -5, NaN, Infinity, undefined]) assert.equal(store.save(1, bad), false)
     assert.equal(store.personalBest(1), null)
 })
+
+test('a failed write is not cached or reported as a record', () => {
+    const storage = { getItem: () => null, setItem: () => { throw new Error('full') } }
+    const store = createGhostRunStore(storage)
+    assert.equal(store.save(1, 5000), false)
+    assert.equal(store.personalBest(1), null)
+})

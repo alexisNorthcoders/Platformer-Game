@@ -7,9 +7,12 @@ const N = level
 const report = {}
 const realNow = performance.now.bind(performance)
 let clock = 100000
-performance.now = () => clock
+performance.now = () => clock // the Door handler in eventListeners.js calls performance.now() too
 const keyOf = n => `kings-and-pigs:ghost-run:level-${n}`
-const stored = () => ghostRunStore.personalBest(N)
+const stored = () => {
+    const raw = localStorage.getItem(keyOf(N))
+    return raw === null ? null : JSON.parse(raw).timeMs
+}
 
 /** A store that rereads the cleared storage (the real one caches what it has read). */
 async function reloadStore() {
@@ -43,11 +46,11 @@ try {
     await fresh()
     report.first = { flashed: clearIn(5000), best: stored() }
     report.first.ok = report.first.flashed === true && report.first.best === 5000
-    report.persisted = { ok: JSON.parse(localStorage.getItem(keyOf(N))).timeMs === 5000 }
+    report.persisted = { ok: stored() === 5000 }
 
     await play(N)
     levelTimer.start(clock)
-    report.hud = { ok: ghostRunStore.personalBest(N) === 5000 && newBestFlash === false }
+    report.hud = { ok: ghostRunStore.personalBest(N) === 5000 && stored() === 5000 && newBestFlash === false }
     report.slower = { flashed: clearIn(7000), best: stored() }
     report.slower.ok = report.slower.flashed === false && report.slower.best === 5000
 
@@ -62,12 +65,14 @@ try {
 
     await fresh()
     clock += 2000
+    report.deathBefore = { ok: stored() === null }
     while (!player.dead) player.loseHP()
     step(5)
     report.death = { best: stored(), ok: stored() === null }
 
     await fresh()
     clock += 2000
+    report.quitBefore = { ok: stored() === null }
     const paused = handleEscapeMenu() && pauseMenuFromPlaying
     handlePauseMenuTarget('quit')
     report.quit = { paused, best: stored(), gameState, ok: paused && !pauseMenuFromPlaying && gameState === 'menu' && stored() === null }
