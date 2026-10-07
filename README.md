@@ -19,3 +19,11 @@
 ![JavaScript platformer game](platformer.gif)
 
 Play the game: https://alexisraspberry.duckdns.org/kings-and-pigs/
+
+## Running tests
+
+```
+npm test
+```
+
+The unit tests need Node 22 or newer (`engines.node` in `package.json`). There are no dependencies to install. GitHub Actions runs the same command on Node 22 for every push to `main` and every pull request.
