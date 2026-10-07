@@ -413,6 +413,19 @@ function drawFramedLevelPreview(rect) {
     c.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, rect.x, rect.y, rect.w, rect.h)
 }
 
+/** The selected level's Personal Best over the Level Preview, `--:--:--` when it has none. */
+function drawPreviewBest(at) {
+    const best = ghostRunStore.personalBest(selectedLevel)
+    const text = `BEST ${best === null ? '--:--:--' : formatLevelTime(best)}`
+    c.font = menuArt.pixelFont(16)
+    c.textAlign = 'center'
+    c.textBaseline = 'middle'
+    c.lineWidth = 4
+    c.strokeStyle = '#000000'
+    c.strokeText(text, at.x, at.y)
+    drawMenuText(text, at.x, at.y, 16, '#f5f0e6')
+}
+
 function refreshMenuPreview() {
     menuPreviewSprite = new Sprite({
         position: { x: 0, y: 0 },
@@ -1262,6 +1275,7 @@ function drawTitleScreen() {
     drawMenuBackdrop()
     drawTitleScene()
     drawFramedLevelPreview(layout.preview)
+    drawPreviewBest(layout.previewBest)
     drawBrickPanel(layout.panel)
     menuTitleSprite.draw(2)
 
