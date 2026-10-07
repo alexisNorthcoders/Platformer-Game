@@ -80,6 +80,8 @@ for (const [i, platform] of movingPlatforms.entries()) {
     // On a tall map rides stack in one shaft: wait until no other ride is within 90 px of this one's surface.
     const crowded = () => movingPlatforms.some((other, j) => j !== i &&
         Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200)
+    // One measurement per platform, from a clear start. If a neighbour sweeps through mid-ride, the result
+    // is kept as measured and the neighbours are named, so a failure is told apart from a real one.
     for (let f = 0; f < 3000 && crowded(); f++) step(1)
     const surface = platform.surface()
     player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
@@ -87,13 +89,23 @@ for (const [i, platform] of movingPlatforms.entries()) {
     player.velocity.y = 0
     const offset = player.position.x - platform.state.x
     const heartsBefore = player.hitpoints
-    step(100)
+    const neighbours = new Set()
+    for (let f = 0; f < 100; f++) {
+        step(1)
+        movingPlatforms.forEach((other, j) => {
+            if (j !== i && Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200) neighbours.add(j)
+        })
+    }
     const gap = player.position.y + FEET - platform.state.y
     const drift = player.position.x - platform.state.x - offset
     const ok = Math.abs(gap) < 1 && Math.abs(drift) < 2
-    report.rides.platforms.push({ i, ok, gap: +gap.toFixed(3), drift: +drift.toFixed(3), lostHeart: player.hitpoints < heartsBefore })
-    if (!ok) report.rides.ok = false
+    const result = { i, ok, gap: +gap.toFixed(3), drift: +drift.toFixed(3), lostHeart: player.hitpoints < heartsBefore }
+    if (!ok && neighbours.size) result.failure = 'interfered by neighbour'
+    else if (!ok) result.failure = 'ride'
+    if (neighbours.size) result.neighbours = [...neighbours]
     player.hitpoints = heartsBefore
+    report.rides.platforms.push(result)
+    if (!result.ok) report.rides.ok = false
 }
 
 // 3b. Each Helix Platform: the King stands on its hub for a whole turn, and
