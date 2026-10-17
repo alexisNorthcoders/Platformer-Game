@@ -59,7 +59,15 @@ class BoxPig extends Enemy {
     }
 
     update() {
-        this.breakPieces.forEach(piece => piece.update())
+        if (!this.loaded) {
+            // Faded out after the shared death step: nothing left to update or draw.
+            this.breakPieces.length = 0
+            return
+        }
+        this.breakPieces.forEach(piece => {
+            piece.opacity = this.opacity
+            piece.update()
+        })
     }
 
     draw(scale) {
