@@ -35,7 +35,7 @@ _Avoid_: Retry, respawn (Try Again is only a button label)
 Leave the level for the Title Screen with a clean session. Offered on the Pause Menu and the Game Over Screen.
 
 **Squish**:
-The King landing on a Pig from above: the Pig dies outright and the King bounces off it, unhurt. Works on Pigs and the King Pig, never on the Match Pig, who still hurts the King on contact.
+The King landing on a Pig from above: the Pig dies outright and the King bounces off it, unhurt. Works on Pigs, the King Pig and the Box Pig, never on the Match Pig, who still hurts the King on contact.
 _Avoid_: Stomp, jump attack, head bounce
 
 ### Characters
@@ -59,6 +59,10 @@ The crowned Pig.
 The boss: a King Pig five times the size, fought alone on the Boss Level. He has 10 hit points, shown in a health bar: a hammer hit costs him 1 and a Bomb's blast 3. His attacks are the Bomb Drop and the Ground Pound, and touching him hurts like touching any Pig. He can't be squished.
 _Avoid_: Boss Pig, Pig King, big King Pig
 
+**Box Pig**:
+A Pig hiding inside a Box, which looks exactly like any other Box until the King comes within about three tiles. Then it peeks out and hops after him, and goes back into hiding where it stands once he gets away. It never leaves the floor it hides on. Touching it hurts in any state. One hammer hit, a Squish or a Bomb's blast shatters it, and it leaves no Diamond.
+_Avoid_: Mimic, crate pig
+
 **Match Pig**:
 A Pig holding a lit match, who lights a cannon to fire cannon balls.
 _Avoid_: Pig with a Match (except when naming the sprite folder)
@@ -78,6 +82,10 @@ _Avoid_: Stomp, slam, earthquake
 **Bomb**:
 An explosive that, once lit, blows up when its fuse burns out and hurts everyone caught in the blast: King, Pigs and Boxes alike, whoever lit it. A Pig caught in a blast dies outright, however many hits it had left; the King loses one heart. The King drops Bombs, on the ground or in mid-air (a Bomb dropped in mid-air falls unlit and lights its fuse on landing); Bomb Pigs throw them. A live Bomb never outlasts its moment: it is gone, without blowing up, when the King dies, goes through a Door, or the level is restarted or quit.
 _Avoid_: King's bomb, Pig bomb, grenade
+
+**Box**:
+A wooden crate. The King and the Pigs can stand on it. A hammer hit or a Bomb's blast smashes it, and it leaves a Diamond behind.
+_Avoid_: Crate
 
 **Moving Platform**:
 A wooden plank that glides back and forth along a fixed path (sideways, up and down, or diagonally), easing to a stop at each end. The King can jump up through it and land on top; standing on it carries him, and a lit Bomb resting on it rides along too.
