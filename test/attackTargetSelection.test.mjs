@@ -73,3 +73,21 @@ test('collectAttackableEnemiesForPlayerAttack: leaves out the Match Pig (not ham
     assert.deepEqual(collectAttackableEnemiesForPlayerAttack([pig], [king]), [pig, king])
     assert.equal(collectAttackableEnemiesForPlayerAttack([pig], [king]).includes(match), false)
 })
+
+test('collectAttackable includes Box Pigs (#144)', () => {
+    const boxPig = { kind: 'boxPig' }
+    assert.deepEqual(collectAttackableEnemiesForPlayerAttack([], [], null, [boxPig]), [boxPig])
+})
+
+test('hammer hit detection includes a Box Pig (#144)', () => {
+    const boxPig = { hitbox: KING_HITBOX, hit() {} }
+    const hit = findEnemiesHitByPlayerHammer({
+        lastDirection: 'right',
+        attackHitboxRight: ATTACK_BOX_RIGHT,
+        attackHitboxLeft: ATTACK_BOX_LEFT,
+        enemies: [],
+        enemyKing: [],
+        boxPigs: [boxPig],
+    })
+    assert.deepEqual(hit, [boxPig])
+})

@@ -13,7 +13,7 @@ const KEY_PREFIX = 'kings-and-pigs:ghost-run:level-'
  * Level fingerprint (#129): a stable string over what a run can interact with.
  * Fields (all from the level's raw map data and its levels.js entry):
  *   collisions, platforms_2   collision tile layers
- *   boxes, platforms, door, enemy (Pigs), enemyKing, enemyMatch, cannon
+ *   boxes, platforms, door, enemy (Pigs), enemyKing, enemyMatch, cannon, boxPig (Box Pigs, when the level has any)
  *                             object positions
  *   movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves
  *                             platform paths / positions
@@ -28,6 +28,8 @@ const FINGERPRINT_FIELDS = [
 
 export function levelFingerprint(assets, levelConfig = {}) {
     const parts = FINGERPRINT_FIELDS.map(name => assets?.[name] ?? [])
+    // Only a level with Box Pigs counts them, so no other level's fingerprint moves.
+    if (assets?.boxPig?.length) parts.push(assets.boxPig)
     parts.push(levelConfig?.playerPosition ?? null, levelConfig?.checkpoints ?? [])
     const text = JSON.stringify(parts)
     // FNV-1a, 32 bit.

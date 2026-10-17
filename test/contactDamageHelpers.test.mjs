@@ -87,6 +87,11 @@ test('findSquishedPigs: returns every Pig squished at once', () => {
     assert.equal(findSquishedPigs(box(0, 85), 5, pigs).length, 2)
 })
 
+test('findSquishedPigs: squishes a Box Pig (#144)', () => {
+    const boxPig = pigAt(100, { enemyVariant: 'boxPig', hitpoints: 1 })
+    assert.deepEqual(findSquishedPigs(box(0, 85), 5, [boxPig]), [boxPig])
+})
+
 test('findSquishedPigs: skips dead, fading and unloaded Pigs', () => {
     const pigs = [pigAt(100, { hitpoints: 0 }), pigAt(100, { opacity: 0.5 }), pigAt(100, { loaded: false })]
     assert.deepEqual(findSquishedPigs(box(0, 85), 5, pigs), [])
