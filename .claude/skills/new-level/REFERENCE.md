@@ -92,6 +92,7 @@ Layers are read by name. `collisions`, `boxes` and `porta` must exist; the rest 
 | `platform_2` | tiles | gid 260 makes a one-way 64 × 5 strip |
 | `porta` | objects | The Door. Tiled y = ground ÷ 2 (map px). |
 | `boxes` | objects | bottom = 2y; row − 0.5 stacks one box on another |
+| `box_pig` | objects | optional; placed like `boxes` (bottom = 2y). Each is a Box Pig, drawn as a Box until it peeks out. `Layout.box_pigs` is a list of `(col, row of the ground under it)`; empty writes no layer |
 | `enemy`, `enemyKing` | objects | spawn at map y = ground − 16; they settle onto the ground |
 | `diamonds` | objects | centre (world) = (2x + 8, 2y − 8) |
 | `moving_platform` | rectangles | properties `dx`, `dy` (map px), `period` (s), `phase`, `width` (map px, default 100) |

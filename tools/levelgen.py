@@ -58,6 +58,9 @@ class Layout:
     king_pigs: list = field(default_factory=list)
     # (col, row of the ground under it); row - 0.5 stacks a box on another.
     boxes: list = field(default_factory=list)
+    # Box Pigs, placed like boxes: (col, row of the ground under it). Written as a
+    # `box_pig` layer only when not empty; the game draws each as a Box until it springs.
+    box_pigs: list = field(default_factory=list)
     door: tuple = (0, 0)
     # Diamond centres, map px.
     diamonds: list = field(default_factory=list)
@@ -180,6 +183,8 @@ def build_json(layout, cells):
                  properties=[dict(name=key, type='float', value=p.get(key, default))
                              for key, default in (('radius', 64), ('period', 8), ('phase', 0), ('direction', 1))])
             for p in layout.helix_platforms]))
+    if layout.box_pigs:
+        groups.append(('box_pig', tile_objects(BOX_GID, 22, 16, [(col * TILE, row * TILE) for col, row in layout.box_pigs])))
     next_id = 1
     for name, objects in groups:
         for obj in objects:
