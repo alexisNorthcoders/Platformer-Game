@@ -1,4 +1,4 @@
-// Box Pig checks (#144), for Level 17:  node tools/play.mjs --level 17 --file tools/box-pig-checks.js
+// Box Pig checks (#144, #145), for Level 17:  node tools/play.mjs --level 17 --file tools/box-pig-checks.js
 // Evaluated in the page like tools/level-checks.js; the level is restarted between checks.
 
 const N = level
@@ -112,6 +112,85 @@ await play(N)
         remembered, back: boxPigs.length, counter: EnemyTracker.getEnemyCount(),
     }
     report.defeatedMark = { ok: remembered }
+}
+
+// 7. Peek, hop toward the King, give up (#145): the box lifts in place, hops stay on the floor, and it hides where it stopped.
+await play(N)
+{
+    const pig = onFloor()[0]
+    const spawn = { x: pig.position.x, y: pig.position.y }
+    const sheet = () => decodeURIComponent(pig.image.src.split('/').pop())
+    const farX = pig.position.x - 600 // well past 5 tiles (320 px)
+    const keepKing = (x, frames) => {
+        for (let i = 0; i < frames; i++) {
+            player.setPosition({ x, y: FLOOR - FEET - 0.01 })
+            player.velocity.x = 0
+            player.velocity.y = 0
+            player.hitCooldown = true // contact must not knock him about or cost hearts here
+            step(1)
+        }
+    }
+    keepKing(farX, 30)
+    const hiddenFar = pig.ai.mode === 'hidden' && sheet() === 'Idle.png'
+
+    // 4 tiles away: between 3 and 5, so still hidden
+    keepKing(spawn.x + 22 - 62 - 256, 30)
+    const hiddenBetween = pig.ai.mode === 'hidden'
+
+    // 2 tiles away on the left: it peeks, and the box lifts in place (no sideways shift).
+    keepKing(spawn.x + 22 - 62 - 128, 4)
+    const peek = { mode: pig.ai.mode, sheet: sheet(), x: pig.position.x, y: pig.position.y }
+    const peeked = pig.ai.mode === 'lookingOut' && peek.sheet.startsWith('Looking Out') && peek.x === spawn.x && peek.y === spawn.y
+
+    // It winds up, then hops toward him, always back down on its own floor.
+    const sheets = new Set()
+    let leftFloor = false
+    let maxAirborne = 0
+    for (let i = 0; i < 240; i++) {
+        keepKing(spawn.x + 22 - 62 - 128, 1)
+        sheets.add(sheet().replace(/ \(.*/, ''))
+        if (pig.position.y + 32 > FLOOR + 0.5 || pig.position.y + 32 < FLOOR - 80) leftFloor = true
+        if (pig.position.y + 32 < FLOOR - 0.5) maxAirborne = Math.max(maxAirborne, FLOOR - pig.position.y - 32)
+    }
+    const hopped = pig.position.x < spawn.x - 20 && maxAirborne > 10 && !leftFloor
+    const allSheets = ['Jump Anticipation', 'Jump', 'Fall', 'Ground'].every(name => sheets.has(name))
+    const stoppedAt = { x: pig.position.x, y: pig.position.y }
+
+    // Past 5 tiles it settles and hides where it stopped, not at its spawn.
+    keepKing(stoppedAt.x + 22 - 62 - 600, 240)
+    const gaveUp = pig.ai.mode === 'hidden' && sheet() === 'Idle.png' && Math.abs(pig.position.x - stoppedAt.x) < 120 && pig.position.x !== spawn.x && pig.position.y + 32 === FLOOR
+    report.peekHopGiveUp = {
+        ok: hiddenFar && hiddenBetween && peeked && hopped && allSheets && gaveUp,
+        hiddenFar, hiddenBetween, peeked, hopped, allSheets, gaveUp, sheets: [...sheets], spawn, stoppedAt, now: { x: pig.position.x, y: pig.position.y },
+    }
+}
+
+// 8. A hop toward an edge never takes it off its floor.
+await play(N)
+{
+    const pig = onFloor()[0]
+    const body = { left: pig.position.x, right: pig.position.x + 44 }
+    const edges = __boxPig.floorEdges(collisionBlocks, { ...body, bottom: FLOOR, height: 32 })
+    const lip = pig.position.x - edges.left < edges.right - body.right ? 'left' : 'right'
+    let minX = Infinity
+    let maxX = -Infinity
+    let lowest = -Infinity
+    for (let i = 0; i < 900; i++) {
+        // The King stands 100 px past the lip (his position is 62 px left of his centre), on the lip's side.
+        const x = (lip === 'left' ? edges.left - 100 : edges.right + 100) - 62
+        player.setPosition({ x, y: FLOOR - FEET - 0.01 })
+        player.velocity.x = 0
+        player.velocity.y = 0
+        player.hitCooldown = true
+        step(1)
+        minX = Math.min(minX, pig.position.x)
+        maxX = Math.max(maxX, pig.position.x + 44)
+        lowest = Math.max(lowest, pig.position.y + 32)
+    }
+    report.edgeClamp = {
+        ok: edges && minX >= edges.left - 0.01 && maxX <= edges.right + 0.01 && lowest <= FLOOR + 0.01 && pig.ai.mode !== 'hidden',
+        lip, edges, minX, maxX, lowest, mode: pig.ai.mode,
+    }
 }
 
 report.ok = Object.values(report).every(check => !check || typeof check !== 'object' || check.ok !== false)
