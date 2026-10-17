@@ -93,6 +93,9 @@ class Sprite {
             ? this.tintedFrame(cropbox, tint)
             : { image: this.image, x: cropbox.position.x, y: cropbox.position.y }
 
+        // A draw-only shift (e.g. Box Pig sheets): the world position is left alone.
+        const drawX = this.position.x + (this.drawOffset?.x || 0)
+        const drawY = this.position.y + (this.drawOffset?.y || 0)
         if (this.flip) c.scale(-1, 1)
         c.drawImage(
             source.image,
@@ -100,8 +103,8 @@ class Sprite {
             source.y,
             cropbox.width,
             cropbox.height,
-            this.flip ? -this.position.x - this.width * scale - this.flipOffsetX * scale : this.position.x,
-            this.position.y,
+            this.flip ? -drawX - this.width * scale - this.flipOffsetX * scale : drawX,
+            drawY,
             this.width * scale,
             this.height * scale
         )

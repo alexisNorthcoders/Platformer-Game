@@ -45,13 +45,12 @@ class BoxPig extends Enemy {
         this.updateHitbox()
     }
 
-    /** Pixels between the King and this Box Pig (centre to centre), and which side he is on. */
+    /** Horizontal pixels between the King and this Box Pig (centre to centre), and which side he is on. */
     kingRange() {
         // The King has no hitbox until his first update: nobody is near yet.
         if (!player?.hitbox) return { distance: Infinity, direction: 1 }
         const dx = player.hitbox.position.x + player.hitbox.width / 2 - (this.position.x + BOX_PIG_BOX_WIDTH / 2)
-        const dy = player.hitbox.position.y + player.hitbox.height / 2 - (this.position.y + BOX_PIG_BOX_HEIGHT / 2)
-        return { distance: Math.hypot(dx, dy), direction: dx < 0 ? -1 : 1 }
+        return { distance: Math.abs(dx), direction: dx < 0 ? -1 : 1 }
     }
 
     /** One step of the hide / peek / hop behaviour, then the hop's physics. */
@@ -148,14 +147,11 @@ class BoxPig extends Enemy {
             this.breakPieces.forEach(piece => piece.draw(scale))
             return
         }
-        if (this.ai.mode === 'hidden') return super.draw(scale)
-        // The Pig sheets are bigger than the Box: line them up on its bottom centre.
-        const dx = (BOX_PIG_BOX_WIDTH - BOX_PIG_SHEET_WIDTH) / 2
-        const dy = BOX_PIG_BOX_HEIGHT - BOX_PIG_SHEET_HEIGHT
-        this.position.x += dx
-        this.position.y += dy
+        // The Pig sheets are bigger than the Box: line them up on its bottom centre,
+        // shifting only the drawing so the world position and hitbox stay put.
+        this.drawOffset = this.ai.mode === 'hidden'
+            ? null
+            : { x: (BOX_PIG_BOX_WIDTH - BOX_PIG_SHEET_WIDTH) / 2, y: BOX_PIG_BOX_HEIGHT - BOX_PIG_SHEET_HEIGHT }
         super.draw(scale)
-        this.position.x -= dx
-        this.position.y -= dy
     }
 }
