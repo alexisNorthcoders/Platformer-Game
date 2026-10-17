@@ -67,6 +67,8 @@ let respawnPoint = null
 let doors = []
 let enemies = []
 let enemyKing = []
+// Pigs hiding among the Boxes (#143); empty on a level without a `box_pig` layer.
+let boxPigs = []
 // The Boss Level's Giant King Pig (#113); null on every other level.
 let giantKingPig = null
 let enemyMatch = []
@@ -559,7 +561,7 @@ function hitBlastVictims(rect) {
     player.updateHitbox()
     const victims = bombLib.findBlastVictims(rect, {
         king: player,
-        pigs: ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig),
+        pigs: ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig, boxPigs),
         boxes,
     })
     if (victims.king) victims.king.takeBlastHit()
@@ -1715,6 +1717,10 @@ function animate() {
     boxes.forEach(box => {
         box.draw(2);
         if (!levelFrozen) box.update();
+    });
+    boxPigs.forEach(boxPig => {
+        boxPig.draw(2);
+        if (!levelFrozen) boxPig.update();
     });
 
     if (platforms) {

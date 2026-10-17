@@ -131,7 +131,7 @@ class Player extends Sprite {
             this.checkDiamondHitCollision()
         }
 
-        if (enemies?.length || enemyKing?.length || enemyMatch?.length || giantKingPig) {
+        if (enemies?.length || enemyKing?.length || enemyMatch?.length || giantKingPig || boxPigs?.length) {
             if (!this.checkSquish()) this.checkEnemyContactDamage()
         }
 
@@ -371,6 +371,7 @@ class Player extends Sprite {
                 enemies,
                 enemyKing,
                 giantKingPig,
+                boxPigs,
             })
             hitEnemies.forEach((enemy) => {
                 enemy.hit()
@@ -412,7 +413,7 @@ class Player extends Sprite {
      */
     checkSquish() {
         if (this.dead || this.sinking || this.gameOver) return false
-        const targets = ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing)
+        const targets = ContactDamageHelpers.collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, null, boxPigs)
         // findSquishedPigs excludes the Match Pig by variant, whatever the list holds
         const squished = ContactDamageHelpers.findSquishedPigs(this.hitbox, this.velocity.y, targets)
         if (!squished.length) return false
@@ -427,7 +428,7 @@ class Player extends Sprite {
     checkEnemyContactDamage() {
         if (ContactDamageHelpers.cannotTakeContactDamage({ dead: this.dead, hitCooldown: this.hitCooldown, sinking: this.sinking })) return
 
-        const groups = [enemies, enemyKing, enemyMatch, giantKingPig ? [giantKingPig] : []]
+        const groups = [enemies, enemyKing, enemyMatch, giantKingPig ? [giantKingPig] : [], boxPigs]
         for (let g = 0; g < groups.length; g++) {
             const group = groups[g]
             if (!group?.length) continue

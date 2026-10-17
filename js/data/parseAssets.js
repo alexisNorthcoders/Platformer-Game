@@ -95,7 +95,7 @@ async function loadAssets(level, scale) {
         let cannonData = undefined;
         let enemyMatchData = undefined;
 
-        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "tumbling_plank", "crumbling_shelf", "puddle"];
+        const layerNames = ["collisions", "boxes", "porta", "platform", "enemy", "enemyKing", "diamonds", "platform_2", "cannon", "enemy_match", "moving_platform", "rotating_platform", "helix_platform", "tumbling_plank", "crumbling_shelf", "puddle", "box_pig"];
         const layers = jsonData.layers.reduce((acc, layer) => {
             if (layerNames.includes(layer.name)) {
                 acc[layer.name] = layer;
@@ -119,6 +119,7 @@ async function loadAssets(level, scale) {
         const tumblingPlankLayer = layers["tumbling_plank"];
         const crumblingShelfLayer = layers["crumbling_shelf"];
         const puddleLayer = layers["puddle"];
+        const boxPigLayer = layers["box_pig"];
 
         const boxesData = boxesLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
         const portaData = portaLayer.objects.map(obj => ({ x: obj.x, y: obj.y }));
@@ -155,6 +156,7 @@ async function loadAssets(level, scale) {
             levelWidth: jsonData.width * scale * 32,
             levelHeight: jsonData.height * scale * 32,
             cannon: cannonData ? getAssetsPositions(cannonData) : [],
+            boxPig: boxPigLayer ? getAssetsPositions(boxPigLayer.objects.map(obj => ({ x: obj.x, y: obj.y }))) : [],
             enemyMatch: enemyMatchData ? getAssetsPositions(enemyMatchData) : [],
             movingPlatforms: [
                 ...(movingPlatformLayer ? movingPlatformLayer.objects.map(obj => getMovingPlatformPath(obj, scale)) : []),

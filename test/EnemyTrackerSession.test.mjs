@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFileSync } from 'node:fs'
+import vm from 'node:vm'
 import EnemyTracker from '../js/EnemyTracker.mjs'
+
+// LevelProgressKeys is a classic-script const in utils.js: run just its IIFE.
+const utilsSource = readFileSync(new URL('../js/utils.js', import.meta.url), 'utf8')
+const progressSource = utilsSource.slice(utilsSource.indexOf('const LevelProgressKeys'), utilsSource.indexOf('})()', utilsSource.indexOf('const LevelProgressKeys')) + 4)
+const newProgressKeys = () => vm.runInNewContext(`${progressSource}\nLevelProgressKeys`)
 
 test('after resetSession, counters are zero (menu / new run)', () => {
     EnemyTracker.initializeLevel(10)
@@ -63,5 +70,27 @@ test('setEnemyCount rolls the session count back (Restart Level)', () => {
     assert.equal(EnemyTracker.getEnemyCount(), 1)
     EnemyTracker.initializeLevel(4)
     assert.equal(EnemyTracker.isLevelHalfCleared(), false)
+    EnemyTracker.resetSession()
+})
+
+test('a defeated Box Pig survives a Door and back, and Restart Level clears it (#144)', () => {
+    EnemyTracker.resetSession()
+    const progress = newProgressKeys()
+    EnemyTracker.initializeLevel(4)
+    const atLevelStart = EnemyTracker.getEnemyCount()
+    // Shattered: the Pig counter up by one, and the spawn marked defeated (Enemy.die)
+    EnemyTracker.increaseEnemyCount()
+    progress.markEnemyDefeated(17, 'boxPig', 2496, 480)
+    // Through a Door and back: the level is entered again, the session stays
+    EnemyTracker.initializeLevel(4)
+    assert.equal(EnemyTracker.getEnemyCount(), atLevelStart + 1)
+    assert.equal(progress.isEnemyDefeated(17, 'boxPig', 2496, 480), true)
+    assert.equal(progress.isEnemyDefeated(17, 'pig', 2496, 480), false)
+    // Restart Level rolls the Pig count back to the level's entry
+    EnemyTracker.setEnemyCount(atLevelStart)
+    assert.equal(EnemyTracker.getEnemyCount(), atLevelStart)
+    // a new session forgets the defeat
+    progress.clearAll()
+    assert.equal(progress.isEnemyDefeated(17, 'boxPig', 2496, 480), false)
     EnemyTracker.resetSession()
 })

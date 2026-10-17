@@ -5,11 +5,12 @@ import { rectHitboxesOverlap } from './contactDamageHelpers.mjs'
  * Keep in sync with contact damage: if a group can deal contact damage to the
  * player, it must be iterable here so attacks can hit back (see #29).
  */
-export function collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig = null) {
+export function collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig = null, boxPigs = null) {
     return [
         ...(Array.isArray(enemies) ? enemies : []),
         ...(Array.isArray(enemyKing) ? enemyKing : []),
         ...(giantKingPig ? [giantKingPig] : []),
+        ...(Array.isArray(boxPigs) ? boxPigs : []),
     ]
 }
 
@@ -24,9 +25,10 @@ export function findEnemiesHitByPlayerHammer({
     enemies,
     enemyKing,
     giantKingPig = null,
+    boxPigs = null,
     rectHitboxesOverlap: overlapFn = rectHitboxesOverlap,
 }) {
-    const attackableEnemies = collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig)
+    const attackableEnemies = collectAttackableEnemiesForPlayerAttack(enemies, enemyKing, giantKingPig, boxPigs)
     const attackBox = lastDirection === 'right' ? attackHitboxRight : attackHitboxLeft
     const attackOverlapsEnemy = (attackBoxInner, enemy) =>
         Boolean(

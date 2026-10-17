@@ -106,6 +106,12 @@ function createBoxes(positions) {
             }
         }))
 }
+function createBoxPigs(positions, levelNum) {
+    return positions.map(position => new BoxPig({
+        position: { x: position[0], y: position[1] },
+        spawnTrack: { levelId: levelNum, kind: 'boxPig', spawnX: position[0], spawnY: position[1] },
+    }))
+}
 function createEnemies(positions, levelNum) {
     return positions.map(position => new Enemy({
         position: { x: position[0], y: position[1] },
@@ -354,7 +360,7 @@ function createCannon(positions) {
 
 async function createAssets(level, options = {}) {
     const assets = await loadAssets(level, 2)
-    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, levelHeight, mapColumns, cannon, enemyMatch, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = assets
+    const { boxes, platforms, door, enemy, collisions, enemyKing, diamonds, platforms_2, levelWidth, levelHeight, mapColumns, cannon, enemyMatch, boxPig, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, puddles } = assets
     levelFingerprints.set(level, levelFingerprint(assets, levels[level]))
     const platforms_2Collisiongs = platforms_2.parse2D(mapColumns)
     const platformsBlocks = platforms_2Collisiongs.createObjectsFrom2D(64, 5, 'platform')
@@ -362,6 +368,7 @@ async function createAssets(level, options = {}) {
     const collisionBlocks = parsedCollisions.createObjectsFrom2D()
     return {
         boxes: createBoxes(boxes),
+        boxPigs: createBoxPigs(boxPig ?? [], level),
         platforms: createPlatforms(platforms),
         movingPlatforms: createMovingPlatforms(movingPlatforms),
         helixPlatforms: createHelixPlatforms(helixPlatforms),
@@ -395,7 +402,7 @@ function applyCollisions(player, enemies, enemyKing, enemyMatch, collisionBlocks
     if (giantKingPig) giantKingPig.collisionBlocks = collisionBlocks.filter(block => !platforms.some(platform => platform.collisionBlocks.includes(block)))
 }
 async function initializeLevel(level, playerPosition, lastDirection, options = {}) {
-    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, giantKingPig, background, far, sky, diamonds, platformsBlocks, levelWidth, levelHeight, cannon, enemyMatch, rainTops, puddles } = await createAssets(level, options));
+    ({ boxes, platforms, movingPlatforms, helixPlatforms, tumblingPlanks, crumblingShelves, doors, enemies, collisionBlocks, enemyKing, giantKingPig, background, far, sky, diamonds, platformsBlocks, levelWidth, levelHeight, cannon, enemyMatch, boxPigs, rainTops, puddles } = await createAssets(level, options));
     const enemyTint = levels[level]?.enemyTint ?? null
     const enemyGlow = levels[level]?.enemyGlow ?? null
     enemies.concat(enemyKing, enemyMatch, giantKingPig ?? []).forEach(enemy => {
@@ -406,6 +413,11 @@ async function initializeLevel(level, playerPosition, lastDirection, options = {
     boxes.forEach(box => {
         box.tint = boxTint
         box.tintMode = 'color'
+    })
+    // A Box Pig is a Box to the eye: boxTint, never enemyTint or enemyGlow.
+    boxPigs.forEach(boxPig => {
+        boxPig.tint = boxTint
+        boxPig.tintMode = 'color'
     })
 
     collisionBlocks = collisionBlocks.concat(platformsBlocks,
