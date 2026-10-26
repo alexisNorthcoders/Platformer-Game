@@ -5,6 +5,7 @@ import {
     createMovingPlatformState,
     isResting,
     isRiding,
+    riddenPlatform,
     carriedDrop,
     pathPositionAt,
     pathShareAt,
@@ -60,6 +61,18 @@ test('the King beside the platform, above it, or jumping off does not ride it', 
     assert.equal(isRiding(standingHitbox(1000 + MOVING_PLATFORM.width + 5), 0, SURFACE), false)
     assert.equal(isRiding(standingHitbox(1050, SURFACE.y - 20), 0, SURFACE), false)
     assert.equal(isRiding(standingHitbox(1050), -10, SURFACE), false)
+})
+
+test('the King on two crossing planks rides only the higher one', () => {
+    const lower = { x: 1000, y: SURFACE.y + 1 }
+    const higher = { x: 1060, y: SURFACE.y - 1 }
+    assert.equal(riddenPlatform(standingHitbox(1050), 0, [lower, higher]), 1)
+    assert.equal(riddenPlatform(standingHitbox(1050), 0, [higher, lower]), 0)
+})
+
+test('the King on no plank rides none', () => {
+    assert.equal(riddenPlatform(standingHitbox(1050), -10, [SURFACE]), -1)
+    assert.equal(riddenPlatform(standingHitbox(500), 0, [SURFACE]), -1)
 })
 
 test('a Bomb resting on the top is carried; one elsewhere is not', () => {

@@ -76,33 +76,41 @@ await play(N)
 //    feet gap about 0, and carried along with it.
 await play(N)
 report.rides = { ok: true, platforms: [] }
+const RIDE = 100
+const lib = globalThis.__movingPlatform
+player.updateHitbox()
+const { width, height } = player.hitbox
+const hitboxX = player.hitbox.position.x - player.position.x
+const widths = movingPlatforms.map(p => p.surface().width)
 for (const [i, platform] of movingPlatforms.entries()) {
-    // On a tall map rides stack in one shaft: wait until no other ride is within 90 px of this one's surface.
-    const crowded = () => movingPlatforms.some((other, j) => j !== i &&
-        Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200)
-    // One measurement per platform, from a clear start. If a neighbour sweeps through mid-ride, the result
-    // is kept as measured and the neighbours are named, so a failure is told apart from a real one.
-    for (let f = 0; f < 3000 && crowded(); f++) step(1)
+    // Ride when no other plank takes the King off this one for the whole ride (looked ahead on copies of
+    // the paths): where planks cross he rides the higher one, so that ride would measure the other plank.
+    const clearRide = () => {
+        const states = movingPlatforms.map(p => structuredClone(p.state))
+        for (let f = 0; f <= RIDE; f++) {
+            const hitbox = { position: { x: states[i].x + 100 - 62 + hitboxX, y: states[i].y - 0.01 - height }, width, height }
+            if (lib.riddenPlatform(hitbox, 0, states.map((state, j) => ({ x: state.x, y: state.y, width: widths[j] }))) !== i) return false
+            states.forEach(state => lib.stepMovingPlatform(state))
+        }
+        return true
+    }
+    let clear = clearRide()
+    for (let f = 0; f < 3000 && !clear; f++) {
+        step(1)
+        clear = clearRide()
+    }
     const surface = platform.surface()
     player.setPosition({ x: surface.x + 100 - 62, y: surface.y - FEET - 0.01 })
     player.velocity.x = 0
     player.velocity.y = 0
     const offset = player.position.x - platform.state.x
     const heartsBefore = player.hitpoints
-    const neighbours = new Set()
-    for (let f = 0; f < 100; f++) {
-        step(1)
-        movingPlatforms.forEach((other, j) => {
-            if (j !== i && Math.abs(other.state.y - platform.state.y) < 90 && Math.abs(other.state.x - platform.state.x) < 200) neighbours.add(j)
-        })
-    }
+    step(RIDE)
     const gap = player.position.y + FEET - platform.state.y
     const drift = player.position.x - platform.state.x - offset
-    const ok = Math.abs(gap) < 1 && Math.abs(drift) < 2
+    const ok = clear && Math.abs(gap) < 1 && Math.abs(drift) < 2
     const result = { i, ok, gap: +gap.toFixed(3), drift: +drift.toFixed(3), lostHeart: player.hitpoints < heartsBefore }
-    if (!ok && neighbours.size) result.failure = 'interfered by neighbour'
-    else if (!ok) result.failure = 'ride'
-    if (neighbours.size) result.neighbours = [...neighbours]
+    if (!clear) result.failure = 'no clear ride in 3000 frames'
     player.hitpoints = heartsBefore
     report.rides.platforms.push(result)
     if (!result.ok) report.rides.ok = false
