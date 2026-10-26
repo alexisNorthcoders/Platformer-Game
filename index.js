@@ -667,10 +667,11 @@ function stepMovingPlatforms() {
     if (!movingPlatforms.length) return
     const lib = globalThis.__movingPlatform
     player.updateHitbox()
-    for (const platform of movingPlatforms) {
+    const ridden = player.gameOver ? -1 : lib.riddenPlatform(player.hitbox, player.velocity.y, movingPlatforms.map(p => p.surface()))
+    for (const [i, platform] of movingPlatforms.entries()) {
         const surface = platform.surface()
         const { dx, dy } = platform.step()
-        if (!player.gameOver && lib.isRiding(player.hitbox, player.velocity.y, surface)) {
+        if (i === ridden) {
             player.position.x += dx
             player.position.y += dy > 0
                 ? lib.carriedDrop(player.hitbox, dy, collisionBlocks.filter(block => block.type !== 'platform'))

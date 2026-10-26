@@ -84,6 +84,18 @@ export function isRiding(hitbox, velocityY, surface) {
         hitbox.position.x + hitbox.width >= surface.x
 }
 
+/**
+ * The index in `surfaces` of the one platform a body rides, or -1: where two
+ * planks cross under his feet, the higher one, the one he stands on.
+ */
+export function riddenPlatform(hitbox, velocityY, surfaces) {
+    let ridden = -1
+    surfaces.forEach((surface, i) => {
+        if (isRiding(hitbox, velocityY, surface) && (ridden < 0 || surface.y < surfaces[ridden].y)) ridden = i
+    })
+    return ridden
+}
+
 /** Player lands the King this far above a block's top. */
 const STANDING_GAP = 0.01
 
